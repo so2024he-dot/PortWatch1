@@ -16,20 +16,24 @@
     
     <!-- Root Context -->
     
-    <!-- Component Scan (Service만) -->
+
+    <!-- Component Scan            -->
+
+    
+    <!-- Service 계층만 Component Scan -->
     <context:component-scan base-package="com.portwatch.service" />
     
-    <!-- ========================= -->
+
     <!-- MySQL Database 설정        -->
-    <!-- ========================= -->
+ 
     
     <!-- HikariCP Configuration -->
     <bean id="hikariConfig" class="com.zaxxer.hikari.HikariConfig">
         <property name="driverClassName" value="com.mysql.cj.jdbc.Driver" />
         <property name="jdbcUrl" value="jdbc:mysql://127.0.0.1:3306/portwatch_db?serverTimezone=Asia/Seoul&amp;useSSL=false&amp;allowPublicKeyRetrieval=true&amp;characterEncoding=UTF-8" />
         <property name="username" value="root" />
-        <!-- ⚠️ 여기에 본인의 MySQL 비밀번호 입력! -->
-        <property name="password" value="" />
+        <!-- ⚠️ 여기에 본인의 MySQL root 비밀번호 입력! -->
+        <property name="password" value="1234" />
         <property name="maximumPoolSize" value="10" />
         <property name="minimumIdle" value="5" />
         <property name="connectionTimeout" value="30000" />
@@ -40,11 +44,9 @@
     <!-- DataSource -->
     <bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
         <constructor-arg ref="hikariConfig" />
-    </bean>
-    
-    <!-- ========================= -->
+    </bean>    
+  
     <!-- MyBatis 설정              -->
-    <!-- ========================= -->
     
     <!-- SqlSessionFactory -->
     <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
@@ -63,9 +65,9 @@
     <!-- MyBatis Mapper Scanner -->
     <mybatis-spring:scan base-package="com.portwatch.persistence" />
     
-    <!-- ========================= -->
+  
     <!-- Transaction 설정          -->
-    <!-- ========================= -->
+ 
     
     <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
         <property name="dataSource" ref="dataSource" />
