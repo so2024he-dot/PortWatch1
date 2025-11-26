@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.portwatch.persistence.PortfolioDAO">
+
+    <insert id="insertPortfolio" parameterType="com.portwatch.domain.PortfolioVO">
+        INSERT INTO PORTFOLIO (member_id, stock_id, quantity, avg_purchase_price, purchase_date, updated_at)
+        VALUES (#{memberId}, #{stockId}, #{quantity}, #{avgPurchasePrice}, #{purchaseDate}, NOW())
+    </insert>
+    
+    <select id="selectPortfolioByMember" parameterType="int" resultType="com.portwatch.domain.PortfolioVO">
+        SELECT 
+            p.portfolio_id as portfolioId,
+            p.member_id as memberId,
+            p.stock_id as stockId,
+            p.quantity,
+            p.avg_purchase_price as avgPurchasePrice,
+            p.purchase_date as purchaseDate,
+            p.updated_at as updatedAt,
+            s.stock_code as stockCode,
+            s.stock_name as stockName,
+            (SELECT sp.close_price 
+             FROM STOCK_PRICE sp 
+             WHERE sp.stock_id = s.stock_id 
+             ORDER BY sp.trade_date DESC LIMIT 1) as currentPrice
+        FROM PORTFOLIO p
+        INNER JOIN STOCK s ON p.stock_id = s.stock_id
+        WHERE p.member_id = #{memberId}
+        ORDER BY p.purchase_date DESC
+    </select>
+    
+    <select id="selectPortfolioById" parameterType="long" resultType="com.portwatch.domain.PortfolioVO">
+        SELECT 
+            portfolio_id as portfolioId,
+            member_id as memberId,
+            stock_id as stockId,
+            quantity,
+            avg_purchase_price as avgPurchasePrice,
+            purchase_date as purchaseDate,
+            updated_at as updatedAt
+        FROM PORTFOLIO
+        WHERE portfolio_id = #{portfolioId}
+    </select>
+    
+    <select id="checkDuplicate" parameterType="map" resultType="int">
+        SELECT COUNT(*) 
+        FROM PORTFOLIO 
+        WHERE member_id = #{memberId} AND stock_id = #{stockId}
+    </select>
+    
+    <update id="updatePortfolio" parameterType="com.portwatch.domain.PortfolioVO">
+        UPDATE PORTFOLIO
+        SET quantity = #{quantity},
+            avg_purchase_price = #{avgPurchasePrice},
+            purchase_date = #{purchaseDate},
+            updated_at = NOW()
+        WHERE portfolio_id = #{portfolioId}
+    </update>
+    
+    <delete id="deletePortfolio" parameterType="long">
+        DELETE FROM PORTFOLIO WHERE portfolio_id = #{portfolioId}
+    </delete>
+    
+    <select id="getPortfolioSummary" parameterType="int" resultType="map">
+        SELECT 
+            SUM(p.quantity * p.avg_purchase_price) as totalInvestment,
+            SUM(p.quantity * COALESCE(sp.close_price, 0)) as totalValue,
+            SUM(p.quantity * (COALESCE(sp.close_price, 0) - p.avg_purchase_price)) as totalProfit,
+            CASE 
+                WHEN SUM(p.quantity * p.avg_purchase_price) > 0 
+                THEN ROUND((SUM(p.quantity * (COALESCE(sp.close_price, 0) - p.avg_purchase_price)) 
+                     / SUM(p.quantity * p.avg_purchase_price)) * 100, 2)
+                ELSE 0 
+            END as totalProfitRate
+        FROM PORTFOLIO p
+        LEFT JOIN (
+            SELECT stock_id, close_price
+            FROM STOCK_PRICE sp1
+            WHERE trade_date = (SELECT MAX(trade_date) FROM STOCK_PRICE sp2 WHERE sp2.stock_id = sp1.stock_id)
+        ) sp ON p.stock_id = sp.stock_id
+        WHERE p.member_id = #{memberId}
+    </select>
+
+</mapper>

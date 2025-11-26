@@ -1,0 +1,393 @@
+SPRING.TXT
+
+Framework : 어떤 대상을 구성하는 구조/뼈대
+
+Spring Framework : 스프링을 구성하는 구조/뼈대
+=> 소프트웨어적 관점  : 기능을 미리 클래스 / 인터페이스로 만들어 놓은 반제품
+				(어느정도 기능이 만들어진 형태)=> 밀키트
+=> 일정수준의 프로젝트를 구성
+
+
+* Spring Lagacy Project
+ - 스프링 MVC 프로젝트
+ - 이전에 생성된 프로젝트 => 관련된 자료 많음
+ - 모든 버젼의 스프링에 사용가능
+ - 프로젝트 설정/세팅이 복잡함
+ - was(tomcat)가 필요함
+ 
+* Spring Starter project(Spring Boot)
+ - 최신 스프링 개발기법
+ - 프로젝트 세팅이 없음, 간편
+ - 자체 서버가 포함되어있음
+ - 최적화 버전이 존재함
+ - JSP 페이지 설정을 별도로 처리
+ 
+ * 스프링 특징
+ - 경량 프레임워크 <-> 중량 프레임워크(EJB)
+ - 제어의 역행(IoC, Inversion Of Control) 기술을 사용해서 애플리케이션간의 
+       느슨한 결합을 제공한다.
+   => 서블릿 & Bean(객체를 직접 생성X, 프레임워크에서 처리   
+ - 의존성 주입(DI,Dependency Injection)기능을 제공함
+ - 관점지향 프로그래밍 (AOP,Aspect Oriented Programing)지원 -> 자원관리 수행
+ - 영속서 관련 라이브러리(MyBatis) 기능을 제공
+ - POJO(Plain Old Java Object)방식 프레임워크(spring = java)
+ 
+ * 스프링의 주요 기능
+ - core : 다른 기능과 설정을 분리하기 위한 IoC를 제공 
+ - context : 스프링기본기능,bin(객체)에 접근하는 
+ - DAO : HDBC기능을 좀더 편린하게 제공
+ - ORM : 영속성과련 프레임워크 제공(하이버테이트, 마이바티스)
+ - AOP : 관점지향 프로그램밍 기능 제공
+ - Web : 웹 애플리케이션 개발에 필요한 기능 제공 
+ - WebMVC : 스프링MVC 구현에 필요한 기능 제공
+ 
+ 2025년 
+ * MVC 프로젝트 생성
+ 
+ 1) pom.xml
+   자바 버전, 스프링 버젼 생성 
+   Maven-compoiler-plugin / source.target 버전 변경(자바버전과 동일)
+   *maven > update project 실행
+   
+   * C:\Users\ITWILL\.m2\repository (Maven 라이브러리 저장장소)
+	  => 파일/폴더를 모두 강제로 삭제 & 재시작
+	  => 제일 마지막 수단 (update project를 10번 실행해도 반응X)
+	  
+ 2) 톰켓 서버 설치
+ 
+ 2-1) 프로젝트 우클릭 -> 설정 -> Java build path -> Classpass -> AddLibray->
+ runtime -> tomcat 추가
+ 2-2) Project facts -> Dynamic Web Module (3.1) 변경
+ 
+ 3) 실행
+
+ 
+  * Model2 - MVC
+  
+  요청 -> web.xml -> FrontController= Model (action) = DAO = DB
+  						||
+  					   view
+
+  					   
+  						
+  * 스프링MVC (p122)    
+  					  2)HandlerMapping
+						//
+  요청 -> web.xml -> 1)DispacherSerlet = 3)HandlerAdapter = 4)FrontController= Service = DAO(persistence) = MyBatis = DB  									 
+  					||	\\                
+  					||	5)viewResolver    
+  				 6) view
+  				 
+ 
+              |-----------------------------------------------------------|----------|----------------------------------|
+						       Presentation Layer                           Business           Data Access Layer
+						       :UI 를 구성하는 요소를 작성하는 영역(모바일/웹)               Layer              : Persistance Layer
+						       												: 서비스 계층                                데이터 처리(DB사용)
+						       												고객의 요구사항을 반영 
+						       									
+[DAO(persistence) = MyBatis = DB]
+	 Data Access Layer
+	 
+2025년 9월 26일 금요일
+
+https://mybatis.org/mybatis-3/ko/index.html	 
+
+*MyBatis
+ :마이바티스는 개발자가 지정한 SQL, 저장프로시저 그리고 몇가지 고급 매핑을 지원하는 퍼시스턴스 프레임워크이다.
+  마이바티스는 JDBC로 처리하는 상당부분의 코드와 파라미터 설정및 결과 매핑을 대신해준다.
+  마이바티스는 데이터베이스 레코드에 원시타입과 Map 인터페이스 그리고 자바 POJO 를 설정해서 매핑하기 위해 XML과 애노테이션을 사용할 수 있다.
+  => JDBC를 사용해서 디비 연결을 간편하게 수행가능하도록 도와줌
+   - 코드의 간소화  (SQL Mapper 라이브러리) 
+   	 -> try-chtch-finally 구문을 생략,pstmt, rs 사용 편의성 제공 
+   	                             pstmt.setSting(1,dto.getId());
+   	                             rs.getInt(2,rs.getInt("idx");
+   	 - SQL구문 분리 운영
+   	 	1) XML  2) 어노테이션 
+   	 	
+   	 - Spring에 특화되어있음(자동화 연동)
+   	 - 동적 SQL
+  		https://mybatis.org/mybatis-3/ko/dynamic-sql.html
+  			
+  	[라이브러리]	
+  	mySQL-connector-j => Mysql 사용
+  	mybatis			  => Mybatis 사용
+  	mybatis-spring    => 스프링-Mybatis 연동
+  	spring-jdbc       => JDBC (디비연결)
+  	spring-test       => 연결테스트용
+  	HiKariCP          =>	
+   	https://mvnrepository.com/artifact/com.mysql/mysql-connector-j
+   	https://mvnrepository.com/artifact/org.mybatis/mybatis
+   	https://mvnrepository.com/artifact/org.mybatis/mybatis-spring
+   	https://mvnrepository.com/artifact/org.springframework/spring-jdbc
+   	https://mvnrepository.com/artifact/org.springframework/spring-test
+   	https://mvnrepository.com/artifact/com.zaxxer/HikariCP
+   	
+   	
+ root-context 필수 작성 	
+   			  <property name="configLocation"
+ 		  		    value="classpath:/mybatis-config.xml" />
+    => classpath:/의미는 src/main/resources 폴더를 나타낸다.
+    => src/main/resources 폴더와 root-context.xml 연결됨 
+                              (sevlet-context.xml 연결됨)
+                              => web.xml 에 연결되어있기 때문에 
+                              
+ 		=>namespace은 외부에서 mapper를 찾을 때 (호출할 때) 사용되는 이름
+  		=> namespace는 실제 파일의 위치가 아님! 설정된 주소/이름
+  		
+  *Spring <=> Mybatis 연결
+  1)XML 사용해서 SQL 구문, DAO에서 XML코드 호출해서 실행
+  	- SQL 구문이 분리되어 있어서 관리가 편함
+  	- 파일이 많아지고, 작업량, 복잡도가 증가
+  	
+  2)어노테이션 사용, DAO 인터페이스를 통한 실행
+  	- DAO 객체없이 사용가능, 편의성 증가
+  	- SQL 구문을 실행할 때 마다 컴파일
+  
+  3)1+2 SQL 구문을 XML, 어노테이션을 같이 사용
+   	- 간단한 SQL -> 어노테이션, 복잡한 SQL -> XML 유연하게 대처
+   	- 개발자의 능력에 따른 방식차이가 발생(유지보수가 어려움)
+ 
+ 2025년 9월 26일 금요일
+ 
+  *MyBatis 사용해서 SQL구문을 실행방법
+    - 테이블 생성X
+    - 도메인 객체를 설계(DTO클래스/VO클래스)X
+    - 도메인? 프로젝트에서 사용되는 중요한 개념(명사)X
+    	=> 도메인 정보가 테이블이 된다.(물리적인 환경으로 분리가능 여부판단)X
+    - DAO 인터페이스 생성X
+    - 실행할 기능을 추상메서드로 정의O
+    - XML mapper 생성 X
+    - 저장경로 namespace 설정X
+    - &SQL 구문 작성 O
+    - Mybatis(설정파일)와 mapper가 연결되도록 설정(root-context./xml)X
+    - DAO 인터페이스를 상속하는 객체 를 구현O
+    - 테스트(jUnit)를 사용해서 기능 실행 및 테스트O
+    
+   *lombok 설치
+  https://projectlombok.org/#
+  CMD 창에서 lombok.jar
+  java -jar lombok.jar 실행
+  specify location 누름    
+  C:\spring-tool-suite-3.9.12.RELEASE-e4.14.0-win32-x86_64\
+    sts-bundle\sts-3.9.12.RELEASE 
+   해당 툴 설치
+   바로가기 파일을 다시 만들기 => 툴에 설치완료
+   프로젝트에  lombok
+   
+ 	<!-- 회원가입  -->
+  	<insert id="insertMember" >
+  		insert into tbl_member(userid,userpw,username,useremail) 
+  		value(#{userid},#{userpw},#{username},#{useremail}) 
+  	</insert>
+    
+    #{userid} => set/get()메서드
+    
+    => Mybatis가 전달된 객체 VO에서 해당 메서드를 찾아서 자동으로 실행
+    	전달된 파라메터 정보를 자동으로 매핑해서 처리
+    	(MemberVO 객체는 반드시  set/get메서드가 필요함)
+    	lombok 사용, 그냥 작성하기
+    
+2025년 9월 29일 월요일
+
+* 스프링 MVC 자동처리 동작
+ - URI 분석해서 적절한 컨트롤러를 찾아줌 (~~.me, ~~.bo / /member/ooooo, /boards/ooooo)
+ - 호출에 해당하는 메서드 자동호출 
+ - 컨트롤러의 결과데이터를 뷰페이지로 전달
+ - 주소에 따른 적절한 뷰페이지 연결 
+ - 파라메터를 자동으로 수집  
+ 
+* 스프링 MVC 수동처리 동작(개발자가 직접 해야 하는 동작)
+ - 특정 URI에 동작하는 컨트롤러를 만들기
+ - 컨트롤러 안에 내가 원하는 기능을 메서드로 설계
+ - 서비스 객체 생성
+ - DAO 객체 생성
+ - 뷰페이지에 전달받은 데이터를 출력
+
+2025년 9월 30일 화요일
+
+설정>java>editer>Tamplit
+Name : 단축명령어 (호출할 이름) [ld/logger.debug]
+context : java (명령어의 사용범위)
+Automatically Insert(자동추가 - 바로적용)
+Description : 설명
+	[logger.debug()동작]
+pattern : 실행할 문장들을 선언 
+logger.debug("${cursor}");
+
+* log4j의 레벨(6개의 레벨 높은 단계부터 낮은 단계)
+	FATAL (6) : 시스템 차원에서 발생한 심각한 문제 (직접적으로 관리하지 않는다.)
+	ERROR (5) : 실행 중에 문제가 발생한 상황
+	WARN  (4) : 시스템 오류의 원인을 확인 가능한 메세지
+	INFO  (3) : 애플리케이션 운영과 관련된 정보 출력
+	DEBUG (2) : 개발시 디버깅 용도로 사용 
+	TRACE (1) : debug보다 상세한 로그정보를 출력(직접적으로 관리하지 않는다.)
+	
+	0) 서버 실행(start)
+	1)http://localhost:8088/web/doC1?userid=admin&userpw=1234
+	주소실행=> doC!(vo,abc,xyz) 호출을 스프링이 대신;
+	
+	2) 컨트롤러에 메서드 호출
+    @RequestMapping(value="/doC1",method = RequestMethod.GET)
+	public String doC1( MemberVO vo, ABC abc,XYZ xyz){
+					=> 매개변수를 작성한다. 정보를 받아오겠다. 
+					=> 필요한 정보(객체)가 있다면, 매개변수로 선언하자!
+		....
+	}
+	
+*Model 객체  VS @RequestParam
+  	- Model - 메서드레벨 (디비 데이터)
+   	- @ModelAttribute - 컨트롤러 레벨 (파라메터 정보)
+    	(request.getAttribute())
+   	=>@Requestparam 사용하는 경우는 1:1 대응 관계일 때 주로 사용
+   		(request.getParameter())
+   	  Model객체를 사용하는 경우 1:N(Bean,Collection)대응 관계일 때에 주로 사용
+   	  
+2025년 10월 1일 수요일
+
+RedirectAttribute 객체
+ => 페이지를 redirect로 이동시 정보를 전달하는 객체
+ 
+ 
+ rttr.addAttribute("이름",값);
+ => 정보를 URL에 붙여서 전달, 새로고침시 데이터가 유지
+ => Model 객체와 동일한 동작
+ 
+ rttr.addFlashAttribute("이름",값);
+ => 정보를 sesstion영역에 저장해서 전달, 새로고침시 데이터가 사라짐
+ (전달 즉시 Session에 정보 초기화)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  *의존관계 주입 객체를 만들어서 사용하려고 할 때에 만들어져있는 객체들을 만든다. 
+  데이터 베이스에 정보처리를 하고, 그렇게 할 것이다. 

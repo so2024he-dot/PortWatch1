@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans 
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://mybatis.org/schema/mybatis-spring 
+        http://mybatis.org/schema/mybatis-spring.xsd">
+    
+    <!-- Root Context -->
+    
+    <!-- Component Scan (Service만) -->
+    <context:component-scan base-package="com.portwatch.service" />
+    
+    <!-- ========================= -->
+    <!-- MySQL Database 설정        -->
+    <!-- ========================= -->
+    
+    <!-- HikariCP Configuration -->
+    <bean id="hikariConfig" class="com.zaxxer.hikari.HikariConfig">
+        <property name="driverClassName" value="com.mysql.cj.jdbc.Driver" />
+        <property name="jdbcUrl" value="jdbc:mysql://127.0.0.1:3306/portwatch_db?serverTimezone=Asia/Seoul&amp;useSSL=false&amp;allowPublicKeyRetrieval=true&amp;characterEncoding=UTF-8" />
+        <property name="username" value="root" />
+        <!-- ⚠️ 여기에 본인의 MySQL 비밀번호 입력! -->
+        <property name="password" value="" />
+        <property name="maximumPoolSize" value="10" />
+        <property name="minimumIdle" value="5" />
+        <property name="connectionTimeout" value="30000" />
+        <property name="idleTimeout" value="600000" />
+        <property name="maxLifetime" value="1800000" />
+    </bean>
+    
+    <!-- DataSource -->
+    <bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
+        <constructor-arg ref="hikariConfig" />
+    </bean>
+    
+    <!-- ========================= -->
+    <!-- MyBatis 설정              -->
+    <!-- ========================= -->
+    
+    <!-- SqlSessionFactory -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource" />
+        <property name="mapperLocations" value="classpath:mappers/**/*Mapper.xml" />
+        <property name="configuration">
+            <bean class="org.apache.ibatis.session.Configuration">
+                <property name="mapUnderscoreToCamelCase" value="true" />
+                <property name="jdbcTypeForNull" value="NULL" />
+                <property name="cacheEnabled" value="true" />
+                <property name="lazyLoadingEnabled" value="false" />
+            </bean>
+        </property>
+    </bean>
+    
+    <!-- MyBatis Mapper Scanner -->
+    <mybatis-spring:scan base-package="com.portwatch.persistence" />
+    
+    <!-- ========================= -->
+    <!-- Transaction 설정          -->
+    <!-- ========================= -->
+    
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+    
+    <tx:annotation-driven transaction-manager="transactionManager" />
+    
+</beans>

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.portwatch.persistence.StockDAO">
+
+    <select id="searchStocks" parameterType="map" resultType="com.portwatch.domain.StockVO">
+        SELECT 
+            stock_id as stockId,
+            stock_code as stockCode,
+            stock_name as stockName,
+            market_type as marketType,
+            industry,
+            updated_at as updatedAt
+        FROM STOCK
+        WHERE 1=1
+        <if test="keyword != null and keyword != ''">
+            AND (stock_name LIKE CONCAT('%', #{keyword}, '%') 
+                 OR stock_code LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="marketType != null and marketType != ''">
+            AND market_type = #{marketType}
+        </if>
+        ORDER BY stock_name
+        LIMIT 100
+    </select>
+    
+    <select id="getStockAutocomplete" parameterType="string" resultType="com.portwatch.domain.StockVO">
+        SELECT 
+            stock_id as stockId,
+            stock_code as stockCode,
+            stock_name as stockName,
+            market_type as marketType
+        FROM STOCK
+        WHERE stock_name LIKE CONCAT('%', #{keyword}, '%') 
+           OR stock_code LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY stock_name
+        LIMIT 10
+    </select>
+    
+    <select id="getStockByCode" parameterType="string" resultType="com.portwatch.domain.StockVO">
+        SELECT 
+            stock_id as stockId,
+            stock_code as stockCode,
+            stock_name as stockName,
+            market_type as marketType,
+            industry,
+            updated_at as updatedAt
+        FROM STOCK
+        WHERE stock_code = #{stockCode}
+    </select>
+    
+    <select id="getStockById" parameterType="int" resultType="com.portwatch.domain.StockVO">
+        SELECT 
+            stock_id as stockId,
+            stock_code as stockCode,
+            stock_name as stockName,
+            market_type as marketType,
+            industry,
+            updated_at as updatedAt
+        FROM STOCK
+        WHERE stock_id = #{stockId}
+    </select>
+    
+    <select id="getTopVolume" parameterType="int" resultType="com.portwatch.domain.StockVO">
+        SELECT 
+            s.stock_id as stockId,
+            s.stock_code as stockCode,
+            s.stock_name as stockName,
+            s.market_type as marketType,
+            sp.close_price as currentPrice,
+            sp.volume
+        FROM STOCK s
+        INNER JOIN STOCK_PRICE sp ON s.stock_id = sp.stock_id
+        WHERE sp.trade_date = (SELECT MAX(trade_date) FROM STOCK_PRICE)
+        ORDER BY sp.volume DESC
+        LIMIT #{limit}
+    </select>
+    
+    <select id="getTopGainers" parameterType="int" resultType="com.portwatch.domain.StockVO">
+        SELECT 
+            s.stock_id as stockId,
+            s.stock_code as stockCode,
+            s.stock_name as stockName,
+            s.market_type as marketType,
+            sp1.close_price as currentPrice,
+            ROUND(((sp1.close_price - sp2.close_price) / sp2.close_price) * 100, 2) as changeRate
+        FROM STOCK s
+        INNER JOIN STOCK_PRICE sp1 ON s.stock_id = sp1.stock_id
+        LEFT JOIN STOCK_PRICE sp2 ON s.stock_id = sp2.stock_id 
+            AND sp2.trade_date = DATE_SUB(sp1.trade_date, INTERVAL 1 DAY)
+        WHERE sp1.trade_date = (SELECT MAX(trade_date) FROM STOCK_PRICE)
+        ORDER BY changeRate DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper>

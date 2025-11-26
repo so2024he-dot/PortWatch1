@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.portwatch.persistence.WatchlistDAO">
+
+    <insert id="insertWatchlist" parameterType="com.portwatch.domain.WatchlistVO">
+        INSERT INTO WATCHLIST (member_id, stock_id, added_at)
+        VALUES (#{memberId}, #{stockId}, NOW())
+    </insert>
+    
+    <select id="selectWatchlistByMember" parameterType="int" resultType="com.portwatch.domain.WatchlistVO">
+        SELECT 
+            w.watchlist_id as watchlistId,
+            w.member_id as memberId,
+            w.stock_id as stockId,
+            w.added_at as addedAt,
+            s.stock_code as stockCode,
+            s.stock_name as stockName,
+            s.market_type as marketType
+        FROM WATCHLIST w
+        INNER JOIN STOCK s ON w.stock_id = s.stock_id
+        WHERE w.member_id = #{memberId}
+        ORDER BY w.added_at DESC
+    </select>
+    
+    <select id="checkExists" parameterType="map" resultType="int">
+        SELECT COUNT(*) 
+        FROM WATCHLIST 
+        WHERE member_id = #{memberId} AND stock_id = #{stockId}
+    </select>
+    
+    <delete id="deleteWatchlist" parameterType="map">
+        DELETE FROM WATCHLIST 
+        WHERE member_id = #{memberId} AND stock_id = #{stockId}
+    </delete>
+
+</mapper>
