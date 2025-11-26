@@ -35,4 +35,24 @@
     <!-- Component Scan for Controllers -->
     <context:component-scan base-package="com.portwatch.controller" />
     
+    <!-- ⭐ 1. Annotation Driven에 validator 속성 추가 -->
+	<mvc:annotation-driven validator="validator" />
+
+	<!-- ⭐ 2. Validator 빈 등록 -->
+	<bean id="validator" 
+	      class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean">
+	    <property name="validationMessageSource" ref="messageSource"/>
+	</bean>
+	
+	<!-- ⭐ 3. MessageSource 설정 -->
+	<bean id="messageSource" 
+	      class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+	    <property name="basenames">
+	        <list>
+	            <value>classpath:messages/validation</value>
+	        </list>
+	    </property>
+	    <property name="defaultEncoding" value="UTF-8"/>
+	</bean>
+	
 </beans:beans>
