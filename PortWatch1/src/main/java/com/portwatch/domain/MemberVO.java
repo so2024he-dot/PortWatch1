@@ -4,6 +4,9 @@ import java.sql.Date;
 import java.sql.Timestamp;
 import javax.validation.constraints.*;
 
+import org.hibernate.validator.constraints.Email;
+import org.hibernate.validator.constraints.NotBlank;
+
 public class MemberVO {
     private Integer memberId;
     

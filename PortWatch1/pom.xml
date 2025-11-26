@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.portwatch</groupId>
     <artifactId>portwatch</artifactId>
-    <name>PortWatch</name>
+    <name>PortWatch1</name>
     <packaging>war</packaging>
     <version>1.0.0-BUILD-SNAPSHOT</version>
     

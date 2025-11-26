@@ -1,58 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<beans:beans xmlns="http://www.springframework.org/schema/mvc"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:beans="http://www.springframework.org/schema/beans"
-    xmlns:context="http://www.springframework.org/schema/context"
-    xsi:schemaLocation="http://www.springframework.org/schema/mvc 
-        https://www.springframework.org/schema/mvc/spring-mvc.xsd
-        http://www.springframework.org/schema/beans 
-        https://www.springframework.org/schema/beans/spring-beans.xsd
-        http://www.springframework.org/schema/context 
-        https://www.springframework.org/schema/context/spring-context.xsd">
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+           http://www.springframework.org/schema/beans 
+           http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/mvc 
+           http://www.springframework.org/schema/mvc/spring-mvc.xsd
+           http://www.springframework.org/schema/context 
+           http://www.springframework.org/schema/context/spring-context.xsd">
 
-    <!-- DispatcherServlet Context -->
-    
-    <!-- Enable Spring MVC @Controller -->
-    <annotation-driven>
-        <message-converters>
-            <beans:bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
-                <beans:property name="objectMapper">
-                    <beans:bean class="com.fasterxml.jackson.databind.ObjectMapper" />
-                </beans:property>
-            </beans:bean>
-        </message-converters>
-    </annotation-driven>
-
-    <!-- Static Resources -->
-    <resources mapping="/resources/**" location="/resources/" />
-
-    <!-- View Resolver -->
-    <beans:bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
-        <beans:property name="prefix" value="/WEB-INF/views/" />
-        <beans:property name="suffix" value=".jsp" />
-    </beans:bean>
-    
-    <!-- Component Scan for Controllers -->
+    <!-- ============================================ -->
+    <!-- Component Scan: Controller 패키지 스캔 -->
+    <!-- ============================================ -->
     <context:component-scan base-package="com.portwatch.controller" />
     
-    <!-- ⭐ 1. Annotation Driven에 validator 속성 추가 -->
-	<mvc:annotation-driven validator="validator" />
-
-	<!-- ⭐ 2. Validator 빈 등록 -->
-	<bean id="validator" 
-	      class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean">
-	    <property name="validationMessageSource" ref="messageSource"/>
-	</bean>
-	
-	<!-- ⭐ 3. MessageSource 설정 -->
-	<bean id="messageSource" 
-	      class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
-	    <property name="basenames">
-	        <list>
-	            <value>classpath:messages/validation</value>
-	        </list>
-	    </property>
-	    <property name="defaultEncoding" value="UTF-8"/>
-	</bean>
-	
-</beans:beans>
+    <!-- ============================================ -->
+    <!-- Annotation Driven: Validator 활성화 -->
+    <!-- ============================================ -->
+    <mvc:annotation-driven validator="validator" />
+    
+    <!-- ============================================ -->
+    <!-- Validator 빈 등록 -->
+    <!-- ============================================ -->
+    <bean id="validator" 
+          class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean">
+        <property name="validationMessageSource" ref="messageSource"/>
+    </bean>
+    
+    <!-- ============================================ -->
+    <!-- MessageSource: Validation 메시지 설정 -->
+    <!-- ============================================ -->
+    <bean id="messageSource" 
+          class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+        <property name="basenames">
+            <list>
+                <value>classpath:messages/validation</value>
+                <value>classpath:messages/messages</value>
+            </list>
+        </property>
+        <property name="defaultEncoding" value="UTF-8"/>
+        <property name="cacheSeconds" value="60"/>
+    </bean>
+    
+    <!-- ============================================ -->
+    <!-- ViewResolver: JSP 경로 설정 -->
+    <!-- ============================================ -->
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix" value="/WEB-INF/views/" />
+        <property name="suffix" value=".jsp" />
+    </bean>
+    
+    <!-- ============================================ -->
+    <!-- Static Resources: CSS, JS, Images -->
+    <!-- ============================================ -->
+    <mvc:resources mapping="/resources/**" location="/resources/" />
+    
+</beans>
