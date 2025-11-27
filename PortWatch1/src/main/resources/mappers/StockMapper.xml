@@ -4,93 +4,273 @@
 
 <mapper namespace="com.portwatch.persistence.StockDAO">
 
-    <select id="searchStocks" parameterType="map" resultType="com.portwatch.domain.StockVO">
+    <!-- ============================================ -->
+    <!-- ResultMap 정의 (현재 MySQL DDL에 맞춤) -->
+    <!-- ============================================ -->
+    <resultMap id="StockResultMap" type="StockVO">
+        <id property="stockId" column="stock_id"/>
+        <result property="stockCode" column="stock_code"/>
+        <result property="stockName" column="stock_name"/>
+        <result property="marketType" column="market_type"/>
+        <result property="industry" column="industry"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="currentPrice" column="current_price"/>
+        <result property="openPrice" column="open_price"/>
+        <result property="highPrice" column="high_price"/>
+        <result property="lowPrice" column="low_price"/>
+        <result property="closePrice" column="close_price"/>
+        <result property="priceChange" column="price_change"/>
+        <result property="priceChangeRate" column="price_change_rate"/>
+        <result property="volume" column="volume"/>
+        <result property="tradingValue" column="trading_value"/>
+    </resultMap>
+
+    <!-- ============================================ -->
+    <!-- 모든 종목 조회 (Map 형태) -->
+    <!-- ============================================ -->
+    <select id="selectAllStocks" resultType="map">
         SELECT 
-            stock_id as stockId,
-            stock_code as stockCode,
-            stock_name as stockName,
-            market_type as marketType,
-            industry,
-            updated_at as updatedAt
+            stock_id,
+            stock_code,
+            stock_name,
+            market_type,
+            industry
         FROM STOCK
-        WHERE 1=1
-        <if test="keyword != null and keyword != ''">
-            AND (stock_name LIKE CONCAT('%', #{keyword}, '%') 
-                 OR stock_code LIKE CONCAT('%', #{keyword}, '%'))
-        </if>
-        <if test="marketType != null and marketType != ''">
-            AND market_type = #{marketType}
-        </if>
         ORDER BY stock_name
-        LIMIT 100
     </select>
     
-    <select id="getStockAutocomplete" parameterType="string" resultType="com.portwatch.domain.StockVO">
+    <!-- ============================================ -->
+    <!-- 모든 종목 조회 (VO 형태) -->
+    <!-- ============================================ -->
+    <select id="selectAll" resultMap="StockResultMap">
         SELECT 
-            stock_id as stockId,
-            stock_code as stockCode,
-            stock_name as stockName,
-            market_type as marketType
-        FROM STOCK
-        WHERE stock_name LIKE CONCAT('%', #{keyword}, '%') 
-           OR stock_code LIKE CONCAT('%', #{keyword}, '%')
-        ORDER BY stock_name
-        LIMIT 10
+            s.stock_id,
+            s.stock_code,
+            s.stock_name,
+            s.market_type,
+            s.industry,
+            s.updated_at,
+            sp.close_price as current_price
+        FROM STOCK s
+        LEFT JOIN (
+            SELECT 
+                stock_id, 
+                close_price,
+                ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY trade_date DESC) as rn
+            FROM STOCK_PRICE
+        ) sp ON s.stock_id = sp.stock_id AND sp.rn = 1
+        ORDER BY s.stock_name
     </select>
     
-    <select id="getStockByCode" parameterType="string" resultType="com.portwatch.domain.StockVO">
+    <!-- ============================================ -->
+    <!-- 종목 코드로 조회 -->
+    <!-- ============================================ -->
+    <select id="selectByCode" parameterType="string" resultMap="StockResultMap">
         SELECT 
-            stock_id as stockId,
-            stock_code as stockCode,
-            stock_name as stockName,
-            market_type as marketType,
-            industry,
-            updated_at as updatedAt
-        FROM STOCK
-        WHERE stock_code = #{stockCode}
+            s.stock_id,
+            s.stock_code,
+            s.stock_name,
+            s.market_type,
+            s.industry,
+            s.updated_at,
+            sp.close_price as current_price,
+            sp.open_price,
+            sp.high_price,
+            sp.low_price,
+            sp.volume,
+            sp.trading_value
+        FROM STOCK s
+        LEFT JOIN (
+            SELECT 
+                stock_id, 
+                open_price,
+                high_price,
+                low_price,
+                close_price,
+                volume,
+                trading_value,
+                ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY trade_date DESC) as rn
+            FROM STOCK_PRICE
+        ) sp ON s.stock_id = sp.stock_id AND sp.rn = 1
+        WHERE s.stock_code = #{stockCode}
     </select>
     
-    <select id="getStockById" parameterType="int" resultType="com.portwatch.domain.StockVO">
+    <!-- ============================================ -->
+    <!-- 종목 ID로 조회 -->
+    <!-- ============================================ -->
+    <select id="selectById" parameterType="int" resultMap="StockResultMap">
         SELECT 
-            stock_id as stockId,
-            stock_code as stockCode,
-            stock_name as stockName,
-            market_type as marketType,
-            industry,
-            updated_at as updatedAt
-        FROM STOCK
-        WHERE stock_id = #{stockId}
+            s.stock_id,
+            s.stock_code,
+            s.stock_name,
+            s.market_type,
+            s.industry,
+            s.updated_at,
+            sp.close_price as current_price
+        FROM STOCK s
+        LEFT JOIN (
+            SELECT 
+                stock_id, 
+                close_price,
+                ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY trade_date DESC) as rn
+            FROM STOCK_PRICE
+        ) sp ON s.stock_id = sp.stock_id AND sp.rn = 1
+        WHERE s.stock_id = #{stockId}
     </select>
     
-    <select id="getTopVolume" parameterType="int" resultType="com.portwatch.domain.StockVO">
+    <!-- ============================================ -->
+    <!-- 종목 검색 (이름 또는 코드) -->
+    <!-- ============================================ -->
+    <select id="searchStocks" parameterType="string" resultMap="StockResultMap">
         SELECT 
-            s.stock_id as stockId,
-            s.stock_code as stockCode,
-            s.stock_name as stockName,
-            s.market_type as marketType,
-            sp.close_price as currentPrice,
+            s.stock_id,
+            s.stock_code,
+            s.stock_name,
+            s.market_type,
+            s.industry,
+            sp.close_price as current_price
+        FROM STOCK s
+        LEFT JOIN (
+            SELECT 
+                stock_id, 
+                close_price,
+                ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY trade_date DESC) as rn
+            FROM STOCK_PRICE
+        ) sp ON s.stock_id = sp.stock_id AND sp.rn = 1
+        WHERE s.stock_name LIKE CONCAT('%', #{keyword}, '%')
+           OR s.stock_code LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY s.stock_name
+    </select>
+    
+    <!-- ============================================ -->
+    <!-- 종목 검색 (키워드 + 시장 타입) -->
+    <!-- ============================================ -->
+    <select id="searchStocksWithMarket" resultMap="StockResultMap">
+        SELECT 
+            s.stock_id,
+            s.stock_code,
+            s.stock_name,
+            s.market_type,
+            s.industry,
+            sp.close_price as current_price
+        FROM STOCK s
+        LEFT JOIN (
+            SELECT 
+                stock_id, 
+                close_price,
+                ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY trade_date DESC) as rn
+            FROM STOCK_PRICE
+        ) sp ON s.stock_id = sp.stock_id AND sp.rn = 1
+        WHERE (s.stock_name LIKE CONCAT('%', #{keyword}, '%')
+           OR s.stock_code LIKE CONCAT('%', #{keyword}, '%'))
+          AND s.market_type = #{marketType}
+        ORDER BY s.stock_name
+    </select>
+    
+    <!-- ============================================ -->
+    <!-- 자동완성 (제한된 개수) -->
+    <!-- ============================================ -->
+    <select id="autocomplete" resultMap="StockResultMap">
+        SELECT 
+            s.stock_id,
+            s.stock_code,
+            s.stock_name,
+            s.market_type,
+            s.industry
+        FROM STOCK s
+        WHERE s.stock_name LIKE CONCAT('%', #{keyword}, '%')
+           OR s.stock_code LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY 
+            CASE 
+                WHEN s.stock_name LIKE CONCAT(#{keyword}, '%') THEN 1
+                WHEN s.stock_code LIKE CONCAT(#{keyword}, '%') THEN 2
+                ELSE 3
+            END,
+            s.stock_name
+        LIMIT #{limit}
+    </select>
+    
+    <!-- ============================================ -->
+    <!-- 시장별 종목 조회 -->
+    <!-- ============================================ -->
+    <select id="selectByMarket" parameterType="string" resultMap="StockResultMap">
+        SELECT 
+            s.stock_id,
+            s.stock_code,
+            s.stock_name,
+            s.market_type,
+            s.industry,
+            sp.close_price as current_price
+        FROM STOCK s
+        LEFT JOIN (
+            SELECT 
+                stock_id, 
+                close_price,
+                ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY trade_date DESC) as rn
+            FROM STOCK_PRICE
+        ) sp ON s.stock_id = sp.stock_id AND sp.rn = 1
+        WHERE s.market_type = #{marketType}
+        ORDER BY s.stock_name
+    </select>
+    
+    <!-- ============================================ -->
+    <!-- 거래량 상위 종목 -->
+    <!-- ============================================ -->
+    <select id="selectTopVolume" parameterType="int" resultMap="StockResultMap">
+        SELECT 
+            s.stock_id,
+            s.stock_code,
+            s.stock_name,
+            s.market_type,
+            s.industry,
+            sp.close_price as current_price,
             sp.volume
         FROM STOCK s
-        INNER JOIN STOCK_PRICE sp ON s.stock_id = sp.stock_id
-        WHERE sp.trade_date = (SELECT MAX(trade_date) FROM STOCK_PRICE)
+        INNER JOIN (
+            SELECT 
+                stock_id, 
+                close_price,
+                volume,
+                ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY trade_date DESC) as rn
+            FROM STOCK_PRICE
+        ) sp ON s.stock_id = sp.stock_id AND sp.rn = 1
+        WHERE sp.volume IS NOT NULL
         ORDER BY sp.volume DESC
         LIMIT #{limit}
     </select>
     
-    <select id="getTopGainers" parameterType="int" resultType="com.portwatch.domain.StockVO">
+    <!-- ============================================ -->
+    <!-- 상승률 상위 종목 -->
+    <!-- ============================================ -->
+    <select id="selectTopGainers" parameterType="int" resultMap="StockResultMap">
         SELECT 
-            s.stock_id as stockId,
-            s.stock_code as stockCode,
-            s.stock_name as stockName,
-            s.market_type as marketType,
-            sp1.close_price as currentPrice,
-            ROUND(((sp1.close_price - sp2.close_price) / sp2.close_price) * 100, 2) as changeRate
+            s.stock_id,
+            s.stock_code,
+            s.stock_name,
+            s.market_type,
+            s.industry,
+            today.close_price as current_price,
+            (today.close_price - yesterday.close_price) as price_change,
+            ROUND(((today.close_price - yesterday.close_price) / yesterday.close_price) * 100, 2) as price_change_rate
         FROM STOCK s
-        INNER JOIN STOCK_PRICE sp1 ON s.stock_id = sp1.stock_id
-        LEFT JOIN STOCK_PRICE sp2 ON s.stock_id = sp2.stock_id 
-            AND sp2.trade_date = DATE_SUB(sp1.trade_date, INTERVAL 1 DAY)
-        WHERE sp1.trade_date = (SELECT MAX(trade_date) FROM STOCK_PRICE)
-        ORDER BY changeRate DESC
+        INNER JOIN (
+            SELECT 
+                stock_id, 
+                close_price,
+                trade_date,
+                ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY trade_date DESC) as rn
+            FROM STOCK_PRICE
+        ) today ON s.stock_id = today.stock_id AND today.rn = 1
+        INNER JOIN (
+            SELECT 
+                stock_id, 
+                close_price,
+                trade_date,
+                ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY trade_date DESC) as rn
+            FROM STOCK_PRICE
+        ) yesterday ON s.stock_id = yesterday.stock_id AND yesterday.rn = 2
+        WHERE today.close_price > yesterday.close_price
+        ORDER BY price_change_rate DESC
         LIMIT #{limit}
     </select>
 

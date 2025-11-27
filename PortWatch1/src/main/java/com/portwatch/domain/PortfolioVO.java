@@ -1,54 +1,80 @@
-package com.portwatch.domain;
+    package com.portwatch.domain;
 
+import javax.validation.constraints.*;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Timestamp;
 
+/**
+ * 포트폴리오 VO
+ * 현재 MySQL DDL에 완벽히 맞춤
+ */
 public class PortfolioVO {
-    private long portfolioId;
-    private int memberId;
-    private int stockId;
-    private int quantity;
+    
+    // 기본 정보
+    private Long portfolioId;
+    private Integer memberId;
+    private Integer stockId;
+    
+    @NotNull(message = "보유 수량은 필수 입력 항목입니다.")
+    @Min(value = 1, message = "수량은 1 이상이어야 합니다.")
+    private Integer quantity;
+    
+    @NotNull(message = "평균 매입가는 필수 입력 항목입니다.")
+    @DecimalMin(value = "0.01", message = "평균 매입가는 0보다 커야 합니다.")
     private BigDecimal avgPurchasePrice;
+    
     private Date purchaseDate;
     private Timestamp updatedAt;
     
-    // JOIN 필드
+    // 조인 정보 (STOCK 테이블)
     private String stockCode;
     private String stockName;
+    private String marketType;
+    private String industry;
+    
+    // 주가 정보 (STOCK_PRICE 테이블)
     private BigDecimal currentPrice;
     
+    // 계산 필드
+    private BigDecimal totalPurchaseAmount;  // 총 매입금액 = quantity * avgPurchasePrice
+    private BigDecimal totalCurrentValue;    // 총 평가금액 = quantity * currentPrice
+    private BigDecimal profit;               // 손익 = totalCurrentValue - totalPurchaseAmount
+    private BigDecimal profitRate;           // 수익률 = (profit / totalPurchaseAmount) * 100
+    
+    // 기본 생성자
     public PortfolioVO() {}
     
-    public long getPortfolioId() {
+    // Getters and Setters
+    public Long getPortfolioId() {
         return portfolioId;
     }
     
-    public void setPortfolioId(long portfolioId) {
+    public void setPortfolioId(Long portfolioId) {
         this.portfolioId = portfolioId;
     }
     
-    public int getMemberId() {
+    public Integer getMemberId() {
         return memberId;
     }
     
-    public void setMemberId(int memberId) {
+    public void setMemberId(Integer memberId) {
         this.memberId = memberId;
     }
     
-    public int getStockId() {
+    public Integer getStockId() {
         return stockId;
     }
     
-    public void setStockId(int stockId) {
+    public void setStockId(Integer stockId) {
         this.stockId = stockId;
     }
     
-    public int getQuantity() {
+    public Integer getQuantity() {
         return quantity;
     }
     
-    public void setQuantity(int quantity) {
+    public void setQuantity(Integer quantity) {
         this.quantity = quantity;
     }
     
@@ -92,6 +118,22 @@ public class PortfolioVO {
         this.stockName = stockName;
     }
     
+    public String getMarketType() {
+        return marketType;
+    }
+    
+    public void setMarketType(String marketType) {
+        this.marketType = marketType;
+    }
+    
+    public String getIndustry() {
+        return industry;
+    }
+    
+    public void setIndustry(String industry) {
+        this.industry = industry;
+    }
+    
     public BigDecimal getCurrentPrice() {
         return currentPrice;
     }
@@ -100,30 +142,54 @@ public class PortfolioVO {
         this.currentPrice = currentPrice;
     }
     
-    // 계산 메서드
-    public BigDecimal getPurchaseAmount() {
-        if (avgPurchasePrice == null) return BigDecimal.ZERO;
-        return avgPurchasePrice.multiply(new BigDecimal(quantity));
+    // 계산 필드 Getters
+    public BigDecimal getTotalPurchaseAmount() {
+        if (quantity != null && avgPurchasePrice != null) {
+            return avgPurchasePrice.multiply(new BigDecimal(quantity));
+        }
+        return BigDecimal.ZERO;
     }
     
-    public BigDecimal getCurrentAmount() {
-        if (currentPrice == null) return BigDecimal.ZERO;
-        return currentPrice.multiply(new BigDecimal(quantity));
+    public BigDecimal getTotalCurrentValue() {
+        if (quantity != null && currentPrice != null) {
+            return currentPrice.multiply(new BigDecimal(quantity));
+        }
+        return BigDecimal.ZERO;
     }
     
-    public BigDecimal getProfitLoss() {
-        if (currentPrice == null || avgPurchasePrice == null) return BigDecimal.ZERO;
-        return currentPrice.subtract(avgPurchasePrice).multiply(new BigDecimal(quantity));
+    public BigDecimal getProfit() {
+        return getTotalCurrentValue().subtract(getTotalPurchaseAmount());
     }
     
     public BigDecimal getProfitRate() {
-        if (avgPurchasePrice == null || avgPurchasePrice.compareTo(BigDecimal.ZERO) == 0) {
+        BigDecimal purchaseAmount = getTotalPurchaseAmount();
+        if (purchaseAmount.compareTo(BigDecimal.ZERO) == 0) {
             return BigDecimal.ZERO;
         }
-        if (currentPrice == null) return BigDecimal.ZERO;
+        if (currentPrice == null) {
+            return BigDecimal.ZERO;
+        }
         
         return currentPrice.subtract(avgPurchasePrice)
                 .divide(avgPurchasePrice, 4, BigDecimal.ROUND_HALF_UP)
                 .multiply(new BigDecimal(100));
     }
+    
+    @Override
+    public String toString() {
+        return "PortfolioVO{" +
+                "portfolioId=" + portfolioId +
+                ", memberId=" + memberId +
+                ", stockId=" + stockId +
+                ", stockCode='" + stockCode + '\'' +
+                ", stockName='" + stockName + '\'' +
+                ", quantity=" + quantity +
+                ", avgPurchasePrice=" + avgPurchasePrice +
+                ", currentPrice=" + currentPrice +
+                ", profit=" + getProfit() +
+                ", profitRate=" + getProfitRate() +
+                '}';
+    }
 }
+
+    
