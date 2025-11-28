@@ -1,4 +1,4 @@
-package com.portwatch.controller;
+    package com.portwatch.controller;
 
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
@@ -81,24 +81,45 @@ public class MemberController {
         return "member/signup";
     }
     
-    // 회원가입 처리 (Validation 적용)
+    // 회원가입 처리 (디버깅 로그 추가)
     @PostMapping("/signup")
     public String signup(@Valid @ModelAttribute MemberVO memberVO,
                         BindingResult bindingResult,
                         RedirectAttributes rttr) {
+        
+        System.out.println("========================================");
+        System.out.println(" 회원가입 시도");
+        System.out.println("이메일: " + memberVO.getMemberEmail());
+        System.out.println("이름: " + memberVO.getMemberName());
+        System.out.println("전화번호: " + memberVO.getMemberPhone());
+        System.out.println("비밀번호 있음: " + (memberVO.getMemberPass() != null && !memberVO.getMemberPass().isEmpty()));
+        System.out.println("========================================");
+        
         // Validation 오류 확인
         if (bindingResult.hasErrors()) {
-            return "member/signup";
+            System.out.println(" Validation 에러 발생!");
+            bindingResult.getAllErrors().forEach(error -> {
+                System.out.println("에러: " + error.getDefaultMessage());
+            });
+            rttr.addFlashAttribute("error", "입력 정보를 확인해주세요.");
+            return "redirect:/member/signup";
         }
         
         try {
+            System.out.println(" MemberService.signup() 호출 전");
             memberService.signup(memberVO);
+            System.out.println(" 회원가입 성공!");
+            
             rttr.addFlashAttribute("message", "회원가입이 완료되었습니다. 로그인해주세요.");
             rttr.addFlashAttribute("messageType", "success");
             return "redirect:/member/login";
+            
         } catch (Exception e) {
+            System.out.println(" 회원가입 에러 발생!");
+            System.out.println("에러 메시지: " + e.getMessage());
             e.printStackTrace();
-            rttr.addFlashAttribute("error", "회원가입 중 오류가 발생했습니다.");
+            
+            rttr.addFlashAttribute("error", "회원가입 중 오류가 발생했습니다: " + e.getMessage());
             return "redirect:/member/signup";
         }
     }
@@ -114,3 +135,5 @@ public class MemberController {
         return "member/mypage";
     }
 }
+
+    
