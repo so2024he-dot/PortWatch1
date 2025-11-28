@@ -4,11 +4,13 @@
 
 <mapper namespace="com.portwatch.persistence.WatchlistDAO">
 
+    <!-- 관심종목 추가 -->
     <insert id="insertWatchlist" parameterType="com.portwatch.domain.WatchlistVO">
         INSERT INTO WATCHLIST (member_id, stock_id, added_at)
         VALUES (#{memberId}, #{stockId}, NOW())
     </insert>
     
+    <!-- 회원별 관심종목 목록 조회 (JOIN) -->
     <select id="selectWatchlistByMember" parameterType="int" resultType="com.portwatch.domain.WatchlistVO">
         SELECT 
             w.watchlist_id as watchlistId,
@@ -17,22 +19,33 @@
             w.added_at as addedAt,
             s.stock_code as stockCode,
             s.stock_name as stockName,
-            s.market_type as marketType
+            s.market_type as marketType,
+            s.industry as industry
         FROM WATCHLIST w
         INNER JOIN STOCK s ON w.stock_id = s.stock_id
         WHERE w.member_id = #{memberId}
         ORDER BY w.added_at DESC
     </select>
     
+    <!-- 관심종목 존재 여부 확인 -->
     <select id="checkExists" parameterType="map" resultType="int">
         SELECT COUNT(*) 
         FROM WATCHLIST 
-        WHERE member_id = #{memberId} AND stock_id = #{stockId}
+        WHERE member_id = #{memberId} 
+        AND stock_id = #{stockId}
     </select>
     
+    <!-- 관심종목 삭제 (memberId, stockId) -->
     <delete id="deleteWatchlist" parameterType="map">
         DELETE FROM WATCHLIST 
-        WHERE member_id = #{memberId} AND stock_id = #{stockId}
+        <where>
+            <if test="watchlistId != null">
+                watchlist_id = #{watchlistId}
+            </if>
+            <if test="memberId != null and stockId != null">
+                member_id = #{memberId} AND stock_id = #{stockId}
+            </if>
+        </where>
     </delete>
 
 </mapper>

@@ -1,4 +1,4 @@
-    package com.portwatch.domain;
+package com.portwatch.domain;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -167,5 +167,3 @@ public class StockVO {
                 '}';
     }
 }
-
-    
