@@ -6,7 +6,6 @@ import java.util.Map;
 
 /**
  * 종목 서비스 인터페이스
- * API Controller 지원
  */
 public interface StockService {
     
@@ -14,6 +13,11 @@ public interface StockService {
      * 모든 종목 목록 조회 (Map 형태)
      */
     List<Map<String, Object>> getAllStocks() throws Exception;
+    
+    /**
+     * 모든 종목 목록 조회 (VO 형태) - 추가
+     */
+    List<StockVO> getAllStocksList() throws Exception;
     
     /**
      * 종목 코드로 조회
@@ -27,13 +31,11 @@ public interface StockService {
     
     /**
      * 종목 검색 (키워드 + 시장 타입)
-     * API Controller에서 사용
      */
     List<StockVO> searchStocks(String keyword, String marketType) throws Exception;
     
     /**
      * 자동완성 (키워드만)
-     * API Controller에서 사용
      */
     List<StockVO> getAutocomplete(String keyword) throws Exception;
     
@@ -44,13 +46,11 @@ public interface StockService {
     
     /**
      * 거래량 상위 종목
-     * API Controller에서 사용
      */
     List<StockVO> getTopVolume(int limit) throws Exception;
     
     /**
      * 상승률 상위 종목
-     * API Controller에서 사용
      */
     List<StockVO> getTopGainers(int limit) throws Exception;
 }
