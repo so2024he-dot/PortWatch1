@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.portwatch.persistence.NewsDAO">
+
+    <!-- 뉴스 저장 -->
+    <insert id="insertNews" parameterType="com.portwatch.domain.NewsVO">
+        INSERT INTO NEWS (news_title, news_content, news_source, news_url, news_pub_date, news_reg_date)
+        VALUES (#{newsTitle}, #{newsContent}, #{newsSource}, #{newsUrl}, #{newsPubDate}, NOW())
+    </insert>
+    
+    <!-- 최신 뉴스 조회 -->
+    <select id="selectLatestNews" parameterType="int" resultType="com.portwatch.domain.NewsVO">
+        SELECT 
+            news_id as newsId,
+            news_title as newsTitle,
+            news_content as newsContent,
+            news_source as newsSource,
+            news_url as newsUrl,
+            news_pub_date as newsPubDate,
+            news_reg_date as newsRegDate
+        FROM NEWS
+        ORDER BY news_reg_date DESC
+        LIMIT #{limit}
+    </select>
+    
+    <!-- 특정 종목 관련 뉴스 조회 -->
+    <select id="selectNewsByStock" resultType="com.portwatch.domain.NewsVO">
+        SELECT 
+            n.news_id as newsId,
+            n.news_title as newsTitle,
+            n.news_content as newsContent,
+            n.news_source as newsSource,
+            n.news_url as newsUrl,
+            n.news_pub_date as newsPubDate,
+            n.news_reg_date as newsRegDate
+        FROM NEWS n
+        INNER JOIN STOCK s ON n.news_title LIKE CONCAT('%', s.stock_name, '%')
+        WHERE s.stock_code = #{stockCode}
+        ORDER BY n.news_reg_date DESC
+        LIMIT #{limit}
+    </select>
+    
+    <!-- 뉴스 ID로 조회 -->
+    <select id="selectNewsById" parameterType="int" resultType="com.portwatch.domain.NewsVO">
+        SELECT 
+            news_id as newsId,
+            news_title as newsTitle,
+            news_content as newsContent,
+            news_source as newsSource,
+            news_url as newsUrl,
+            news_pub_date as newsPubDate,
+            news_reg_date as newsRegDate
+        FROM NEWS
+        WHERE news_id = #{newsId}
+    </select>
+    
+    <!-- 중복 뉴스 확인 (URL 기준) -->
+    <select id="checkDuplicateNews" parameterType="string" resultType="int">
+        SELECT COUNT(*) 
+        FROM NEWS 
+        WHERE news_url = #{newsUrl}
+    </select>
+
+</mapper>

@@ -55,6 +55,14 @@
         color: white;
     }
     
+    /* ⭐ Feature Card 링크 스타일 */
+    .feature-link {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        height: 100%;
+    }
+    
     .feature-card {
         background: white;
         border-radius: 16px;
@@ -64,12 +72,13 @@
         transition: all 0.3s;
         height: 100%;
         border: 1px solid rgba(102, 126, 234, 0.1);
+        cursor: pointer;  /* ⭐ 마우스 커서 변경 */
     }
     
     .feature-card:hover {
-        transform: translateY(-10px);
-        box-shadow: 0 15px 40px rgba(102, 126, 234, 0.2);
-        border-color: rgba(102, 126, 234, 0.3);
+        transform: translateY(-10px) scale(1.02);  /* ⭐ 확대 효과 추가 */
+        box-shadow: 0 15px 40px rgba(102, 126, 234, 0.3);  /* ⭐ 그림자 강화 */
+        border-color: rgba(102, 126, 234, 0.5);  /* ⭐ 테두리 색상 강화 */
     }
     
     .feature-icon {
@@ -78,6 +87,11 @@
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        transition: all 0.3s;  /* ⭐ 아이콘 애니메이션 */
+    }
+    
+    .feature-card:hover .feature-icon {
+        transform: scale(1.1);  /* ⭐ hover 시 아이콘 확대 */
     }
     
     .feature-title {
@@ -188,54 +202,66 @@
     </c:choose>
 </div>
 
-<!-- Features -->
+<!-- Features (⭐ 클릭 가능하도록 수정) -->
 <div class="row g-4 mb-4">
+    <!-- 포트폴리오 관리 -->
     <div class="col-lg-3 col-md-6">
-        <div class="feature-card animate-fade-in" style="animation-delay: 0.1s;">
-            <div class="feature-icon">
-                <i class="bi bi-briefcase"></i>
+        <a href="${pageContext.request.contextPath}/portfolio/list" class="feature-link">
+            <div class="feature-card animate-fade-in" style="animation-delay: 0.1s;">
+                <div class="feature-icon">
+                    <i class="bi bi-briefcase"></i>
+                </div>
+                <h3 class="feature-title">포트폴리오 관리</h3>
+                <p class="feature-desc">
+                    여러 개의 포트폴리오를 만들고 실시간으로 수익률을 확인하세요
+                </p>
             </div>
-            <h3 class="feature-title">포트폴리오 관리</h3>
-            <p class="feature-desc">
-                여러 개의 포트폴리오를 만들고 실시간으로 수익률을 확인하세요
-            </p>
-        </div>
+        </a>
     </div>
     
+    <!-- 종목 분석 -->
     <div class="col-lg-3 col-md-6">
-        <div class="feature-card animate-fade-in" style="animation-delay: 0.2s;">
-            <div class="feature-icon">
-                <i class="bi bi-graph-up"></i>
+        <a href="${pageContext.request.contextPath}/stock/list" class="feature-link">
+            <div class="feature-card animate-fade-in" style="animation-delay: 0.2s;">
+                <div class="feature-icon">
+                    <i class="bi bi-graph-up"></i>
+                </div>
+                <h3 class="feature-title">종목 분석</h3>
+                <p class="feature-desc">
+                    KOSPI, KOSDAQ 종목 정보와 가격 변동을 한눈에 확인하세요
+                </p>
             </div>
-            <h3 class="feature-title">종목 분석</h3>
-            <p class="feature-desc">
-                KOSPI, KOSDAQ 종목 정보와 가격 변동을 한눈에 확인하세요
-            </p>
-        </div>
+        </a>
     </div>
     
+    <!-- 관심종목 -->
     <div class="col-lg-3 col-md-6">
-        <div class="feature-card animate-fade-in" style="animation-delay: 0.3s;">
-            <div class="feature-icon">
-                <i class="bi bi-star-fill"></i>
+        <a href="${pageContext.request.contextPath}/watchlist/list" class="feature-link">
+            <div class="feature-card animate-fade-in" style="animation-delay: 0.3s;">
+                <div class="feature-icon">
+                    <i class="bi bi-star-fill"></i>
+                </div>
+                <h3 class="feature-title">관심종목</h3>
+                <p class="feature-desc">
+                    관심있는 종목을 저장하고 빠르게 접근하세요
+                </p>
             </div>
-            <h3 class="feature-title">관심종목</h3>
-            <p class="feature-desc">
-                관심있는 종목을 저장하고 빠르게 접근하세요
-            </p>
-        </div>
+        </a>
     </div>
     
+    <!-- 실시간 뉴스 -->
     <div class="col-lg-3 col-md-6">
-        <div class="feature-card animate-fade-in" style="animation-delay: 0.4s;">
-            <div class="feature-icon">
-                <i class="bi bi-newspaper"></i>
+        <a href="${pageContext.request.contextPath}/news/list" class="feature-link">
+            <div class="feature-card animate-fade-in" style="animation-delay: 0.4s;">
+                <div class="feature-icon">
+                    <i class="bi bi-newspaper"></i>
+                </div>
+                <h3 class="feature-title">실시간 뉴스</h3>
+                <p class="feature-desc">
+                    최신 주식 시장 뉴스를 실시간으로 받아보세요
+                </p>
             </div>
-            <h3 class="feature-title">실시간 뉴스</h3>
-            <p class="feature-desc">
-                최신 주식 시장 뉴스를 실시간으로 받아보세요
-            </p>
-        </div>
+        </a>
     </div>
 </div>
 
@@ -277,3 +303,5 @@
 </script>
 
 <jsp:include page="common/footer.jsp" />
+
+    
