@@ -1,4 +1,4 @@
-package com.portwatch.controller;
+    package com.portwatch.controller;
 
 import com.portwatch.domain.NewsVO;
 import com.portwatch.service.NewsService;
@@ -38,7 +38,7 @@ public class NewsController {
             model.addAttribute("error", "뉴스를 불러오는 중 오류가 발생했습니다.");
         }
         
-        return "news/list";
+        return "news/news_list";  // ⭐ 수정: list → news_list
     }
     
     /**
