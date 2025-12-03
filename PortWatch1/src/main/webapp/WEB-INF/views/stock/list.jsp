@@ -5,6 +5,12 @@
 <jsp:include page="../common/header.jsp" />
 
 <style>
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
     .page-header {
         background: white;
         border-radius: 16px;
@@ -24,6 +30,8 @@
     
     .market-tabs {
         margin-bottom: 2rem;
+        display: flex;
+        gap: 1rem;
     }
     
     .market-tabs .nav-link {
@@ -32,11 +40,20 @@
         font-weight: 600;
         color: #6b7280;
         transition: all 0.3s;
+        border: none;
+        background: white;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgb(0 0 0 / 0.1);
     }
     
     .market-tabs .nav-link.active {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
+    }
+    
+    .market-tabs .nav-link:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgb(0 0 0 / 0.1);
     }
     
     .stock-card {
@@ -47,6 +64,8 @@
         transition: all 0.3s;
         cursor: pointer;
         margin-bottom: 1.5rem;
+        height: 100%;
+        min-height: 200px;
     }
     
     .stock-card:hover {
@@ -59,12 +78,15 @@
         justify-content: space-between;
         align-items: flex-start;
         margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f3f4f6;
     }
     
     .stock-name {
         font-size: 1.25rem;
         font-weight: 700;
         color: #1f2937;
+        margin-bottom: 0.25rem;
     }
     
     .stock-code {
@@ -79,27 +101,13 @@
     .current-price {
         font-size: 1.5rem;
         font-weight: 700;
-    }
-    
-    .price-change {
-        font-size: 0.875rem;
-        font-weight: 600;
-    }
-    
-    .price-positive {
-        color: #dc2626;
-    }
-    
-    .price-negative {
-        color: #2563eb;
+        color: #6b7280;
     }
     
     .stock-info {
         display: flex;
         gap: 1.5rem;
         margin-top: 1rem;
-        padding-top: 1rem;
-        border-top: 1px solid #e5e7eb;
     }
     
     .info-item {
@@ -115,6 +123,7 @@
     .info-value {
         font-weight: 600;
         color: #1f2937;
+        font-size: 0.875rem;
     }
     
     .market-badge {
@@ -123,6 +132,7 @@
         border-radius: 6px;
         font-size: 0.75rem;
         font-weight: 600;
+        margin-top: 0.5rem;
     }
     
     .badge-kospi {
@@ -135,17 +145,39 @@
         color: #9f1239;
     }
     
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 16px;
+        color: #6b7280;
+    }
+    
+    .row {
+        display: flex;
+        flex-wrap: wrap;
+        margin: 0 -0.75rem;
+    }
+    
+    .col-lg-4 {
+        width: 33.333%;
+        padding: 0 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .col-md-6 {
+        width: 50%;
+    }
+    
+    @media (max-width: 992px) {
+        .col-lg-4 {
+            width: 50%;
+        }
+    }
+    
     @media (max-width: 768px) {
-        .page-header {
-            padding: 1.5rem;
-        }
-        
-        .page-title {
-            font-size: 1.5rem;
-        }
-        
-        .stock-card {
-            padding: 1rem;
+        .col-lg-4, .col-md-6 {
+            width: 100%;
         }
         
         .stock-name {
@@ -155,119 +187,150 @@
         .current-price {
             font-size: 1.25rem;
         }
-        
-        .stock-info {
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-        
-        .info-item {
-            flex: 0 0 calc(50% - 0.5rem);
-        }
     }
 </style>
 
-<!-- Page Header -->
-<div class="page-header animate-fade-in">
-    <h1 class="page-title">
-        <i class="bi bi-graph-up me-2"></i>종목 목록
-    </h1>
-    <p class="text-muted mb-0 mt-2">
-        총 <strong>${stockList.size()}</strong>개의 종목
-    </p>
-</div>
-
-<!-- Market Tabs -->
-<ul class="nav nav-pills market-tabs animate-fade-in" style="animation-delay: 0.1s;">
-    <li class="nav-item">
-        <a class="nav-link active" data-market="all" href="#" onclick="filterMarket('all'); return false;">
-            <i class="bi bi-grid me-2"></i>전체
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" data-market="KOSPI" href="#" onclick="filterMarket('KOSPI'); return false;">
-            <i class="bi bi-bar-chart me-2"></i>KOSPI
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" data-market="KOSDAQ" href="#" onclick="filterMarket('KOSDAQ'); return false;">
-            <i class="bi bi-graph-up-arrow me-2"></i>KOSDAQ
-        </a>
-    </li>
-</ul>
-
-<!-- Stock List -->
-<div class="row" id="stockList">
-    <c:forEach var="stock" items="${stockList}" varStatus="status">
-        <div class="col-lg-4 col-md-6 stock-item animate-fade-in" 
-             data-market="${stock.market_type}" 
-             style="animation-delay: ${status.index * 0.05}s;">
-            <div class="stock-card">
-                <div class="stock-header">
-                    <div>
-                        <div class="stock-name">${stock.stock_name}</div>
-                        <div class="stock-code">${stock.stock_code}</div>
-                        <span class="market-badge badge-${stock.market_type == 'KOSPI' ? 'kospi' : 'kosdaq'} mt-2">
-                            ${stock.market_type}
-                        </span>
-                    </div>
-                    <div class="stock-price">
-                        <div class="current-price">
-                            <fmt:formatNumber value="${stock.current_price}" type="number" pattern="#,##0" />
-                        </div>
-                        <div class="price-change price-${stock.price_change >= 0 ? 'positive' : 'negative'}">
-                            <i class="bi bi-${stock.price_change >= 0 ? 'arrow-up' : 'arrow-down'}"></i>
-                            ${stock.price_change >= 0 ? '+' : ''}
-                            <fmt:formatNumber value="${stock.price_change_rate}" type="number" pattern="#,##0.00" />%
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="stock-info">
-                    <div class="info-item">
-                        <div class="info-label">업종</div>
-                        <div class="info-value">${stock.industry}</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label">거래량</div>
-                        <div class="info-value">
-                            <fmt:formatNumber value="${stock.volume}" type="number" pattern="#,##0" />
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="mt-3">
-                    <a href="${pageContext.request.contextPath}/portfolio/create?stockId=${stock.stock_id}" 
-                       class="btn btn-sm btn-outline-primary w-100">
-                        <i class="bi bi-plus-circle me-2"></i>포트폴리오에 추가
-                    </a>
-                </div>
-            </div>
-        </div>
-    </c:forEach>
-</div>
-
-<c:if test="${empty stockList}">
-    <div class="empty-state text-center py-5">
-        <i class="bi bi-inbox" style="font-size: 4rem; opacity: 0.3;"></i>
-        <h5 class="mt-3">등록된 종목이 없습니다</h5>
+<div class="container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="bi bi-graph-up me-2"></i>종목 목록
+        </h1>
+        <p class="text-muted mb-0 mt-2">
+            <c:choose>
+                <c:when test="${not empty stockList}">
+                    총 <strong>${stockList.size()}</strong>개의 종목
+                </c:when>
+                <c:otherwise>
+                    등록된 종목이 없습니다
+                </c:otherwise>
+            </c:choose>
+        </p>
     </div>
-</c:if>
 
+    <!-- Market Tabs -->
+    <div class="market-tabs">
+        <button class="nav-link active" data-market="all" onclick="filterMarket('all')">
+            <i class="bi bi-grid me-2"></i>전체
+        </button>
+        <button class="nav-link" data-market="KOSPI" onclick="filterMarket('KOSPI')">
+            <i class="bi bi-bar-chart me-2"></i>KOSPI
+        </button>
+        <button class="nav-link" data-market="KOSDAQ" onclick="filterMarket('KOSDAQ')">
+            <i class="bi bi-graph-up-arrow me-2"></i>KOSDAQ
+        </button>
+    </div>
+
+    <!-- Stock List -->
+    <div class="row" id="stockList">
+        <c:choose>
+            <c:when test="${not empty stockList}">
+                <c:forEach var="stock" items="${stockList}">
+                    <div class="col-lg-4 col-md-6 stock-item" data-market="${stock.marketType}">
+                        <div class="stock-card" onclick="location.href='${pageContext.request.contextPath}/stock/detail/${stock.stockCode}'">
+                            <div class="stock-header">
+                                <div>
+                                    <div class="stock-name">${stock.stockName}</div>
+                                    <div class="stock-code">${stock.stockCode}</div>
+                                    <span class="market-badge badge-${stock.marketType == 'KOSPI' ? 'kospi' : 'kosdaq'}">
+                                        ${stock.marketType}
+                                    </span>
+                                </div>
+                                <div class="stock-price">
+                                    <div class="current-price">-</div>
+                                </div>
+                            </div>
+                            
+                            <div class="stock-info">
+                                <div class="info-item">
+                                    <div class="info-label">업종</div>
+                                    <div class="info-value">
+                                        <c:choose>
+                                            <c:when test="${not empty stock.industry}">
+                                                ${stock.industry}
+                                            </c:when>
+                                            <c:otherwise>
+                                                -
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">코드</div>
+                                    <div class="info-value">${stock.stockCode}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </c:forEach>
+            </c:when>
+            <c:otherwise>
+                <div class="col-12">
+                    <div class="empty-state">
+                        <i class="bi bi-inbox" style="font-size: 4rem; opacity: 0.3;"></i>
+                        <h5 class="mt-3">등록된 종목이 없습니다</h5>
+                        <p class="text-muted mt-2">MySQL에서 STOCK 테이블에 데이터를 추가해주세요.</p>
+                        <a href="${pageContext.request.contextPath}/" class="btn btn-primary mt-3">
+                            <i class="bi bi-house me-2"></i>홈으로 돌아가기
+                        </a>
+                    </div>
+                </div>
+            </c:otherwise>
+        </c:choose>
+    </div>
+
+    <c:if test="${not empty error}">
+        <div class="alert alert-danger mt-3" role="alert">
+            ${error}
+        </div>
+    </c:if>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 function filterMarket(market) {
-    // Update active tab
+    console.log('필터링:', market);
+    
+    // 탭 활성화
     $('.market-tabs .nav-link').removeClass('active');
     $(`.market-tabs .nav-link[data-market="${market}"]`).addClass('active');
     
-    // Filter stocks
+    // 종목 필터링
     if (market === 'all') {
-        $('.stock-item').show();
+        $('.stock-item').fadeIn(300);
     } else {
-        $('.stock-item').hide();
-        $(`.stock-item[data-market="${market}"]`).show();
+        $('.stock-item').fadeOut(300);
+        $(`.stock-item[data-market="${market}"]`).fadeIn(300);
     }
+    
+    // 개수 출력
+    setTimeout(function() {
+        var visibleCount = $('.stock-item:visible').length;
+        console.log('표시된 종목:', visibleCount + '개');
+    }, 350);
 }
+
+// 페이지 로드 시
+$(document).ready(function() {
+    var totalStocks = $('.stock-item').length;
+    var kospiCount = $('.stock-item[data-market="KOSPI"]').length;
+    var kosdaqCount = $('.stock-item[data-market="KOSDAQ"]').length;
+    
+    console.log('=== 종목 데이터 로드 완료 ===');
+    console.log('총 종목:', totalStocks + '개');
+    console.log('KOSPI:', kospiCount + '개');
+    console.log('KOSDAQ:', kosdaqCount + '개');
+    
+    if (totalStocks === 0) {
+        console.warn('⚠️ 종목 데이터가 없습니다.');
+        console.warn('MySQL에서 다음 SQL을 실행하세요:');
+        console.warn('INSERT INTO STOCK (stock_code, stock_name, market_type, industry) VALUES ...');
+    } else {
+        console.log('✅ 종목 데이터 정상 로드');
+    }
+});
 </script>
 
 <jsp:include page="../common/footer.jsp" />
+
+    

@@ -307,11 +307,11 @@
                                         <div class="stock-code">${item.stockCode}</div>
                                     </td>
                                     <td>
-                                        <span class="market-badge market-${item.stockMarket == 'KOSPI' ? 'kospi' : 'kosdaq'}">
-                                            ${item.stockMarket}
+                                        <span class="market-badge market-${item.marketType == 'KOSPI' ? 'kospi' : 'kosdaq'}">
+                                            ${item.marketType}
                                         </span>
                                     </td>
-                                    <td>${item.stockSector}</td>
+                                    <td>${item.industry}</td>
                                     <td>
                                         <div class="price">
                                             <fmt:formatNumber value="${item.currentPrice}" pattern="#,##0"/>원
@@ -337,7 +337,7 @@
                                         </c:choose>
                                     </td>
                                     <td>
-                                        <fmt:formatDate value="${item.watchlistRegDate}" pattern="yyyy-MM-dd"/>
+                                        <fmt:formatDate value="${item.addedAt}" pattern="yyyy-MM-dd"/>
                                     </td>
                                     <td>
                                         <form action="${pageContext.request.contextPath}/watchlist/remove/${item.watchlistId}" 
@@ -356,3 +356,5 @@
     </div>
 </body>
 </html>
+
+    

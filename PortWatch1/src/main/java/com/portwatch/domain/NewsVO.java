@@ -12,6 +12,7 @@ public class NewsVO {
     private String newsContent;
     private String newsSource;
     private String newsUrl;
+    private String stockCode;  // 종목 코드 (종목별 뉴스용)
     private Timestamp newsPubDate;
     private Timestamp newsRegDate;
     
@@ -59,6 +60,14 @@ public class NewsVO {
         this.newsUrl = newsUrl;
     }
     
+    public String getStockCode() {
+        return stockCode;
+    }
+    
+    public void setStockCode(String stockCode) {
+        this.stockCode = stockCode;
+    }
+    
     public Timestamp getNewsPubDate() {
         return newsPubDate;
     }
@@ -81,6 +90,7 @@ public class NewsVO {
                 "newsId=" + newsId +
                 ", newsTitle='" + newsTitle + '\'' +
                 ", newsSource='" + newsSource + '\'' +
+                ", stockCode='" + stockCode + '\'' +
                 ", newsPubDate=" + newsPubDate +
                 '}';
     }

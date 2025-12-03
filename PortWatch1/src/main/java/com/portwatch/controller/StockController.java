@@ -1,4 +1,4 @@
-    package com.portwatch.controller;
+package com.portwatch.controller;
 
 import javax.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -6,7 +6,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import com.portwatch.domain.StockVO;
+import com.portwatch.domain.NewsVO;
 import com.portwatch.service.StockService;
+import com.portwatch.service.NewsService;
 
 import java.util.List;
 
@@ -16,6 +18,9 @@ public class StockController {
     
     @Autowired
     private StockService stockService;
+    
+    @Autowired
+    private NewsService newsService;
     
     /**
      * 종목 목록 페이지
@@ -81,8 +86,18 @@ public class StockController {
                 return "redirect:/stock/list";
             }
             
+            // 종목 정보
             model.addAttribute("stock", stock);
             model.addAttribute("stockCode", stockCode);
+            
+            // 종목 관련 뉴스 가져오기
+            try {
+                List<NewsVO> newsList = newsService.getNewsByStock(stockCode, 5);
+                model.addAttribute("newsList", newsList);
+            } catch (Exception e) {
+                System.err.println("뉴스 로드 실패: " + e.getMessage());
+                model.addAttribute("newsList", null);
+            }
             
             return "stock/detail";
             
@@ -93,5 +108,3 @@ public class StockController {
         }
     }
 }
-
-    
