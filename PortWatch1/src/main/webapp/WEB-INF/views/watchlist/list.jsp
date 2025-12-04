@@ -1,4 +1,4 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+    <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <!DOCTYPE html>
@@ -186,6 +186,151 @@
             background: #5568d3;
         }
         
+        .btn-success {
+            background: #10b981;
+            color: white;
+            margin-right: 5px;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal.show {
+            display: block;
+        }
+        
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f1f3f5;
+        }
+        
+        .modal-header h2 {
+            color: #333;
+            font-size: 22px;
+            margin: 0;
+        }
+        
+        .close {
+            font-size: 28px;
+            font-weight: bold;
+            color: #999;
+            cursor: pointer;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+        
+        .close:hover {
+            color: #333;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .stock-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .stock-info-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .stock-info-code {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .stock-info-price {
+            font-size: 16px;
+            color: #667eea;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+        
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+        
+        .modal-footer .btn {
+            flex: 1;
+            padding: 12px;
+            font-size: 15px;
+        }
+        
+        .btn-gray {
+            background: #6b7280;
+            color: white;
+        }
+        
+        .btn-gray:hover {
+            background: #4b5563;
+        }
+        
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -239,7 +384,7 @@
         <!-- Header -->
         <div class="header">
             <h1>⭐ 관심종목</h1>
-            <p>관심있는 종목을 한눈에 확인하세요</p>
+            <p>관심있는 종목을 한눈에 확인하고 포트폴리오에 바로 추가하세요</p>
         </div>
         
         <!-- Messages -->
@@ -314,7 +459,12 @@
                                     <td>${item.industry}</td>
                                     <td>
                                         <div class="price">
-                                            <fmt:formatNumber value="${item.currentPrice}" pattern="#,##0"/>원
+                                            <c:choose>
+                                                <c:when test="${not empty item.currentPrice}">
+                                                    <fmt:formatNumber value="${item.currentPrice}" pattern="#,##0"/>원
+                                                </c:when>
+                                                <c:otherwise>-</c:otherwise>
+                                            </c:choose>
                                         </div>
                                     </td>
                                     <td>
@@ -340,6 +490,14 @@
                                         <fmt:formatDate value="${item.addedAt}" pattern="yyyy-MM-dd"/>
                                     </td>
                                     <td>
+                                        <button type="button" 
+                                                class="btn btn-success" 
+                                                data-stock-id="${item.stockId}"
+                                                data-stock-name="${item.stockName}"
+                                                data-stock-code="${item.stockCode}"
+                                                data-current-price="${not empty item.currentPrice ? item.currentPrice : 0}">
+                                            📊 포트폴리오
+                                        </button>
                                         <form action="${pageContext.request.contextPath}/watchlist/remove/${item.watchlistId}" 
                                               method="post" style="display:inline;"
                                               onsubmit="return confirm('관심종목에서 삭제하시겠습니까?');">
@@ -354,6 +512,197 @@
             </c:choose>
         </div>
     </div>
+    
+    <!-- 포트폴리오 추가 모달 -->
+    <div id="portfolioModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📊 포트폴리오에 추가</h2>
+                <span class="close">&times;</span>
+            </div>
+            
+            <div class="stock-info">
+                <div class="stock-info-name" id="modalStockName"></div>
+                <div class="stock-info-code" id="modalStockCode"></div>
+                <div class="stock-info-price" id="modalCurrentPrice"></div>
+            </div>
+            
+            <form id="addPortfolioForm">
+                <input type="hidden" id="modalStockId" name="stockId">
+                
+                <div class="form-group">
+                    <label for="quantity">보유 수량 *</label>
+                    <input type="number" 
+                           id="quantity" 
+                           name="quantity" 
+                           placeholder="예: 10" 
+                           min="1" 
+                           required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="avgPurchasePrice">평균 매입가 (원) *</label>
+                    <input type="number" 
+                           id="avgPurchasePrice" 
+                           name="avgPurchasePrice" 
+                           placeholder="예: 50000" 
+                           min="1" 
+                           required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="purchaseDate">매입 일자 (선택)</label>
+                    <input type="date" 
+                           id="purchaseDate" 
+                           name="purchaseDate">
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-gray" id="closeModalBtn">취소</button>
+                    <button type="submit" class="btn btn-success">추가하기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- jQuery 라이브러리 -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <script>
+    console.log('=== 관심종목 페이지 로드 완료 ===');
+    
+    // 페이지 로드 후 실행
+    $(document).ready(function() {
+        console.log('jQuery 로드 완료');
+        
+        // 메시지 자동 숨김
+        setTimeout(function() {
+            $('.message').fadeOut('slow');
+        }, 3000);
+        
+        // 포트폴리오 버튼 클릭 이벤트 (이벤트 위임 방식)
+        $('.btn-success').on('click', function() {
+            console.log('포트폴리오 버튼 클릭됨!');
+            
+            var stockId = $(this).data('stock-id');
+            var stockName = $(this).data('stock-name');
+            var stockCode = $(this).data('stock-code');
+            var currentPrice = $(this).data('current-price') || 0;
+            
+            console.log('종목 정보:', {
+                stockId: stockId,
+                stockName: stockName,
+                stockCode: stockCode,
+                currentPrice: currentPrice
+            });
+            
+            openAddToPortfolioModal(stockId, stockName, stockCode, currentPrice);
+        });
+        
+        // 모달 닫기 버튼
+        $('.close, #closeModalBtn').on('click', function() {
+            console.log('모달 닫기 버튼 클릭');
+            closeModal();
+        });
+        
+        // 모달 외부 클릭 시 닫기
+        $('#portfolioModal').on('click', function(event) {
+            if ($(event.target).is('#portfolioModal')) {
+                console.log('모달 외부 클릭');
+                closeModal();
+            }
+        });
+        
+        // ESC 키로 모달 닫기
+        $(document).on('keydown', function(event) {
+            if (event.key === 'Escape') {
+                console.log('ESC 키 눌림');
+                closeModal();
+            }
+        });
+        
+        // 포트폴리오 추가 폼 제출
+        $('#addPortfolioForm').on('submit', function(e) {
+            e.preventDefault();
+            console.log('폼 제출 시작');
+            
+            var formData = {
+                stockId: $('#modalStockId').val(),
+                quantity: $('#quantity').val(),
+                avgPurchasePrice: $('#avgPurchasePrice').val(),
+                purchaseDate: $('#purchaseDate').val()
+            };
+            
+            console.log('전송 데이터:', formData);
+            
+            // AJAX 요청
+            $.ajax({
+                url: '${pageContext.request.contextPath}/api/portfolio/add',
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    console.log('응답 성공:', response);
+                    
+                    if (response.success) {
+                        alert('✅ ' + response.message);
+                        closeModal();
+                        
+                        // 포트폴리오 페이지로 이동할지 묻기
+                        if (confirm('포트폴리오 페이지로 이동하시겠습니까?')) {
+                            location.href = '${pageContext.request.contextPath}/portfolio/list';
+                        } else {
+                            // 페이지 새로고침
+                            location.reload();
+                        }
+                    } else {
+                        if (response.requireLogin) {
+                            alert('⚠️ 로그인이 필요합니다.');
+                            location.href = '${pageContext.request.contextPath}/member/login';
+                        } else {
+                            alert('❌ ' + response.message);
+                        }
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX 오류:', {
+                        status: status,
+                        error: error,
+                        response: xhr.responseText
+                    });
+                    alert('❌ 포트폴리오 추가 중 오류가 발생했습니다.\n' + error);
+                }
+            });
+        });
+    });
+    
+    // 모달 열기 함수
+    function openAddToPortfolioModal(stockId, stockName, stockCode, currentPrice) {
+        console.log('모달 열기 시작:', {stockId, stockName, stockCode, currentPrice});
+        
+        $('#modalStockId').val(stockId);
+        $('#modalStockName').text(stockName);
+        $('#modalStockCode').text('종목코드: ' + stockCode);
+        
+        // 현재가 표시 및 자동 입력
+        var priceText = currentPrice > 0 ? Number(currentPrice).toLocaleString() + '원' : '가격 정보 없음';
+        $('#modalCurrentPrice').text('현재가: ' + priceText);
+        
+        if (currentPrice > 0) {
+            $('#avgPurchasePrice').val(Math.floor(currentPrice));
+        }
+        
+        // 모달 표시
+        $('#portfolioModal').addClass('show');
+        console.log('모달 열림');
+    }
+    
+    // 모달 닫기 함수
+    function closeModal() {
+        $('#portfolioModal').removeClass('show');
+        $('#addPortfolioForm')[0].reset();
+        console.log('모달 닫힘');
+    }
+    </script>
 </body>
 </html>
 
