@@ -491,7 +491,7 @@
                                     </td>
                                     <td>
                                         <button type="button" 
-                                                class="btn btn-success" 
+                                                class="btn btn-success portfolio-add-btn" 
                                                 data-stock-id="${item.stockId}"
                                                 data-stock-name="${item.stockName}"
                                                 data-stock-code="${item.stockCode}"
@@ -523,7 +523,7 @@
             
             <div class="stock-info">
                 <div class="stock-info-name" id="modalStockName"></div>
-                <div class="stock-info-code" id="modalStockCode"></div>
+                <div class="stock-info-code">종목코드: <span id="modalStockCode"></span></div>
                 <div class="stock-info-price" id="modalCurrentPrice"></div>
             </div>
             
@@ -574,27 +574,35 @@
     // 페이지 로드 후 실행
     $(document).ready(function() {
         console.log('jQuery 로드 완료');
+        console.log('contextPath:', '${pageContext.request.contextPath}');
         
         // 메시지 자동 숨김
         setTimeout(function() {
             $('.message').fadeOut('slow');
         }, 3000);
         
-        // 포트폴리오 버튼 클릭 이벤트 (이벤트 위임 방식)
-        $('.btn-success').on('click', function() {
-            console.log('포트폴리오 버튼 클릭됨!');
+        // 포트폴리오 버튼 클릭 이벤트 (클래스 셀렉터 사용)
+        $(document).on('click', '.portfolio-add-btn', function() {
+            console.log('=== 포트폴리오 버튼 클릭됨 ===');
             
             var stockId = $(this).data('stock-id');
             var stockName = $(this).data('stock-name');
             var stockCode = $(this).data('stock-code');
             var currentPrice = $(this).data('current-price') || 0;
             
-            console.log('종목 정보:', {
+            console.log('전달된 데이터:', {
                 stockId: stockId,
                 stockName: stockName,
                 stockCode: stockCode,
                 currentPrice: currentPrice
             });
+            
+            // 데이터 유효성 검사
+            if (!stockId) {
+                console.error('stockId가 없습니다!');
+                alert('종목 정보가 올바르지 않습니다.');
+                return;
+            }
             
             openAddToPortfolioModal(stockId, stockName, stockCode, currentPrice);
         });
@@ -624,16 +632,38 @@
         // 포트폴리오 추가 폼 제출
         $('#addPortfolioForm').on('submit', function(e) {
             e.preventDefault();
-            console.log('폼 제출 시작');
+            console.log('=== 폼 제출 시작 ===');
+            
+            var stockId = $('#modalStockId').val();
+            var quantity = $('#quantity').val();
+            var avgPurchasePrice = $('#avgPurchasePrice').val();
+            var purchaseDate = $('#purchaseDate').val();
             
             var formData = {
-                stockId: $('#modalStockId').val(),
-                quantity: $('#quantity').val(),
-                avgPurchasePrice: $('#avgPurchasePrice').val(),
-                purchaseDate: $('#purchaseDate').val()
+                stockId: stockId,
+                quantity: quantity,
+                avgPurchasePrice: avgPurchasePrice,
+                purchaseDate: purchaseDate
             };
             
-            console.log('전송 데이터:', formData);
+            console.log('전송할 데이터:', formData);
+            
+            // 유효성 검사
+            if (!stockId || stockId === 'undefined') {
+                alert('종목 정보가 올바르지 않습니다.');
+                console.error('stockId 오류:', stockId);
+                return;
+            }
+            
+            if (!quantity || quantity <= 0) {
+                alert('보유 수량을 입력해주세요.');
+                return;
+            }
+            
+            if (!avgPurchasePrice || avgPurchasePrice <= 0) {
+                alert('평균 매입가를 입력해주세요.');
+                return;
+            }
             
             // AJAX 요청
             $.ajax({
@@ -641,7 +671,8 @@
                 type: 'POST',
                 data: formData,
                 success: function(response) {
-                    console.log('응답 성공:', response);
+                    console.log('=== 응답 성공 ===');
+                    console.log('응답 데이터:', response);
                     
                     if (response.success) {
                         alert('✅ ' + response.message);
@@ -664,11 +695,10 @@
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('AJAX 오류:', {
-                        status: status,
-                        error: error,
-                        response: xhr.responseText
-                    });
+                    console.error('=== AJAX 오류 ===');
+                    console.error('Status:', status);
+                    console.error('Error:', error);
+                    console.error('Response:', xhr.responseText);
                     alert('❌ 포트폴리오 추가 중 오류가 발생했습니다.\n' + error);
                 }
             });
@@ -677,11 +707,13 @@
     
     // 모달 열기 함수
     function openAddToPortfolioModal(stockId, stockName, stockCode, currentPrice) {
-        console.log('모달 열기 시작:', {stockId, stockName, stockCode, currentPrice});
+        console.log('=== 모달 열기 함수 실행 ===');
+        console.log('Parameters:', {stockId, stockName, stockCode, currentPrice});
         
+        // 값 설정
         $('#modalStockId').val(stockId);
         $('#modalStockName').text(stockName);
-        $('#modalStockCode').text('종목코드: ' + stockCode);
+        $('#modalStockCode').text(stockCode);
         
         // 현재가 표시 및 자동 입력
         var priceText = currentPrice > 0 ? Number(currentPrice).toLocaleString() + '원' : '가격 정보 없음';
@@ -691,9 +723,20 @@
             $('#avgPurchasePrice').val(Math.floor(currentPrice));
         }
         
+        // 오늘 날짜 자동 설정
+        var today = new Date().toISOString().split('T')[0];
+        $('#purchaseDate').val(today);
+        
         // 모달 표시
         $('#portfolioModal').addClass('show');
-        console.log('모달 열림');
+        console.log('모달 열림 완료');
+        
+        // 설정된 값 확인
+        console.log('설정된 값 확인:', {
+            modalStockId: $('#modalStockId').val(),
+            modalStockName: $('#modalStockName').text(),
+            modalStockCode: $('#modalStockCode').text()
+        });
     }
     
     // 모달 닫기 함수
