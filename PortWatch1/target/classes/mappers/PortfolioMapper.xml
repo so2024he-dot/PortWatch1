@@ -33,17 +33,24 @@
         INSERT INTO PORTFOLIO (
             member_id,
             stock_id,
+            stock_code,
+            stock_name,
             quantity,
             avg_purchase_price,
             purchase_date
-        ) VALUES (
+        )
+        SELECT 
             #{memberId},
             #{stockId},
+            s.stock_code,
+            s.stock_name,
             #{quantity},
             #{avgPurchasePrice},
             #{purchaseDate}
-        )
+        FROM STOCK s
+        WHERE s.stock_id = #{stockId}
     </insert>
+
     
     <!-- ============================================ -->
     <!-- 회원의 포트폴리오 목록 조회 -->
