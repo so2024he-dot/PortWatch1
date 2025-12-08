@@ -167,7 +167,7 @@
 <div class="news-container">
     <div class="news-header animate-fade-in">
         <h1 class="news-title">
-            <i class="bi bi-newspaper"></i> 실시간 증권 뉴스
+            <i class="bi bi-newspaper">실시간 증권 뉴스</i> 
         </h1>
         <p class="news-subtitle">네이버 금융의 최신 증권 뉴스를 실시간으로 확인하세요</p>
     </div>

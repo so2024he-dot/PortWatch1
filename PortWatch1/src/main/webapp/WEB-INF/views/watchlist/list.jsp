@@ -524,37 +524,83 @@
             <div class="stock-info">
                 <div class="stock-info-name" id="modalStockName"></div>
                 <div class="stock-info-code">종목코드: <span id="modalStockCode"></span></div>
-                <div class="stock-info-price" id="modalCurrentPrice"></div>
+            </div>
+            
+            <!-- ⭐ 1주 단가 정보 박스 (증권사 스타일) -->
+            <div id="priceInfoBox" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 18px 20px; border-radius: 12px; margin: 15px 0; display: none; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 13px; opacity: 0.9; margin-bottom: 5px;">💰 1주 단가 (현재가)</div>
+                        <div id="unitPriceDisplay" style="font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">0원</div>
+                    </div>
+                    <div style="font-size: 40px; opacity: 0.3;">📈</div>
+                </div>
             </div>
             
             <form id="addPortfolioForm">
                 <input type="hidden" id="modalStockId" name="stockId">
                 
+                <!-- 수량 입력 (증권사 스타일) -->
                 <div class="form-group">
-                    <label for="quantity">보유 수량 *</label>
-                    <input type="number" 
-                           id="quantity" 
-                           name="quantity" 
-                           placeholder="예: 10" 
-                           min="1" 
-                           required>
+                    <label for="quantity" style="font-weight: 600; color: #333; font-size: 15px;">
+                        📊 매수 수량 *
+                    </label>
+                    <div style="position: relative;">
+                        <input type="number" 
+                               id="quantity" 
+                               name="quantity" 
+                               placeholder="수량 입력" 
+                               min="1" 
+                               value="1"
+                               required
+                               style="width: 100%; padding: 12px 45px 12px 15px; font-size: 18px; font-weight: 600; border: 2px solid #e5e7eb; border-radius: 8px; text-align: right;">
+                        <span style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #6b7280; font-weight: 600;">주</span>
+                    </div>
+                    <small style="color: #3b82f6; display: block; margin-top: 5px; font-weight: 500;">
+                        💡 수량을 입력하면 1주 단가가 자동으로 적용됩니다
+                    </small>
                 </div>
                 
+                <!-- 매입 단가 (증권사 스타일) -->
                 <div class="form-group">
-                    <label for="avgPurchasePrice">평균 매입가 (원) *</label>
-                    <input type="number" 
-                           id="avgPurchasePrice" 
-                           name="avgPurchasePrice" 
-                           placeholder="예: 50000" 
-                           min="1" 
-                           required>
+                    <label for="avgPurchasePrice" style="font-weight: 600; color: #333; font-size: 15px;">
+                        💵 매입 단가 (1주당) *
+                    </label>
+                    <div style="position: relative;">
+                        <input type="number" 
+                               id="avgPurchasePrice" 
+                               name="avgPurchasePrice" 
+                               placeholder="단가가 자동으로 입력됩니다" 
+                               min="1" 
+                               required
+                               style="width: 100%; padding: 12px 45px 12px 15px; font-size: 18px; font-weight: 600; border: 2px solid #e5e7eb; border-radius: 8px; text-align: right; background: #f9fafb;">
+                        <span style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #6b7280; font-weight: 600;">원</span>
+                    </div>
+                    <small style="color: #6b7280; display: block; margin-top: 5px;">
+                        ℹ️ 현재가가 자동으로 입력됩니다. 직접 수정도 가능합니다.
+                    </small>
                 </div>
                 
+                <!-- ⭐ 총 매입금액 (증권사 스타일) -->
+                <div id="totalAmountBox" style="background: #f0fdf4; border: 2px solid #10b981; padding: 18px 20px; border-radius: 10px; margin: 15px 0; display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="color: #047857; font-weight: 600; font-size: 14px;">💰 총 매입금액</span>
+                        <span id="totalAmountDisplay" style="color: #047857; font-size: 26px; font-weight: 700; letter-spacing: -0.5px;">0원</span>
+                    </div>
+                    <div style="font-size: 13px; color: #059669; padding-top: 10px; border-top: 1px solid #86efac;">
+                        <span id="calcFormula">계산식: 수량 × 단가</span>
+                    </div>
+                </div>
+                
+                <!-- 매입 일자 -->
                 <div class="form-group">
-                    <label for="purchaseDate">매입 일자 (선택)</label>
+                    <label for="purchaseDate" style="font-weight: 600; color: #333; font-size: 15px;">
+                        📅 매입 일자 (선택)
+                    </label>
                     <input type="date" 
                            id="purchaseDate" 
-                           name="purchaseDate">
+                           name="purchaseDate"
+                           style="width: 100%; padding: 12px 15px; font-size: 16px; border: 2px solid #e5e7eb; border-radius: 8px;">
                 </div>
                 
                 <div class="modal-footer">
@@ -564,6 +610,7 @@
             </form>
         </div>
     </div>
+    
     
     <!-- jQuery 라이브러리 -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -704,10 +751,62 @@
             });
         });
     });
+
+        
+        // ⭐ 증권사 방식: 수량 입력 시 이벤트
+        $('#quantity').on('input', function() {
+            console.log('📊 수량 입력 이벤트');
+            
+            // 정수만 입력 가능
+            this.value = this.value.replace(/[^0-9]/g, '');
+            
+            var quantity = parseInt(this.value) || 0;
+            
+            // ⭐ 증권사 방식: 수량이 변경되면 현재가를 평균 매입가에 자동 설정 (처음 한 번만)
+            if (quantity > 0 && currentStockPrice > 0) {
+                var currentAvgPrice = parseInt($('#avgPurchasePrice').val()) || 0;
+                
+                // 평균 매입가가 비어있거나 자동 입력된 값이면 현재가로 설정
+                if (currentAvgPrice === 0 || isAutoFilled) {
+                    $('#avgPurchasePrice').val(currentStockPrice);
+                    console.log('✅ 평균 매입가 자동 설정:', currentStockPrice);
+                }
+                
+                // 실시간 계산
+                calculateTotalAmount();
+            } else {
+                $('#totalAmountBox').hide();
+            }
+        });
+        
+        // ⭐ 증권사 방식: 평균 매입가 입력 시 이벤트
+        $('#avgPurchasePrice').on('input', function() {
+            console.log('💵 평균 매입가 입력 이벤트');
+            
+            // 정수만 입력 가능
+            this.value = this.value.replace(/[^0-9]/g, '');
+            
+            // ⭐ 사용자가 직접 수정하면 자동 입력 플래그 해제
+            isAutoFilled = false;
+            
+            // 실시간 계산
+            calculateTotalAmount();
+        });
+        
+        // ⭐ 평균 매입가 포커스 시 자동 입력 플래그 해제
+        $('#avgPurchasePrice').on('focus', function() {
+            isAutoFilled = false;
+            console.log('💵 평균 매입가 포커스 - 자동 입력 모드 해제');
+        });
     
-    // 모달 열기 함수
+    
+    // ⭐ 전역 변수: 현재 종목의 단가 저장
+    var currentStockPrice = 0;
+    var isAutoFilled = false; // 자동 입력 플래그
+    
+    // 모달 열기 함수 (증권사 방식으로 개선)
     function openAddToPortfolioModal(stockId, stockName, stockCode, currentPrice) {
-        console.log('=== 모달 열기 함수 실행 ===');
+        console.log('=== 포트폴리오 추가 모달 열기 (증권사 방식) ===');
         console.log('Parameters:', {stockId, stockName, stockCode, currentPrice});
         
         // 값 설정
@@ -715,12 +814,31 @@
         $('#modalStockName').text(stockName);
         $('#modalStockCode').text(stockCode);
         
-        // 현재가 표시 및 자동 입력
-        var priceText = currentPrice > 0 ? Number(currentPrice).toLocaleString() + '원' : '가격 정보 없음';
-        $('#modalCurrentPrice').text('현재가: ' + priceText);
+        // ⭐ 전역 변수에 현재가 저장
+        currentStockPrice = currentPrice > 0 ? Math.floor(currentPrice) : 0;
         
         if (currentPrice > 0) {
-            $('#avgPurchasePrice').val(Math.floor(currentPrice));
+            // ⭐ 1주 단가 표시 박스 표시
+            $('#priceInfoBox').show();
+            $('#unitPriceDisplay').text(currentStockPrice.toLocaleString() + '원');
+            
+            // ⭐ 증권사 방식: 자동으로 수량 1, 평균 매입가에 현재가 설정
+            $('#quantity').val(1);
+            $('#avgPurchasePrice').val(currentStockPrice);
+            isAutoFilled = true;
+            
+            // ⭐ 즉시 총 매입금액 계산
+            calculateTotalAmount();
+            
+            console.log('✅ 자동 설정 완료:', {
+                quantity: 1,
+                avgPurchasePrice: currentStockPrice,
+                totalAmount: currentStockPrice
+            });
+        } else {
+            $('#priceInfoBox').hide();
+            $('#quantity').val('');
+            $('#avgPurchasePrice').val('');
         }
         
         // 오늘 날짜 자동 설정
@@ -731,22 +849,56 @@
         $('#portfolioModal').addClass('show');
         console.log('모달 열림 완료');
         
-        // 설정된 값 확인
-        console.log('설정된 값 확인:', {
-            modalStockId: $('#modalStockId').val(),
-            modalStockName: $('#modalStockName').text(),
-            modalStockCode: $('#modalStockCode').text()
-        });
+        // 수량 입력란에 포커스
+        setTimeout(function() {
+            $('#quantity').focus().select();
+        }, 100);
+    }
+    
+    // ⭐ 신규 함수: 총 매입금액 계산 (증권사 방식)
+    function calculateTotalAmount() {
+        var quantity = parseInt($('#quantity').val()) || 0;
+        var price = parseInt($('#avgPurchasePrice').val()) || 0;
+        
+        console.log('💰 총 매입금액 계산:', {quantity, price});
+        
+        if (quantity > 0 && price > 0) {
+            var total = quantity * price;
+            
+            // 총 매입금액 표시
+            $('#totalAmountBox').show();
+            $('#totalAmountDisplay').text(total.toLocaleString() + '원');
+            
+            // 계산식 표시 (증권사 스타일)
+            var formula = quantity.toLocaleString() + '주 × ' + 
+                         price.toLocaleString() + '원 = ' + 
+                         total.toLocaleString() + '원';
+            $('#calcFormula').text(formula);
+            
+            console.log('✅ 계산 완료:', {quantity, price, total, formula});
+        } else {
+            $('#totalAmountBox').hide();
+            console.log('⚠️ 계산 불가 (값 부족)');
+        }
     }
     
     // 모달 닫기 함수
     function closeModal() {
         $('#portfolioModal').removeClass('show');
         $('#addPortfolioForm')[0].reset();
-        console.log('모달 닫힘');
+        
+        // ⭐ 추가된 요소들도 초기화
+        $('#priceInfoBox').hide();
+        $('#totalAmountBox').hide();
+        currentStockPrice = 0;
+        isAutoFilled = false;
+        
+        console.log('모달 닫힘 및 초기화 완료');
     }
     </script>
 </body>
 </html>
+
+    
 
     
