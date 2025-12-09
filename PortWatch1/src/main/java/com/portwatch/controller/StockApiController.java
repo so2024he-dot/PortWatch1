@@ -57,6 +57,34 @@ public class StockApiController {
         }
         return result;
     }
+    
+    /**
+     * 종목 ID로 현재가 정보 조회 (포트폴리오 추가 시 사용)
+     */
+    @GetMapping("/info/{stockId}")
+    public Map<String, Object> getStockInfo(@PathVariable Integer stockId) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            StockVO stock = stockService.getStockById(stockId);
+            
+            if (stock != null) {
+                result.put("success", true);
+                result.put("stockId", stock.getStockId());
+                result.put("stockCode", stock.getStockCode());
+                result.put("stockName", stock.getStockName());
+                result.put("currentPrice", stock.getCurrentPrice());
+                result.put("marketType", stock.getMarketType());
+            } else {
+                result.put("success", false);
+                result.put("message", "종목 정보를 찾을 수 없습니다.");
+            }
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "종목 정보 조회 중 오류가 발생했습니다: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return result;
+    }
 }
 
     
