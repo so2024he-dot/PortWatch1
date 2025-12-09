@@ -2,6 +2,8 @@
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import com.portwatch.domain.StockPriceVO;
 import com.portwatch.domain.StockVO;
 import com.portwatch.persistence.StockDAO;
 import java.util.List;
@@ -14,8 +16,9 @@ import java.util.Map;
 public class StockServiceImpl implements StockService {
     
     @Autowired
-    private StockDAO stockDAO;
-    
+    private StockDAO stockDAO;    
+  
+        
     /**
      * 모든 종목 조회 (Map 형태)
      * JSP에서 snake_case로 접근 가능

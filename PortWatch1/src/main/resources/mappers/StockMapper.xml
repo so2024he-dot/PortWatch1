@@ -63,6 +63,26 @@
     </select>
     
     <!-- ============================================ -->
+    <!-- 최근 30일 주가 조회 -->
+    <!-- ============================================ -->
+    <!-- ⭐ 수정: com.itwillbs → com.portwatch ⭐ -->
+    <select id="getRecentPrices" resultType="com.portwatch.domain.StockPriceVO">
+        SELECT
+            stock_id,
+            trade_date,
+            open_price,
+            high_price,
+            low_price,
+            close_price,
+            volume,
+            trading_value
+        FROM STOCK_PRICE
+        WHERE stock_id = #{stockId}
+        ORDER BY trade_date DESC
+        LIMIT 30
+    </select>
+    
+    <!-- ============================================ -->
     <!-- 종목 코드로 조회 -->
     <!-- ============================================ -->
     <select id="selectByCode" parameterType="string" resultMap="StockResultMap">

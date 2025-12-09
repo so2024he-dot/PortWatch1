@@ -52,6 +52,13 @@
             <version>${org.springframework-version}</version>
         </dependency>
         
+        <!-- ⭐ Spring Context Support (스케줄링 기능) ⭐ -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context-support</artifactId>
+            <version>${org.springframework-version}</version>
+        </dependency>
+        
         <!-- MyBatis -->
         <dependency>
             <groupId>org.mybatis</groupId>
@@ -95,11 +102,16 @@
             <groupId>javax.servlet</groupId>
             <artifactId>jstl</artifactId>
             <version>1.2</version>
-        </dependency>       
-      
-        <!--외부 라이브러리 추가 -->
+        </dependency>
         
-        <!-- Validation API (Spring 5.0.7 호환)   -->   
+        <!-- ⭐ JSR-330 (@Inject 어노테이션 지원) ⭐ -->
+        <dependency>
+            <groupId>javax.inject</groupId>
+            <artifactId>javax.inject</artifactId>
+            <version>1</version>
+        </dependency>
+        
+        <!-- Validation API (Spring 5.0.7 호환) -->
         <dependency>
             <groupId>javax.validation</groupId>
             <artifactId>validation-api</artifactId>
@@ -109,7 +121,7 @@
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-validator</artifactId>
             <version>5.4.3.Final</version>
-        </dependency>        
+        </dependency>
         
         <!-- EL (Expression Language) -->
         <dependency>
@@ -134,29 +146,17 @@
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-crypto</artifactId>
-            <version>5.0.6.RELEASE</version>
+            <version>5.0.7.RELEASE</version>
         </dependency>
+        
+        <!-- Jsoup: HTML 파싱 (네이버 금융 크롤링용) -->
         <dependency>
-		    <groupId>org.springframework.security</groupId>
-		    <artifactId>spring-security-crypto</artifactId>
-		    <version>5.0.7.RELEASE</version>
-		</dependency>
-
-		<!-- Jsoup -->
-        <dependency>
-		    <groupId>org.jsoup</groupId>
-		    <artifactId>jsoup</artifactId>
-		    <version>1.14.3</version>
-		</dependency>
-		
-  <!-- Jsoup: HTML 파싱 (네이버 금융 크롤링용) -->
-		<dependency>
-		    <groupId>org.jsoup</groupId>
-		    <artifactId>jsoup</artifactId>
-		    <version>1.15.3</version>
-		</dependency>
-
-		<!-- Logging -->
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.15.3</version>
+        </dependency>
+        
+        <!-- Logging -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -177,8 +177,8 @@
             <artifactId>log4j</artifactId>
             <version>1.2.17</version>
         </dependency>
-
-		<!-- Test -->
+        
+        <!-- Test -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -187,9 +187,6 @@
         </dependency>
     </dependencies>
     
-  
-	 <!--외부 라이브러리 추가 -->
-
     <build>
         <plugins>
             <plugin>

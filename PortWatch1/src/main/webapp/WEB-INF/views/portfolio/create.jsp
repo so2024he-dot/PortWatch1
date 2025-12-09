@@ -471,6 +471,213 @@ $(document).ready(function() {
     // 초기 버튼 비활성화
     submitBtn.prop('disabled', true);
 });
+
+$(document).ready(function() {
+    const stockSelect = $('#stockSelect');
+    const quantityInput = $('#quantityInput');
+    const priceInput = $('#priceInput');
+    const previewCard = $('#previewCard');
+    const totalAmount = $('#totalAmount');
+    const previewQuantity = $('#previewQuantity');
+    const previewPrice = $('#previewPrice');
+    const submitBtn = $('#submitBtn');
+    
+    // ⭐ 새로 추가: 종목 선택 시 현재가 자동 가져오기 ⭐
+    stockSelect.on('change', function() {
+        const stockId = $(this).val();
+        
+        // 종목이 선택되지 않았으면 매입가 초기화
+        if (!stockId || stockId === '') {
+            priceInput.val('');
+            priceInput.attr('placeholder', '1주당 평균 매입가를 입력하세요');
+            return;
+        }
+        
+        // AJAX로 선택된 종목의 현재가 가져오기
+        $.ajax({
+            url: '${pageContext.request.contextPath}/api/stock/info/' + stockId,
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                if (response.success && response.currentPrice) {
+                    // 현재가를 매입가 필드에 자동 입력
+                    const currentPrice = Math.round(response.currentPrice);
+                    priceInput.val(currentPrice);
+                    
+                    // 플레이스홀더 업데이트
+                    priceInput.attr('placeholder', 
+                        '현재가: ' + currentPrice.toLocaleString('ko-KR') + '원');
+                    
+                    // 알림 메시지 (선택사항)
+                    showPriceLoadedMessage(response.stockName, currentPrice);
+                    
+                    // 미리보기 자동 업데이트
+                    updatePreview();
+                } else {
+                    // 현재가 정보가 없는 경우
+                    priceInput.val('');
+                    priceInput.attr('placeholder', '현재가 정보가 없습니다. 수동으로 입력하세요');
+                    
+                    console.warn('현재가 정보를 가져올 수 없습니다.');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('종목 정보 조회 실패:', error);
+                priceInput.attr('placeholder', '현재가 조회 실패. 수동으로 입력하세요');
+            }
+        });
+    });
+    
+    // 현재가 로드 완료 메시지 표시 (3초 후 자동 사라짐)
+    function showPriceLoadedMessage(stockName, price) {
+        // 기존 메시지가 있으면 제거
+        $('.price-loaded-message').remove();
+        
+        // 메시지 생성
+        const message = $('<div class="alert alert-success alert-dismissible fade show price-loaded-message" role="alert">')
+            .css({
+                'position': 'fixed',
+                'top': '20px',
+                'right': '20px',
+                'z-index': '9999',
+                'min-width': '300px',
+                'animation': 'slideInRight 0.3s ease-out'
+            })
+            .html(`
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <strong>${stockName}</strong>의 현재가 <strong>${price.toLocaleString('ko-KR')}원</strong>이 자동 입력되었습니다.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `);
+        
+        // body에 추가
+        $('body').append(message);
+        
+        // 3초 후 자동 제거
+        setTimeout(function() {
+            message.fadeOut(function() {
+                $(this).remove();
+            });
+        }, 3000);
+    }
+    
+    // 실시간 계산 미리보기
+    function updatePreview() {
+        const quantity = parseInt(quantityInput.val()) || 0;
+        const price = parseInt(priceInput.val()) || 0;
+        const total = quantity * price;
+        
+        if (quantity > 0 && price > 0) {
+            // 미리보기 카드 표시
+            previewCard.fadeIn();
+            
+            // 총 투자금액
+            totalAmount.text(total.toLocaleString('ko-KR') + '원');
+            
+            // 보유 수량
+            previewQuantity.text(quantity.toLocaleString('ko-KR') + '주');
+            
+            // 평균 단가
+            previewPrice.text(price.toLocaleString('ko-KR') + '원');
+            
+            // 버튼 활성화
+            submitBtn.prop('disabled', false);
+        } else {
+            // 미리보기 카드 숨김
+            previewCard.fadeOut();
+            
+            // 버튼 비활성화 (값이 없으면)
+            if (quantity === 0 || price === 0) {
+                submitBtn.prop('disabled', true);
+            }
+        }
+    }
+    
+    // 입력 이벤트 리스너
+    quantityInput.on('input', updatePreview);
+    priceInput.on('input', updatePreview);
+    
+    // 정수만 입력 가능하도록 제한
+    quantityInput.on('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
+    
+    priceInput.on('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
+    
+    // 폼 제출 전 유효성 검사
+    $('#portfolioForm').on('submit', function(e) {
+        const quantity = parseInt(quantityInput.val());
+        const price = parseInt(priceInput.val());
+        
+        // 수량 검사
+        if (!quantity || quantity < 1) {
+            e.preventDefault();
+            alert('보유 수량을 1주 이상 입력해주세요.');
+            quantityInput.focus();
+            return false;
+        }
+        
+        // 가격 검사
+        if (!price || price < 1) {
+            e.preventDefault();
+            alert('평균 매입가를 정확히 입력해주세요.');
+            priceInput.focus();
+            return false;
+        }
+        
+        // 정수 확인
+        if (quantity % 1 !== 0) {
+            e.preventDefault();
+            alert('보유 수량은 정수로 입력해주세요. (소수점 불가)');
+            quantityInput.focus();
+            return false;
+        }
+        
+        if (price % 1 !== 0) {
+            e.preventDefault();
+            alert('평균 매입가는 정수로 입력해주세요. (소수점 불가)');
+            priceInput.focus();
+            return false;
+        }
+        
+        // 최종 확인
+        const total = quantity * price;
+        const confirmMsg = `다음 내용으로 종목을 추가하시겠습니까?\n\n` +
+                          `보유 수량: ${quantity.toLocaleString()}주\n` +
+                          `평균 매입가: ${price.toLocaleString()}원\n` +
+                          `총 투자금액: ${total.toLocaleString()}원`;
+        
+        if (!confirm(confirmMsg)) {
+            e.preventDefault();
+            return false;
+        }
+        
+        return true;
+    });
+    
+    // 오늘 날짜를 기본값으로 설정 (선택사항)
+    const today = new Date().toISOString().split('T')[0];
+    $('#dateInput').val(today);
+    
+    // 초기 버튼 비활성화
+    submitBtn.prop('disabled', true);
+});
+</script>
+
+<style>
+/* 알림 애니메이션 추가 */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
 </script>
 
 <jsp:include page="../common/footer.jsp" />

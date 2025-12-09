@@ -4,6 +4,7 @@
        xmlns:context="http://www.springframework.org/schema/context"
        xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
        xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:task="http://www.springframework.org/schema/task"
        xsi:schemaLocation="
            http://www.springframework.org/schema/beans 
            http://www.springframework.org/schema/beans/spring-beans.xsd
@@ -12,7 +13,9 @@
            http://mybatis.org/schema/mybatis-spring 
            http://mybatis.org/schema/mybatis-spring.xsd
            http://www.springframework.org/schema/tx 
-           http://www.springframework.org/schema/tx/spring-tx.xsd">
+           http://www.springframework.org/schema/tx/spring-tx.xsd
+           http://www.springframework.org/schema/task
+           http://www.springframework.org/schema/task/spring-task.xsd">
 
     <!-- ============================================ -->
     <!-- 1. 데이터베이스 설정 (MySQL) -->
@@ -41,11 +44,6 @@
             </bean>
         </property>
     </bean>
-	<!-- MySQL 주식 설정  -->
-	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
-	    <property name="dataSource" ref="dataSource" />
-	    <property name="mapperLocations" value="classpath:/mappers/*.xml" />
-	</bean>
 	
 	<bean class="org.mybatis.spring.SqlSessionTemplate">
 	    <constructor-arg ref="sqlSessionFactory" />
@@ -69,5 +67,14 @@
     <!-- 5. Service 스캔 -->
     <!-- ============================================ -->
     <context:component-scan base-package="com.portwatch.service"/>
+
+    <!-- ============================================ -->
+    <!-- 6. 스케줄러 설정 (매일 자동 업데이트) -->
+    <!-- ============================================ -->
+    <!-- 스케줄러 패키지 스캔 -->
+    <context:component-scan base-package="com.portwatch.scheduler"/>
+    
+    <!-- 스케줄링 활성화 -->
+    <task:annotation-driven/>
 
 </beans>

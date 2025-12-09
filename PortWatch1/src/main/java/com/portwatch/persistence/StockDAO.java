@@ -1,5 +1,6 @@
     package com.portwatch.persistence;
 
+import com.portwatch.domain.StockPriceVO;
 import com.portwatch.domain.StockVO;
 import org.apache.ibatis.annotations.Param;
 import java.util.List;
@@ -11,6 +12,12 @@ import java.util.Map;
  */
 public interface StockDAO {
     
+	
+	/**
+	 * MySQL 자동 주식 종목 등록
+	 */
+	 List<StockPriceVO> getRecentPrices(int stockId);
+	 
     /**
      * 모든 종목 조회 (Map 형태)
      */

@@ -22,6 +22,8 @@ public class StockController {
     @Autowired
     private NewsService newsService;
     
+    
+        
     /**
      * 종목 목록 페이지
      */

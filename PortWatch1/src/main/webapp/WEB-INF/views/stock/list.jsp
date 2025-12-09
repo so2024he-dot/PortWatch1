@@ -278,6 +278,24 @@
             </c:otherwise>
         </c:choose>
     </div>
+    
+    <!--MySQL 주식 종목 추가 코드  -->
+	<table>
+	    <tr>
+	        <th>날짜</th><th>시가</th><th>고가</th><th>저가</th><th>종가</th><th>거래량</th>
+	    </tr>
+	    <c:forEach var="p" items="${prices}">
+	        <tr>
+	            <td>${p.tradeDate}</td>
+	            <td>${p.openPrice}</td>
+	            <td>${p.highPrice}</td>
+	            <td>${p.lowPrice}</td>
+	            <td>${p.closePrice}</td>
+	            <td>${p.volume}</td>
+	        </tr>
+	    </c:forEach>
+	</table>
+  <!--MySQL 주식 종목 추가 코드  -->
 
     <c:if test="${not empty error}">
         <div class="alert alert-danger mt-3" role="alert">
