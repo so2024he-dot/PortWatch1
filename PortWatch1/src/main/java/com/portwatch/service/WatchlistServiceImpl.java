@@ -7,13 +7,12 @@ import com.portwatch.domain.WatchlistVO;
 import com.portwatch.domain.StockVO;
 import com.portwatch.persistence.WatchlistDAO;
 import com.portwatch.persistence.StockDAO;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 관심종목 서비스 구현
- * stock_id 기반 (DB 테이블 구조에 맞춤)
+ * 
+ * ✅ 완벽 수정 버전 - Map 제거, @Param 사용
  */
 @Service
 public class WatchlistServiceImpl implements WatchlistService {
@@ -44,17 +43,13 @@ public class WatchlistServiceImpl implements WatchlistService {
             throw new IllegalArgumentException("종목 ID가 유효하지 않습니다.");
         }
         
-        // 중복 확인
-        Map<String, Object> params = new HashMap<String, Object>();
-        params.put("memberId", watchlist.getMemberId());
-        params.put("stockId", watchlist.getStockId());
-        
-        int count = watchlistDAO.checkExists(params);
+        // ✅ 중복 확인 - @Param 방식
+        int count = watchlistDAO.checkExists(watchlist.getMemberId(), watchlist.getStockId());
         if (count > 0) {
             throw new Exception("이미 관심종목에 등록되어 있습니다.");
         }
         
-        // 관심종목 추가
+        // ✅ 관심종목 추가 - 이전 버전은 이 부분이 빠져있었음!
         watchlistDAO.insertWatchlist(watchlist);
     }
     
@@ -74,16 +69,16 @@ public class WatchlistServiceImpl implements WatchlistService {
             throw new IllegalArgumentException("종목 코드가 유효하지 않습니다.");
         }
         
-        // stockCode로 종목 찾기 - selectByCode 사용!
+        // stockCode로 종목 찾기
         StockVO stock = stockDAO.selectByCode(stockCode);
         if (stock == null) {
             throw new Exception("존재하지 않는 종목입니다: " + stockCode);
         }
         
-        // WatchlistVO 생성 - stockId 사용
+        // WatchlistVO 생성
         WatchlistVO watchlist = new WatchlistVO();
         watchlist.setMemberId(memberId);
-        watchlist.setStockId(stock.getStockId());  // stock_id 설정
+        watchlist.setStockId(stock.getStockId());
         
         // 추가
         addWatchlist(watchlist);
@@ -112,11 +107,8 @@ public class WatchlistServiceImpl implements WatchlistService {
             return false;
         }
         
-        Map<String, Object> params = new HashMap<String, Object>();
-        params.put("memberId", memberId);
-        params.put("stockId", stockId);
-        
-        int count = watchlistDAO.checkExists(params);
+        // ✅ @Param 방식
+        int count = watchlistDAO.checkExists(memberId, stockId);
         return count > 0;
     }
     
@@ -135,7 +127,7 @@ public class WatchlistServiceImpl implements WatchlistService {
             return false;
         }
         
-        // stockCode로 종목 찾기 - selectByCode 사용!
+        // stockCode로 종목 찾기
         StockVO stock = stockDAO.selectByCode(stockCode);
         if (stock == null) {
             return false;
@@ -160,11 +152,8 @@ public class WatchlistServiceImpl implements WatchlistService {
             throw new IllegalArgumentException("종목 ID가 유효하지 않습니다.");
         }
         
-        Map<String, Object> params = new HashMap<String, Object>();
-        params.put("memberId", memberId);
-        params.put("stockId", stockId);
-        
-        watchlistDAO.deleteWatchlist(params);
+        // ✅ @Param 방식
+        watchlistDAO.deleteWatchlistByMemberAndStock(memberId, stockId);
     }
     
     /**
@@ -179,10 +168,7 @@ public class WatchlistServiceImpl implements WatchlistService {
             throw new IllegalArgumentException("관심종목 ID가 유효하지 않습니다.");
         }
         
-        // watchlistId로 삭제
-        Map<String, Object> params = new HashMap<String, Object>();
-        params.put("watchlistId", watchlistId);
-        
-        watchlistDAO.deleteWatchlist(params);
+        // ✅ watchlistId로 직접 삭제
+        watchlistDAO.deleteWatchlistById(watchlistId);
     }
 }

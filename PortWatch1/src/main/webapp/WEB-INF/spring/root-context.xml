@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:context="http://www.springframework.org/schema/context"
-       xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
-       xmlns:tx="http://www.springframework.org/schema/tx"
-       xmlns:task="http://www.springframework.org/schema/task"
-       xsi:schemaLocation="
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="
            http://www.springframework.org/schema/beans 
            http://www.springframework.org/schema/beans/spring-beans.xsd
            http://www.springframework.org/schema/context 
@@ -17,66 +17,103 @@
            http://www.springframework.org/schema/task
            http://www.springframework.org/schema/task/spring-task.xsd">
 
-    <!-- ============================================ -->
-    <!-- 1. 데이터베이스 설정 (MySQL) -->
-    <!-- ============================================ -->
-    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
-        <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
-        <property name="url" value="jdbc:mysql://localhost:3306/portwatch_db?useSSL=false&amp;serverTimezone=Asia/Seoul&amp;characterEncoding=UTF-8"/>
-        <property name="username" value="root"/>
-        <property name="password" value="1234"/>  <!-- 여기에 MySQL 비밀번호 입력 -->
-    </bean>
+	<!-- ============================================ -->
+	<!-- 1. 데이터베이스 설정 (MySQL) -->
+	<!-- ============================================ -->
+	<bean id="dataSource"
+		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		<property name="driverClassName"
+			value="com.mysql.cj.jdbc.Driver" />
+		<property name="url"
+			value="jdbc:mysql://itwillbs.com:3306/c6d2507t2p2?
+        useSSL=false&amp;serverTimezone=Asia/Seoul&amp;characterEncoding=UTF-8" />
+		<property name="username" value="c6d2507t2p2" />
+		<property name="password" value="1234" />  <!-- 여기에 MySQL 비밀번호 입력 -->
 
-    <!-- ============================================ -->
-    <!-- 2. MyBatis 설정 -->
-    <!-- ============================================ -->
-    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
-        <property name="dataSource" ref="dataSource"/>
-        <property name="mapperLocations" value="classpath:mappers/**/*.xml"/>
-        
-        <!-- ⭐ 이게 핵심! PortfolioVO를 찾을 수 있게 해줌 -->
-        <property name="typeAliasesPackage" value="com.portwatch.domain"/>
-        
-        <property name="configuration">
-            <bean class="org.apache.ibatis.session.Configuration">
-                <property name="mapUnderscoreToCamelCase" value="true"/>
-                <property name="jdbcTypeForNull" value="NULL"/>
-            </bean>
-        </property>
-    </bean>
-	
-	<bean class="org.mybatis.spring.SqlSessionTemplate">
-	    <constructor-arg ref="sqlSessionFactory" />
 	</bean>
 
+	<!-- ============================================ -->
+	<!-- 2. MyBatis 설정 -->
+	<!-- ============================================ -->
+	<bean id="sqlSessionFactory"
+		class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="mapperLocations"
+			value="classpath:mappers/**/*.xml" />
 
+		<!-- ⭐ 이게 핵심! PortfolioVO를 찾을 수 있게 해줌 -->
+		<!-- ⭐ 도메인 패키지 타입 별칭 설정 -->
+		<property name="typeAliasesPackage"
+			value="com.portwatch.domain" />
 
-    <!-- ============================================ -->
-    <!-- 3. MyBatis Mapper 스캔 -->
-    <!-- ============================================ -->
-    <mybatis-spring:scan base-package="com.portwatch.persistence"/>
+		<property name="configuration">
+			<bean class="org.apache.ibatis.session.Configuration">
 
-    <!-- ============================================ -->
-    <!-- 4. 트랜잭션 관리 -->
-    <!-- ============================================ -->
-    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
-        <property name="dataSource" ref="dataSource"/>
-    </bean>
+				<!-- ⭐ snake_case → camelCase 자동 변환 -->
+				<property name="mapUnderscoreToCamelCase" value="true" />
+				<property name="jdbcTypeForNull" value="NULL" />
 
-    <tx:annotation-driven transaction-manager="transactionManager"/>
+				<!-- ⭐ 로그 레벨 설정 (디버깅 시 유용) -->
+				<property name="logPrefix" value="[MyBatis] " />
 
-    <!-- ============================================ -->
-    <!-- 5. Service 스캔 -->
-    <!-- ============================================ -->
-    <context:component-scan base-package="com.portwatch.service"/>
+			</bean>
+		</property>
+	</bean>
 
-    <!-- ============================================ -->
-    <!-- 6. 스케줄러 설정 (매일 자동 업데이트) -->
-    <!-- ============================================ -->
-    <!-- 스케줄러 패키지 스캔 -->
-    <context:component-scan base-package="com.portwatch.scheduler"/>
-    
-    <!-- 스케줄링 활성화 -->
-    <task:annotation-driven/>
+	<bean class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg ref="sqlSessionFactory" />
+	</bean>
+
+	<!-- ============================================ -->
+	<!-- 3. MyBatis Mapper 스캔 -->
+	<!-- ============================================ -->
+	<mybatis-spring:scan
+		base-package="com.portwatch.persistence" />
+
+	<!-- ============================================ -->
+	<!-- 4. 트랜잭션 관리 -->
+	<!-- ============================================ -->
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<tx:annotation-driven
+		transaction-manager="transactionManager" />
+
+	<!-- ============================================ -->
+	<!-- 5. Service 스캔 -->
+	<!-- ============================================ -->
+	<context:component-scan
+		base-package="com.portwatch.service" />
+
+	<!-- ============================================ -->
+	<!-- 6. 스케줄러 설정 (매일 자동 업데이트) -->
+	<!-- ============================================ -->
+	<!-- 스케줄러 패키지 스캔 -->
+	<context:component-scan
+		base-package="com.portwatch.scheduler" />
+
+	<!-- 스케줄링 활성화 -->
+	<task:annotation-driven />
+
+	<!-- ============================================ -->
+	<!-- 7. Properties 파일 로드 (선택사항) -->
+	<!-- ============================================ -->
+	<!-- application.properties 파일에서 설정 값 읽기 -->
+	<context:property-placeholder
+		location="classpath:application.properties" ignore-unresolvable="true"
+		ignore-resource-not-found="true" />
+
+	<!-- ============================================ -->
+	<!-- 8. 미국 주식 API 설정 (XML 직접 설정 방식) -->
+	<!-- ============================================ -->
+	<bean id="usStockPriceUpdateService" 
+		class="com.portwatch.service.USStockPriceUpdateServiceImpl">
+		<!-- 여기에 발급받은 Alpha Vantage API 키를 직접 입력하세요! -->
+		<property name="apiKey" value="NM8OJLU28PMWSLOB" />
+		<property name="apiUrl" value="https://www.alphavantage.co/query" />
+	</bean>
+	
 
 </beans>

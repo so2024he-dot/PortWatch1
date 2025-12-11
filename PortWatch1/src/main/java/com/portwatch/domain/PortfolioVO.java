@@ -1,13 +1,18 @@
-    package com.portwatch.domain;
+package com.portwatch.domain;
 
 import javax.validation.constraints.*;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Date;
 import java.sql.Timestamp;
 
 /**
- * 포트폴리오 VO
- * 현재 MySQL DDL에 완벽히 맞춤
+ * 포트폴리오 VO (분할 매수 지원)
+ * 
+ * ✅ quantity: Integer → BigDecimal 변경
+ * ✅ 0.5주, 0.1주 등 소수점 매수 가능
+ * 
+ * @version 2.0
  */
 public class PortfolioVO {
     
@@ -16,9 +21,10 @@ public class PortfolioVO {
     private Integer memberId;
     private Integer stockId;
     
+    // ✅ 수정: Integer → BigDecimal
     @NotNull(message = "보유 수량은 필수 입력 항목입니다.")
-    @Min(value = 1, message = "수량은 1 이상이어야 합니다.")
-    private Integer quantity;
+    @DecimalMin(value = "0.01", message = "수량은 0.01 이상이어야 합니다.")
+    private BigDecimal quantity;  // 분할 매수 지원 (0.01주 단위)
     
     @NotNull(message = "평균 매입가는 필수 입력 항목입니다.")
     @DecimalMin(value = "0.01", message = "평균 매입가는 0보다 커야 합니다.")
@@ -70,11 +76,12 @@ public class PortfolioVO {
         this.stockId = stockId;
     }
     
-    public Integer getQuantity() {
+    // ✅ 수정: BigDecimal 타입
+    public BigDecimal getQuantity() {
         return quantity;
     }
     
-    public void setQuantity(Integer quantity) {
+    public void setQuantity(BigDecimal quantity) {
         this.quantity = quantity;
     }
     
@@ -142,17 +149,19 @@ public class PortfolioVO {
         this.currentPrice = currentPrice;
     }
     
-    // 계산 필드 Getters
+    // ✅ 계산 필드 Getters (BigDecimal 사용)
     public BigDecimal getTotalPurchaseAmount() {
         if (quantity != null && avgPurchasePrice != null) {
-            return avgPurchasePrice.multiply(new BigDecimal(quantity));
+            return avgPurchasePrice.multiply(quantity)
+                    .setScale(2, RoundingMode.HALF_UP);
         }
         return BigDecimal.ZERO;
     }
     
     public BigDecimal getTotalCurrentValue() {
         if (quantity != null && currentPrice != null) {
-            return currentPrice.multiply(new BigDecimal(quantity));
+            return currentPrice.multiply(quantity)
+                    .setScale(2, RoundingMode.HALF_UP);
         }
         return BigDecimal.ZERO;
     }
@@ -171,7 +180,7 @@ public class PortfolioVO {
         }
         
         return currentPrice.subtract(avgPurchasePrice)
-                .divide(avgPurchasePrice, 4, BigDecimal.ROUND_HALF_UP)
+                .divide(avgPurchasePrice, 4, RoundingMode.HALF_UP)
                 .multiply(new BigDecimal(100));
     }
     
@@ -191,5 +200,3 @@ public class PortfolioVO {
                 '}';
     }
 }
-
-    

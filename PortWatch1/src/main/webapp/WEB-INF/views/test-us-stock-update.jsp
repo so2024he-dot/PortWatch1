@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ì¤ìê° ì£¼ê° ìë°ì´í¸ íì¤í¸</title>
+    <title>🇺🇸 미국 주식 업데이트 테스트</title>
     <style>
         * {
             margin: 0;
@@ -15,7 +15,7 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -41,10 +41,14 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
         
+        .test-section.us {
+            border-top: 5px solid #4facfe;
+        }
+        
         h2 {
-            color: #667eea;
+            color: #4facfe;
             margin-bottom: 20px;
-            border-bottom: 2px solid #667eea;
+            border-bottom: 2px solid #4facfe;
             padding-bottom: 10px;
         }
         
@@ -59,7 +63,7 @@
             color: #333;
         }
         
-        input[type="text"] {
+        input[type="text"], input[type="number"] {
             width: 100%;
             padding: 12px;
             border: 2px solid #ddd;
@@ -68,13 +72,13 @@
             transition: border-color 0.3s;
         }
         
-        input[type="text"]:focus {
+        input[type="text"]:focus, input[type="number"]:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #4facfe;
         }
         
         button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             color: white;
             border: none;
             padding: 12px 30px;
@@ -87,7 +91,7 @@
         
         button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
         }
         
         button:active {
@@ -99,11 +103,11 @@
             padding: 15px;
             background: #f8f9fa;
             border-radius: 8px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #4facfe;
         }
         
         .result h3 {
-            color: #667eea;
+            color: #4facfe;
             margin-bottom: 10px;
         }
         
@@ -120,7 +124,7 @@
             display: none;
             text-align: center;
             padding: 20px;
-            color: #667eea;
+            color: #4facfe;
             font-weight: bold;
         }
         
@@ -130,7 +134,7 @@
         
         .spinner {
             border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
+            border-top: 4px solid #4facfe;
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -154,7 +158,7 @@
         }
         
         .stock-info {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             color: white;
             padding: 20px;
             border-radius: 10px;
@@ -189,95 +193,153 @@
             font-size: 1.2em;
             font-weight: bold;
         }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            background: #28a745;
+            color: white;
+            border-radius: 5px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>ð ì¤ìê° ì£¼ê° ìë°ì´í¸ íì¤í¸</h1>
+        <h1>🇺🇸 미국 주식 API 테스트 페이지</h1>
         
-        <!-- ë¨ì¼ ì¢ëª© ìë°ì´í¸ -->
-        <div class="test-section">
-            <h2>1ï¸â£ ë¨ì¼ ì¢ëª© ìë°ì´í¸</h2>
-            <div class="input-group">
-                <label for="stockCode1">ì¢ëª© ì½ë ìë ¥:</label>
-                <input type="text" id="stockCode1" placeholder="ì: 005930 (ì¼ì±ì ì)" value="005930">
+        <!-- 1. API 상태 체크 -->
+        <div class="test-section us">
+            <h2>1️⃣ API 상태 체크</h2>
+            <button onclick="checkHealth()">📡 API 상태 확인</button>
+            
+            <div class="loading" id="loading0">
+                <div class="spinner"></div>
+                확인 중...
             </div>
-            <button onclick="updateSingleStock()">ì£¼ê° ìë°ì´í¸</button>
-            <button onclick="getLatestPrice()">ìµì  ì£¼ê° ì¡°í</button>
+            
+            <div class="result" id="result0" style="display:none;"></div>
+        </div>
+        
+        <!-- 2. 단일 종목 업데이트 -->
+        <div class="test-section us">
+            <h2>2️⃣ 단일 종목 업데이트</h2>
+            <div class="input-group">
+                <label for="stockCode1">미국 종목 심볼 입력 <span class="badge">예: AAPL, MSFT</span></label>
+                <input type="text" id="stockCode1" placeholder="예: AAPL (Apple)" value="AAPL">
+            </div>
+            <button onclick="updateSingleStock()">🔄 주가 업데이트</button>
+            <button onclick="getLatestPrice()">📊 최신 주가 조회</button>
             
             <div class="loading" id="loading1">
                 <div class="spinner"></div>
-                ì²ë¦¬ ì¤...
+                처리 중...
             </div>
             
             <div class="result" id="result1" style="display:none;"></div>
         </div>
         
-        <!-- ì¬ë¬ ì¢ëª© ìë°ì´í¸ -->
-        <div class="test-section">
-            <h2>2ï¸â£ ì¬ë¬ ì¢ëª© ìë°ì´í¸</h2>
+        <!-- 3. 여러 종목 업데이트 -->
+        <div class="test-section us">
+            <h2>3️⃣ 여러 종목 일괄 업데이트</h2>
             <div class="input-group">
-                <label for="stockCodes">ì¢ëª© ì½ë ìë ¥ (ì¼íë¡ êµ¬ë¶):</label>
-                <input type="text" id="stockCodes" placeholder="ì: 005930,000660,035420" value="005930,000660,035420">
+                <label for="stockCodes">종목 심볼 입력 (쉼표로 구분) <span class="badge">최대 25개</span></label>
+                <input type="text" id="stockCodes" placeholder="예: AAPL,MSFT,GOOGL" value="AAPL,MSFT,GOOGL">
             </div>
-            <button onclick="updateMultipleStocks()">ì¬ë¬ ì¢ëª© ìë°ì´í¸</button>
+            <button onclick="updateMultipleStocks()">🔄 일괄 업데이트</button>
             
             <div class="loading" id="loading2">
                 <div class="spinner"></div>
-                ì²ë¦¬ ì¤... (ìê°ì´ ê±¸ë¦´ ì ììµëë¤)
+                처리 중... (시간이 걸릴 수 있습니다)
             </div>
             
             <div class="result" id="result2" style="display:none;"></div>
         </div>
         
-        <!-- ì£¼ê° íì¤í ë¦¬ ì¡°í -->
-        <div class="test-section">
-            <h2>3ï¸â£ ì£¼ê° íì¤í ë¦¬ ì¡°í</h2>
+        <!-- 4. 주가 히스토리 조회 -->
+        <div class="test-section us">
+            <h2>4️⃣ 주가 히스토리 조회</h2>
             <div class="input-group">
-                <label for="stockCode3">ì¢ëª© ì½ë ìë ¥:</label>
-                <input type="text" id="stockCode3" placeholder="ì: 005930" value="005930">
+                <label for="stockCode3">종목 심볼 입력:</label>
+                <input type="text" id="stockCode3" placeholder="예: AAPL" value="AAPL">
             </div>
             <div class="input-group">
-                <label for="days">ì¡°í ì¼ì:</label>
-                <input type="text" id="days" placeholder="ì: 30" value="30">
+                <label for="days">조회 일수:</label>
+                <input type="number" id="days" placeholder="30" value="30" min="1" max="365">
             </div>
-            <button onclick="getStockHistory()">íì¤í ë¦¬ ì¡°í</button>
+            <button onclick="getStockHistory()">📈 히스토리 조회</button>
             
             <div class="loading" id="loading3">
                 <div class="spinner"></div>
-                ì²ë¦¬ ì¤...
+                조회 중...
             </div>
             
             <div class="result" id="result3" style="display:none;"></div>
         </div>
         
-        <!-- ì¤ìê° í¬ë¡¤ë§ -->
-        <div class="test-section">
-            <h2>4ï¸â£ ì¤ìê° í¬ë¡¤ë§ (ì ì¥ ì í¨)</h2>
+        <!-- 5. 실시간 크롤링 -->
+        <div class="test-section us">
+            <h2>5️⃣ 실시간 크롤링 (DB 저장 없음)</h2>
             <div class="input-group">
-                <label for="stockCode4">ì¢ëª© ì½ë ìë ¥:</label>
-                <input type="text" id="stockCode4" placeholder="ì: 005930" value="005930">
+                <label for="stockCode4">종목 심볼 입력:</label>
+                <input type="text" id="stockCode4" placeholder="예: AAPL" value="AAPL">
             </div>
-            <button onclick="crawlStockPrice()">ì¤ìê° í¬ë¡¤ë§</button>
+            <button onclick="crawlStockPrice()">🕷️ 실시간 크롤링</button>
             
             <div class="loading" id="loading4">
                 <div class="spinner"></div>
-                í¬ë¡¤ë§ ì¤...
+                크롤링 중...
             </div>
             
             <div class="result" id="result4" style="display:none;"></div>
+        </div>
+        
+        <!-- 6. 전체 업데이트 -->
+        <div class="test-section us">
+            <h2>6️⃣ 전체 미국 주식 업데이트</h2>
+            <p style="color: #dc3545; margin-bottom: 15px;">
+                ⚠️ 주의: 무료 API는 하루 25개 종목만 업데이트 가능합니다!
+            </p>
+            <button onclick="updateAllUSStocks()">🌐 전체 업데이트</button>
+            
+            <div class="loading" id="loading5">
+                <div class="spinner"></div>
+                전체 업데이트 중... (시간이 오래 걸립니다)
+            </div>
+            
+            <div class="result" id="result5" style="display:none;"></div>
         </div>
     </div>
     
     <script>
         // API Base URL
-        const API_BASE = '/api/stock-price';
+        const API_BASE = '${pageContext.request.contextPath}/api/stock/us';
         
-        // 1. ë¨ì¼ ì¢ëª© ìë°ì´í¸
+        console.log('API Base URL:', API_BASE);
+        
+        // 0. API 상태 체크
+        async function checkHealth() {
+            showLoading('loading0', true);
+            hideResult('result0');
+            
+            try {
+                const response = await fetch(API_BASE + '/health');
+                const data = await response.json();
+                
+                showLoading('loading0', false);
+                displayResult('result0', data);
+            } catch (error) {
+                showLoading('loading0', false);
+                displayError('result0', error);
+            }
+        }
+        
+        // 1. 단일 종목 업데이트
         async function updateSingleStock() {
             const stockCode = document.getElementById('stockCode1').value.trim();
             if (!stockCode) {
-                alert('ì¢ëª© ì½ëë¥¼ ìë ¥íì¸ì');
+                alert('종목 심볼을 입력하세요');
                 return;
             }
             
@@ -285,7 +347,9 @@
             hideResult('result1');
             
             try {
-                const response = await fetch(`${API_BASE}/update/${stockCode}`);
+                const response = await fetch(API_BASE + '/' + stockCode + '/update', {
+                    method: 'POST'
+                });
                 const data = await response.json();
                 
                 showLoading('loading1', false);
@@ -296,11 +360,11 @@
             }
         }
         
-        // ìµì  ì£¼ê° ì¡°í
+        // 최신 주가 조회
         async function getLatestPrice() {
             const stockCode = document.getElementById('stockCode1').value.trim();
             if (!stockCode) {
-                alert('ì¢ëª© ì½ëë¥¼ ìë ¥íì¸ì');
+                alert('종목 심볼을 입력하세요');
                 return;
             }
             
@@ -308,7 +372,7 @@
             hideResult('result1');
             
             try {
-                const response = await fetch(`${API_BASE}/latest/${stockCode}`);
+                const response = await fetch(API_BASE + '/' + stockCode + '/latest');
                 const data = await response.json();
                 
                 showLoading('loading1', false);
@@ -319,26 +383,32 @@
             }
         }
         
-        // 2. ì¬ë¬ ì¢ëª© ìë°ì´í¸
+        // 2. 여러 종목 업데이트
         async function updateMultipleStocks() {
             const stockCodesInput = document.getElementById('stockCodes').value.trim();
             if (!stockCodesInput) {
-                alert('ì¢ëª© ì½ëë¥¼ ìë ¥íì¸ì');
+                alert('종목 심볼을 입력하세요');
                 return;
             }
             
             const stockCodes = stockCodesInput.split(',').map(code => code.trim());
             
+            if (stockCodes.length > 25) {
+                if (!confirm('무료 API는 하루 25개까지만 가능합니다. 처음 25개만 업데이트하시겠습니까?')) {
+                    return;
+                }
+            }
+            
             showLoading('loading2', true);
             hideResult('result2');
             
             try {
-                const response = await fetch(`${API_BASE}/update-multiple`, {
+                const response = await fetch(API_BASE + '/update/batch', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ stockCodes })
+                    body: JSON.stringify(stockCodes)
                 });
                 const data = await response.json();
                 
@@ -350,13 +420,13 @@
             }
         }
         
-        // 3. ì£¼ê° íì¤í ë¦¬ ì¡°í
+        // 3. 주가 히스토리 조회
         async function getStockHistory() {
             const stockCode = document.getElementById('stockCode3').value.trim();
             const days = document.getElementById('days').value.trim();
             
             if (!stockCode || !days) {
-                alert('ì¢ëª© ì½ëì ì¡°í ì¼ìë¥¼ ìë ¥íì¸ì');
+                alert('종목 심볼과 조회 일수를 입력하세요');
                 return;
             }
             
@@ -364,7 +434,7 @@
             hideResult('result3');
             
             try {
-                const response = await fetch(`${API_BASE}/history/${stockCode}?days=${days}`);
+                const response = await fetch(API_BASE + '/' + stockCode + '/history?days=' + days);
                 const data = await response.json();
                 
                 showLoading('loading3', false);
@@ -375,11 +445,11 @@
             }
         }
         
-        // 4. ì¤ìê° í¬ë¡¤ë§
+        // 4. 실시간 크롤링
         async function crawlStockPrice() {
             const stockCode = document.getElementById('stockCode4').value.trim();
             if (!stockCode) {
-                alert('ì¢ëª© ì½ëë¥¼ ìë ¥íì¸ì');
+                alert('종목 심볼을 입력하세요');
                 return;
             }
             
@@ -387,7 +457,7 @@
             hideResult('result4');
             
             try {
-                const response = await fetch(`${API_BASE}/crawl/${stockCode}`);
+                const response = await fetch(API_BASE + '/' + stockCode + '/crawl');
                 const data = await response.json();
                 
                 showLoading('loading4', false);
@@ -395,6 +465,29 @@
             } catch (error) {
                 showLoading('loading4', false);
                 displayError('result4', error);
+            }
+        }
+        
+        // 5. 전체 업데이트
+        async function updateAllUSStocks() {
+            if (!confirm('전체 미국 주식을 업데이트하시겠습니까? (최대 25개)')) {
+                return;
+            }
+            
+            showLoading('loading5', true);
+            hideResult('result5');
+            
+            try {
+                const response = await fetch(API_BASE + '/update/all', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                showLoading('loading5', false);
+                displayResult('result5', data);
+            } catch (error) {
+                showLoading('loading5', false);
+                displayError('result5', error);
             }
         }
         
@@ -416,72 +509,41 @@
             const resultDiv = document.getElementById(elementId);
             resultDiv.style.display = 'block';
             
-            let html = `<h3 class="${data.success ? 'success' : 'error'}">
-                ${data.success ? 'â ì±ê³µ' : 'â ì¤í¨'}: ${data.message}
-            </h3>`;
+            let html = '<h3 class="' + (data.success ? 'success' : 'error') + '">' +
+                (data.success ? '✅ 성공' : '❌ 실패') + ': ' + data.message +
+                '</h3>';
             
             if (showStockInfo && data.success && data.data) {
                 const stock = data.data;
-                html += `
-                    <div class="stock-info">
-                        <h4>${stock.stockName || 'ì¢ëª©'} (${stock.stockCode || 'N/A'})</h4>
-                        <div class="price-grid">
-                            <div class="price-item">
-                                <strong>íì¬ê°</strong>
-                                <span>${formatPrice(stock.closePrice)}</span>
-                            </div>
-                            <div class="price-item">
-                                <strong>ìê°</strong>
-                                <span>${formatPrice(stock.openPrice)}</span>
-                            </div>
-                            <div class="price-item">
-                                <strong>ê³ ê°</strong>
-                                <span>${formatPrice(stock.highPrice)}</span>
-                            </div>
-                            <div class="price-item">
-                                <strong>ì ê°</strong>
-                                <span>${formatPrice(stock.lowPrice)}</span>
-                            </div>
-                            <div class="price-item">
-                                <strong>ê±°ëë</strong>
-                                <span>${formatVolume(stock.volume)}</span>
-                            </div>
-                            <div class="price-item">
-                                <strong>ê±°ëëê¸</strong>
-                                <span>${formatValue(stock.tradingValue)}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                html += '<div class="stock-info">' +
+                    '<h4>' + (stock.stockSymbol || '종목') + '</h4>' +
+                    '<div class="price-grid">' +
+                    '<div class="price-item"><strong>현재가</strong><span>$' + formatPrice(stock.closePrice) + '</span></div>' +
+                    '<div class="price-item"><strong>시가</strong><span>$' + formatPrice(stock.openPrice) + '</span></div>' +
+                    '<div class="price-item"><strong>고가</strong><span>$' + formatPrice(stock.highPrice) + '</span></div>' +
+                    '<div class="price-item"><strong>저가</strong><span>$' + formatPrice(stock.lowPrice) + '</span></div>' +
+                    '<div class="price-item"><strong>거래량</strong><span>' + formatVolume(stock.volume) + '</span></div>' +
+                    '</div></div>';
             }
             
-            html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            html += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
             resultDiv.innerHTML = html;
         }
         
         function displayError(elementId, error) {
             const resultDiv = document.getElementById(elementId);
             resultDiv.style.display = 'block';
-            resultDiv.innerHTML = `
-                <h3 class="error">â ìë¬ ë°ì</h3>
-                <pre>${error.message || error}</pre>
-            `;
+            resultDiv.innerHTML = '<h3 class="error">❌ 에러 발생</h3><pre>' + (error.message || error) + '</pre>';
         }
         
         function formatPrice(price) {
             if (!price) return 'N/A';
-            return new Intl.NumberFormat('ko-KR').format(price) + 'ì';
+            return parseFloat(price).toFixed(2);
         }
         
         function formatVolume(volume) {
             if (!volume) return 'N/A';
-            return new Intl.NumberFormat('ko-KR').format(volume);
-        }
-        
-        function formatValue(value) {
-            if (!value) return 'N/A';
-            const billion = value / 100000000;
-            return billion.toFixed(2) + 'ìµì';
+            return new Intl.NumberFormat('en-US').format(volume);
         }
     </script>
 </body>

@@ -1,6 +1,14 @@
 eclipse.preferences.version=1
 encoding//src/main/java=UTF-8
+encoding//src/main/java/com/portwatch/controller/USStockApiController.java=UTF-8
+encoding//src/main/java/com/portwatch/controller/WatchlistApiController.java=UTF-8
+encoding//src/main/java/com/portwatch/controller/WatchlistDebugController.java=UTF-8
+encoding//src/main/java/com/portwatch/service/USStockPriceUpdateService.java=UTF-8
+encoding//src/main/java/com/portwatch/service/USStockPriceUpdateServiceImpl.java=UTF-8
 encoding//src/main/resources=UTF-8
+encoding//src/main/resources/application.properties=UTF-8
+encoding//src/main/webapp/WEB-INF/views/test-api-key.jsp=UTF-8
+encoding//src/main/webapp/WEB-INF/views/test-us-stock-update.jsp=UTF-8
 encoding//src/test/java=UTF-8
 encoding//src/test/resources=UTF-8
 encoding/<project>=UTF-8

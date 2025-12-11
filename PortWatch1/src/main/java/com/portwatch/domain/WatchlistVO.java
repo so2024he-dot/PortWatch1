@@ -1,31 +1,31 @@
-    package com.portwatch.domain;
+package com.portwatch.domain;
 
 import java.sql.Timestamp;
 
 /**
  * 관심종목 VO
- * WATCHLIST 테이블 매핑 (stock_id 기반)
+ * 
+ * DB 테이블: WATCHLIST
+ * - watchlist_id (PK)
+ * - member_id (FK -> MEMBER)
+ * - stock_id (FK -> STOCK)
+ * - added_at (등록일시)
  */
 public class WatchlistVO {
-    // 테이블 기본 필드
-    private Integer watchlistId;
-    private Integer memberId;
-    private Integer stockId;          // DB 테이블의 실제 컬럼
-    private Timestamp addedAt;        // DB의 added_at 컬럼
     
-    // JOIN용 필드 (STOCK 테이블)
-    private String stockCode;         // JOIN으로 가져오는 필드
-    private String stockName;
-    private String marketType;        // DB는 market_type
-    private String industry;
+    private Integer watchlistId;  // 관심종목 ID (PK)
+    private Integer memberId;     // 회원 ID (FK)
+    private Integer stockId;      // 종목 ID (FK)
+    private Timestamp addedAt;    // 등록일시
     
-    // JOIN용 필드 (최신 가격 정보)
-    private Long currentPrice;
-    private Long priceChange;
-    private Double priceChangeRate;
+    // Constructors
+    public WatchlistVO() {
+    }
     
-    // 기본 생성자
-    public WatchlistVO() {}
+    public WatchlistVO(Integer memberId, Integer stockId) {
+        this.memberId = memberId;
+        this.stockId = stockId;
+    }
     
     // Getters and Setters
     public Integer getWatchlistId() {
@@ -60,73 +60,13 @@ public class WatchlistVO {
         this.addedAt = addedAt;
     }
     
-    public String getStockCode() {
-        return stockCode;
-    }
-    
-    public void setStockCode(String stockCode) {
-        this.stockCode = stockCode;
-    }
-    
-    public String getStockName() {
-        return stockName;
-    }
-    
-    public void setStockName(String stockName) {
-        this.stockName = stockName;
-    }
-    
-    public String getMarketType() {
-        return marketType;
-    }
-    
-    public void setMarketType(String marketType) {
-        this.marketType = marketType;
-    }
-    
-    public String getIndustry() {
-        return industry;
-    }
-    
-    public void setIndustry(String industry) {
-        this.industry = industry;
-    }
-    
-    public Long getCurrentPrice() {
-        return currentPrice;
-    }
-    
-    public void setCurrentPrice(Long currentPrice) {
-        this.currentPrice = currentPrice;
-    }
-    
-    public Long getPriceChange() {
-        return priceChange;
-    }
-    
-    public void setPriceChange(Long priceChange) {
-        this.priceChange = priceChange;
-    }
-    
-    public Double getPriceChangeRate() {
-        return priceChangeRate;
-    }
-    
-    public void setPriceChangeRate(Double priceChangeRate) {
-        this.priceChangeRate = priceChangeRate;
-    }
-    
     @Override
     public String toString() {
         return "WatchlistVO{" +
                 "watchlistId=" + watchlistId +
                 ", memberId=" + memberId +
                 ", stockId=" + stockId +
-                ", stockCode='" + stockCode + '\'' +
-                ", stockName='" + stockName + '\'' +
-                ", currentPrice=" + currentPrice +
+                ", addedAt=" + addedAt +
                 '}';
     }
 }
-
-    

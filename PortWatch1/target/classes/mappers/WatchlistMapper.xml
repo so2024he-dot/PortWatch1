@@ -4,48 +4,231 @@
 
 <mapper namespace="com.portwatch.persistence.WatchlistDAO">
 
+    <!-- ======================================== -->
+    <!-- ResultMap 정의 -->
+    <!-- ======================================== -->
+    
+    <!-- 기본 WatchlistVO -->
+    <resultMap id="WatchlistMap" type="com.portwatch.domain.WatchlistVO">
+        <id property="watchlistId" column="watchlist_id" />
+        <result property="memberId" column="member_id" />
+        <result property="stockId" column="stock_id" />
+        <result property="addedAt" column="added_at" />
+    </resultMap>
+    
+    <!-- WatchlistWithPriceVO (현재가 포함) -->
+    <resultMap id="WatchlistWithPriceMap" type="com.portwatch.domain.WatchlistWithPriceVO">
+        <!-- Watchlist 정보 -->
+        <id property="watchlistId" column="watchlist_id" />
+        <result property="memberId" column="member_id" />
+        <result property="stockId" column="stock_id" />
+        <result property="addedAt" column="added_at" />
+        
+        <!-- Stock 정보 -->
+        <result property="stockCode" column="stock_code" />
+        <result property="stockName" column="stock_name" />
+        <result property="marketType" column="market_type" />
+        <result property="industry" column="industry" />
+        
+        <!-- Stock Price 정보 -->
+        <result property="currentPrice" column="current_price" />
+        <result property="openPrice" column="open_price" />
+        <result property="highPrice" column="high_price" />
+        <result property="lowPrice" column="low_price" />
+        <result property="previousClose" column="previous_close" />
+        <result property="priceChange" column="price_change" />
+        <result property="changePercent" column="change_percent" />
+        <result property="volume" column="volume" />
+        <result property="tradeDate" column="trade_date" />
+        <result property="changeDirection" column="change_direction" />
+    </resultMap>
+
+    <!-- ======================================== -->
+    <!-- 기본 CRUD 쿼리 -->
+    <!-- ======================================== -->
+    
     <!-- 관심종목 추가 -->
-    <insert id="insertWatchlist" parameterType="com.portwatch.domain.WatchlistVO">
+    <insert id="insertWatchlist" parameterType="com.portwatch.domain.WatchlistVO"
+            useGeneratedKeys="true" keyProperty="watchlistId">
         INSERT INTO WATCHLIST (member_id, stock_id, added_at)
         VALUES (#{memberId}, #{stockId}, NOW())
     </insert>
     
-    <!-- 회원별 관심종목 목록 조회 (JOIN) -->
-    <select id="selectWatchlistByMember" parameterType="int" resultType="com.portwatch.domain.WatchlistVO">
+    <!-- 관심종목 삭제 (watchlistId) -->
+    <delete id="deleteWatchlistById" parameterType="int">
+        DELETE FROM WATCHLIST
+        WHERE watchlist_id = #{watchlistId}
+    </delete>
+    
+    <!-- 관심종목 삭제 (memberId + stockId) -->
+    <delete id="deleteWatchlistByMemberAndStock">
+        DELETE FROM WATCHLIST
+        WHERE member_id = #{memberId}
+          AND stock_id = #{stockId}
+    </delete>
+    
+    <!-- 관심종목 ID로 조회 -->
+    <select id="selectById" parameterType="int" resultMap="WatchlistMap">
         SELECT 
-            w.watchlist_id as watchlistId,
-            w.member_id as memberId,
-            w.stock_id as stockId,
-            w.added_at as addedAt,
-            s.stock_code as stockCode,
-            s.stock_name as stockName,
-            s.market_type as marketType,
-            s.industry as industry
+            watchlist_id,
+            member_id,
+            stock_id,
+            added_at
+        FROM WATCHLIST
+        WHERE watchlist_id = #{watchlistId}
+    </select>
+    
+    <!-- 회원의 관심종목 목록 조회 -->
+    <select id="selectWatchlistByMember" parameterType="int" resultMap="WatchlistMap">
+        SELECT 
+            watchlist_id,
+            member_id,
+            stock_id,
+            added_at
+        FROM WATCHLIST
+        WHERE member_id = #{memberId}
+        ORDER BY added_at DESC
+    </select>
+    
+    <!-- 관심종목 존재 여부 확인 -->
+    <select id="checkExists" resultType="int">
+        SELECT COUNT(*)
+        FROM WATCHLIST
+        WHERE member_id = #{memberId}
+          AND stock_id = #{stockId}
+    </select>
+
+    <!-- ======================================== -->
+    <!-- 현재가 포함 조회 쿼리 -->
+    <!-- ======================================== -->
+    
+    <!-- 회원의 관심종목 + 현재가 조회 -->
+    <select id="selectWatchlistWithPrices" parameterType="int" 
+            resultMap="WatchlistWithPriceMap">
+        SELECT 
+            w.watchlist_id,
+            w.member_id,
+            w.stock_id,
+            w.added_at,
+            
+            s.stock_code,
+            s.stock_name,
+            s.market_type,
+            s.industry,
+            
+            sp_latest.close_price AS current_price,
+            sp_latest.open_price,
+            sp_latest.high_price,
+            sp_latest.low_price,
+            sp_latest.volume,
+            sp_latest.trade_date,
+            
+            sp_prev.close_price AS previous_close,
+            
+            (sp_latest.close_price - sp_prev.close_price) AS price_change,
+            
+            CASE 
+                WHEN sp_prev.close_price IS NOT NULL AND sp_prev.close_price != 0 THEN
+                    ROUND(((sp_latest.close_price - sp_prev.close_price) / sp_prev.close_price * 100), 2)
+                ELSE NULL
+            END AS change_percent,
+            
+            CASE 
+                WHEN (sp_latest.close_price - sp_prev.close_price) > 0 THEN 'UP'
+                WHEN (sp_latest.close_price - sp_prev.close_price) &lt; 0 THEN 'DOWN'
+                ELSE 'FLAT'
+            END AS change_direction
+            
         FROM WATCHLIST w
         INNER JOIN STOCK s ON w.stock_id = s.stock_id
+        
+        -- 최신 주가 (가장 최근 거래일)
+        LEFT JOIN (
+            SELECT 
+                stock_id,
+                close_price,
+                open_price,
+                high_price,
+                low_price,
+                volume,
+                trade_date,
+                ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY trade_date DESC) as rn
+            FROM STOCK_PRICE
+        ) sp_latest ON s.stock_id = sp_latest.stock_id AND sp_latest.rn = 1
+        
+        -- 전일 주가 (두번째로 최근 거래일)
+        LEFT JOIN (
+            SELECT 
+                stock_id,
+                close_price,
+                ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY trade_date DESC) as rn
+            FROM STOCK_PRICE
+        ) sp_prev ON s.stock_id = sp_prev.stock_id AND sp_prev.rn = 2
+        
         WHERE w.member_id = #{memberId}
         ORDER BY w.added_at DESC
     </select>
     
-    <!-- 관심종목 존재 여부 확인 -->
-    <select id="checkExists" parameterType="map" resultType="int">
-        SELECT COUNT(*) 
-        FROM WATCHLIST 
-        WHERE member_id = #{memberId} 
-        AND stock_id = #{stockId}
+    <!-- 특정 관심종목 + 현재가 조회 -->
+    <select id="selectWatchlistWithPriceById" parameterType="int"
+            resultMap="WatchlistWithPriceMap">
+        SELECT 
+            w.watchlist_id,
+            w.member_id,
+            w.stock_id,
+            w.added_at,
+            
+            s.stock_code,
+            s.stock_name,
+            s.market_type,
+            s.industry,
+            
+            sp_latest.close_price AS current_price,
+            sp_latest.open_price,
+            sp_latest.high_price,
+            sp_latest.low_price,
+            sp_latest.volume,
+            sp_latest.trade_date,
+            
+            sp_prev.close_price AS previous_close,
+            
+            (sp_latest.close_price - sp_prev.close_price) AS price_change,
+            
+            CASE 
+                WHEN sp_prev.close_price IS NOT NULL AND sp_prev.close_price != 0 THEN
+                    ROUND(((sp_latest.close_price - sp_prev.close_price) / sp_prev.close_price * 100), 2)
+                ELSE NULL
+            END AS change_percent,
+            
+            CASE 
+                WHEN (sp_latest.close_price - sp_prev.close_price) > 0 THEN 'UP'
+                WHEN (sp_latest.close_price - sp_prev.close_price) &lt; 0 THEN 'DOWN'
+                ELSE 'FLAT'
+            END AS change_direction
+            
+        FROM WATCHLIST w
+        INNER JOIN STOCK s ON w.stock_id = s.stock_id
+        LEFT JOIN (
+            SELECT 
+                stock_id,
+                close_price,
+                open_price,
+                high_price,
+                low_price,
+                volume,
+                trade_date,
+                ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY trade_date DESC) as rn
+            FROM STOCK_PRICE
+        ) sp_latest ON s.stock_id = sp_latest.stock_id AND sp_latest.rn = 1
+        LEFT JOIN (
+            SELECT 
+                stock_id,
+                close_price,
+                ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY trade_date DESC) as rn
+            FROM STOCK_PRICE
+        ) sp_prev ON s.stock_id = sp_prev.stock_id AND sp_prev.rn = 2
+        
+        WHERE w.watchlist_id = #{watchlistId}
     </select>
-    
-    <!-- 관심종목 삭제 (memberId, stockId) -->
-    <delete id="deleteWatchlist" parameterType="map">
-        DELETE FROM WATCHLIST 
-        <where>
-            <if test="watchlistId != null">
-                watchlist_id = #{watchlistId}
-            </if>
-            <if test="memberId != null and stockId != null">
-                member_id = #{memberId} AND stock_id = #{stockId}
-            </if>
-        </where>
-    </delete>
 
 </mapper>

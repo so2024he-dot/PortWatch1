@@ -324,9 +324,27 @@
                         <div class="price-label">현재가</div>
                         <div class="current-price-large">
                             <c:choose>
+                                <%-- 미국 주식 --%>
+                                <c:when test="${isUSStock and not empty stock.currentPrice}">
+                                    <%-- 달러 가격 --%>
+                                    <div style="font-size: 2.5rem; font-weight: 700;">
+                                        $<fmt:formatNumber value="${stock.currentPrice}" pattern="#,##0.00"/>
+                                    </div>
+                                    <%-- 한화 가격 --%>
+                                    <c:if test="${not empty currentPriceKRW}">
+                                        <div style="font-size: 1.5rem; color: rgba(255,255,255,0.8); margin-top: 0.5rem;">
+                                            ≈ ₩<fmt:formatNumber value="${currentPriceKRW}" pattern="#,##0"/>
+                                        </div>
+                                        <div style="font-size: 0.875rem; color: rgba(255,255,255,0.7); margin-top: 0.25rem;">
+                                            환율: 1 USD = ₩<fmt:formatNumber value="${exchangeRate}" pattern="#,##0.00"/>
+                                        </div>
+                                    </c:if>
+                                </c:when>
+                                <%-- 한국 주식 --%>
                                 <c:when test="${not empty stock.currentPrice}">
                                     <fmt:formatNumber value="${stock.currentPrice}" pattern="#,##0"/>원
                                 </c:when>
+                                <%-- 가격 정보 없음 --%>
                                 <c:otherwise>
                                     -
                                 </c:otherwise>

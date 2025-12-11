@@ -9,7 +9,9 @@ import com.portwatch.domain.StockVO;
 import com.portwatch.domain.NewsVO;
 import com.portwatch.service.StockService;
 import com.portwatch.service.NewsService;
+import com.portwatch.service.ExchangeRateService;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Controller
@@ -21,6 +23,9 @@ public class StockController {
     
     @Autowired
     private NewsService newsService;
+    
+    @Autowired
+    private ExchangeRateService exchangeRateService;
     
     
         
@@ -91,6 +96,33 @@ public class StockController {
             // 종목 정보
             model.addAttribute("stock", stock);
             model.addAttribute("stockCode", stockCode);
+            
+            // 🔧 미국 주식인 경우 환율 정보 추가
+            String marketType = stock.getMarketType();
+            boolean isUSStock = (marketType != null && 
+                    (marketType.equals("NASDAQ") || 
+                     marketType.equals("NYSE") || 
+                     marketType.equals("AMEX")));
+            
+            if (isUSStock) {
+                try {
+                    BigDecimal exchangeRate = exchangeRateService.getUSDToKRW();
+                    model.addAttribute("exchangeRate", exchangeRate);
+                    model.addAttribute("isUSStock", true);
+                    
+                    // 현재가가 있으면 한화로 변환
+                    if (stock.getCurrentPrice() != null) {
+                        BigDecimal krwPrice = exchangeRateService.convertUSDToKRW(stock.getCurrentPrice());
+                        model.addAttribute("currentPriceKRW", krwPrice);
+                    }
+                    
+                } catch (Exception e) {
+                    System.err.println("환율 정보 조회 실패: " + e.getMessage());
+                    // 환율 조회 실패해도 페이지는 정상 표시
+                }
+            } else {
+                model.addAttribute("isUSStock", false);
+            }
             
             // 종목 관련 뉴스 가져오기
             try {

@@ -1,182 +1,186 @@
 package com.portwatch.controller;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.servlet.http.HttpSession;
-
+import com.portwatch.domain.MemberVO;
+import com.portwatch.domain.StockVO;
+import com.portwatch.domain.WatchlistVO;
+import com.portwatch.domain.WatchlistWithPriceVO;
+import com.portwatch.persistence.StockDAO;
+import com.portwatch.persistence.WatchlistDAO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.portwatch.domain.MemberVO;
-import com.portwatch.domain.WatchlistVO;
-import com.portwatch.service.WatchlistService;
+import javax.servlet.http.HttpSession;
+import java.util.List;
 
 /**
- * 관심종목 Controller
- * API 없이 완전 작동
+ * 관심종목 컨트롤러
+ * 
+ * ✅ memberId 기반 (세션 필드명 주의!)
  */
 @Controller
 @RequestMapping("/watchlist")
 public class WatchlistController {
     
+    private static final Logger logger = LoggerFactory.getLogger(WatchlistController.class);
+    
     @Autowired
-    private WatchlistService watchlistService;
+    private WatchlistDAO watchlistDAO;
+    
+    @Autowired
+    private StockDAO stockDAO;
     
     /**
-     * 관심종목 목록 페이지
+     * 관심종목 목록 페이지 (현재가 포함)
+     * 
+     * GET /watchlist/list
      */
-    @GetMapping("/list")
-    public String list(HttpSession session, Model model, RedirectAttributes rttr) {
+    @RequestMapping(value = "/list", method = RequestMethod.GET)
+    public String list(HttpSession session, Model model) {
+        logger.info("📋 관심종목 목록 조회 요청");
+        
+        // 세션에서 회원 정보 가져오기
         MemberVO member = (MemberVO) session.getAttribute("member");
         
         if (member == null) {
-            rttr.addFlashAttribute("error", "로그인이 필요합니다.");
+            logger.warn("⚠️ 로그인하지 않은 사용자");
             return "redirect:/member/login";
         }
         
+        Integer memberId = member.getMemberId();
+        
         try {
-            List<WatchlistVO> watchlist = watchlistService.getWatchlistByMember(member.getMemberId());
+            // ✅ 관심종목 + 현재가 정보 조회
+            List<WatchlistWithPriceVO> watchlist = watchlistDAO.selectWatchlistWithPrices(memberId);
+            
+            logger.info("✅ 관심종목 조회 완료: {}개", watchlist.size());
+            
+            // 통계 정보 계산
+            int totalCount = watchlist.size();
+            int koreanStockCount = 0;
+            int usStockCount = 0;
+            
+            for (WatchlistWithPriceVO item : watchlist) {
+                if (item.isKoreanStock()) {
+                    koreanStockCount++;
+                } else if (item.isUSStock()) {
+                    usStockCount++;
+                }
+            }
+            
+            // Model에 데이터 추가
             model.addAttribute("watchlist", watchlist);
+            model.addAttribute("totalCount", totalCount);
+            model.addAttribute("koreanStockCount", koreanStockCount);
+            model.addAttribute("usStockCount", usStockCount);
+            
             return "watchlist/list";
+            
         } catch (Exception e) {
-            e.printStackTrace();
-            model.addAttribute("error", "관심종목 목록을 불러오는 중 오류가 발생했습니다.");
-            return "watchlist/list";
+            logger.error("❌ 관심종목 조회 실패", e);
+            model.addAttribute("errorMessage", "관심종목 조회 중 오류가 발생했습니다");
+            return "error";
         }
     }
     
     /**
-     * 관심종목 추가 (AJAX)
+     * 관심종목 추가 (stockId 사용)
+     * 
+     * POST /watchlist/add
      */
-    @PostMapping("/add")
+    @RequestMapping(value = "/add", method = RequestMethod.POST)
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> add(
-            @RequestParam String stockCode,
+    public String add(
+            @RequestParam(value = "stockId", required = false) Integer stockId,
+            @RequestParam(value = "stockCode", required = false) String stockCode,
             HttpSession session) {
         
-        Map<String, Object> response = new HashMap<>();
+        logger.info("➕ 관심종목 추가 요청: stockId={}, stockCode={}", stockId, stockCode);
+        
+        // 세션에서 회원 정보 가져오기
         MemberVO member = (MemberVO) session.getAttribute("member");
         
         if (member == null) {
-            response.put("success", false);
-            response.put("message", "로그인이 필요합니다.");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            return "{\"success\": false, \"message\": \"로그인이 필요합니다\"}";
         }
         
+        Integer memberId = member.getMemberId();
+        
         try {
+            // stockCode로 요청한 경우 stockId 찾기
+            if (stockId == null && stockCode != null) {
+                StockVO stock = stockDAO.selectByCode(stockCode);
+                if (stock == null) {
+                    return "{\"success\": false, \"message\": \"종목을 찾을 수 없습니다\"}";
+                }
+                stockId = stock.getStockId();
+                logger.info("   stockCode {} → stockId {}", stockCode, stockId);
+            }
+            
+            if (stockId == null) {
+                return "{\"success\": false, \"message\": \"종목 정보가 없습니다\"}";
+            }
+            
             // 이미 추가되어 있는지 확인
-            if (watchlistService.isInWatchlist(member.getMemberId(), stockCode)) {
-                response.put("success", false);
-                response.put("message", "이미 관심종목에 추가되어 있습니다.");
-                return ResponseEntity.ok(response);
+            int exists = watchlistDAO.checkExists(memberId, stockId);
+            if (exists > 0) {
+                return "{\"success\": false, \"message\": \"이미 관심종목에 추가되어 있습니다\"}";
             }
             
             // 관심종목 추가
-            watchlistService.addToWatchlist(member.getMemberId(), stockCode);
+            WatchlistVO watchlist = new WatchlistVO();
+            watchlist.setMemberId(memberId);
+            watchlist.setStockId(stockId);
             
-            response.put("success", true);
-            response.put("message", "관심종목에 추가되었습니다.");
-            return ResponseEntity.ok(response);
+            watchlistDAO.insertWatchlist(watchlist);
+            
+            logger.info("✅ 관심종목 추가 완료");
+            return "{\"success\": true, \"message\": \"관심종목에 추가되었습니다\"}";
             
         } catch (Exception e) {
-            e.printStackTrace();
-            response.put("success", false);
-            response.put("message", "관심종목 추가 중 오류가 발생했습니다.");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            logger.error("❌ 관심종목 추가 실패", e);
+            return "{\"success\": false, \"message\": \"추가 중 오류가 발생했습니다: " + e.getMessage() + "\"}";
         }
     }
     
     /**
      * 관심종목 삭제
+     * 
+     * POST /watchlist/delete
      */
-    @PostMapping("/remove/{watchlistId}")
-    public String remove(
-            @PathVariable Integer watchlistId,
-            HttpSession session,
-            RedirectAttributes rttr) {
-        
-        MemberVO member = (MemberVO) session.getAttribute("member");
-        
-        if (member == null) {
-            rttr.addFlashAttribute("error", "로그인이 필요합니다.");
-            return "redirect:/member/login";
-        }
-        
-        try {
-            watchlistService.removeFromWatchlist(watchlistId);
-            rttr.addFlashAttribute("message", "관심종목에서 삭제되었습니다.");
-            rttr.addFlashAttribute("messageType", "success");
-        } catch (Exception e) {
-            e.printStackTrace();
-            rttr.addFlashAttribute("error", "관심종목 삭제 중 오류가 발생했습니다.");
-        }
-        
-        return "redirect:/watchlist/list";
-    }
-    
-    /**
-     * 관심종목 삭제 (AJAX)
-     */
-    @PostMapping("/remove/ajax")
+    @RequestMapping(value = "/delete", method = RequestMethod.POST)
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> removeAjax(
-            @RequestParam Integer watchlistId,
-            HttpSession session) {
+    public String delete(@RequestParam("watchlistId") Integer watchlistId, HttpSession session) {
+        logger.info("🗑️ 관심종목 삭제 요청: watchlistId={}", watchlistId);
         
-        Map<String, Object> response = new HashMap<>();
+        // 세션에서 회원 정보 가져오기
         MemberVO member = (MemberVO) session.getAttribute("member");
         
         if (member == null) {
-            response.put("success", false);
-            response.put("message", "로그인이 필요합니다.");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            return "{\"success\": false, \"message\": \"로그인이 필요합니다\"}";
         }
+        
+        Integer memberId = member.getMemberId();
         
         try {
-            watchlistService.removeFromWatchlist(watchlistId);
-            response.put("success", true);
-            response.put("message", "관심종목에서 삭제되었습니다.");
-            return ResponseEntity.ok(response);
+            // 본인 소유 확인
+            WatchlistVO watchlist = watchlistDAO.selectById(watchlistId);
+            if (watchlist == null || !watchlist.getMemberId().equals(memberId)) {
+                return "{\"success\": false, \"message\": \"권한이 없습니다\"}";
+            }
+            
+            // 삭제
+            watchlistDAO.deleteWatchlistById(watchlistId);
+            
+            logger.info("✅ 관심종목 삭제 완료");
+            return "{\"success\": true, \"message\": \"관심종목에서 삭제되었습니다\"}";
+            
         } catch (Exception e) {
-            e.printStackTrace();
-            response.put("success", false);
-            response.put("message", "삭제 중 오류가 발생했습니다.");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-    
-    /**
-     * 관심종목 여부 확인 (AJAX)
-     */
-    @GetMapping("/check")
-    @ResponseBody
-    public ResponseEntity<Map<String, Object>> check(
-            @RequestParam String stockCode,
-            HttpSession session) {
-        
-        Map<String, Object> response = new HashMap<>();
-        MemberVO member = (MemberVO) session.getAttribute("member");
-        
-        if (member == null) {
-            response.put("isInWatchlist", false);
-            return ResponseEntity.ok(response);
-        }
-        
-        try {
-            boolean isInWatchlist = watchlistService.isInWatchlist(member.getMemberId(), stockCode);
-            response.put("isInWatchlist", isInWatchlist);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            e.printStackTrace();
-            response.put("isInWatchlist", false);
-            return ResponseEntity.ok(response);
+            logger.error("❌ 관심종목 삭제 실패", e);
+            return "{\"success\": false, \"message\": \"삭제 중 오류가 발생했습니다\"}";
         }
     }
 }

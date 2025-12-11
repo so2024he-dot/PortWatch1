@@ -69,22 +69,23 @@
             <groupId>org.mybatis</groupId>
             <artifactId>mybatis-spring</artifactId>
             <version>1.3.2</version>
-        </dependency>
+        </dependency> 
         
-        <!-- MySQL -->
+          <!-- MySQL 8.0 드라이버 -->
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
-            <version>8.0.28</version>
+            <version>8.0.33</version>
         </dependency>
+ 
         
-        <!-- HikariCP -->
+           <!-- HikariCP (선택사항 - 성능 향상) -->
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
-            <version>2.7.9</version>
+            <version>3.4.5</version>
         </dependency>
-        
+
         <!-- Servlet & JSP -->
         <dependency>
             <groupId>javax.servlet</groupId>
@@ -149,14 +150,22 @@
             <version>5.0.7.RELEASE</version>
         </dependency>
         
-        <!-- Jsoup: HTML 파싱 (네이버 금융 크롤링용) -->
+         <!--Jsoup: HTML 파싱 (네이버 금융 크롤링용) -->
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
             <version>1.15.3</version>
+        </dependency>          
+    
+
+		<!-- JSON 파싱 (Alpha Vantage API) -->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20180813</version>
         </dependency>
-        
-        <!-- Logging -->
+
+		<!-- Logging -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -177,8 +186,39 @@
             <artifactId>log4j</artifactId>
             <version>1.2.17</version>
         </dependency>
-        
-        <!-- Test -->
+
+		<!-- Servlet API -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>3.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet.jsp</groupId>
+            <artifactId>jsp-api</artifactId>
+            <version>2.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>jstl</artifactId>
+            <version>1.2</version>
+        </dependency>
+
+		<!-- File Upload -->
+        <dependency>
+            <groupId>commons-fileupload</groupId>
+            <artifactId>commons-fileupload</artifactId>
+            <version>1.3.3</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.6</version>
+        </dependency>
+
+		<!-- Test -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
