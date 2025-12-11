@@ -13,12 +13,20 @@ import com.portwatch.domain.PortfolioVO;
 import com.portwatch.domain.PortfolioStockVO;
 import com.portwatch.service.PortfolioService;
 import com.portwatch.service.StockService;
+import com.portwatch.service.ExchangeRateService;
+
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
 /**
- * 포트폴리오 Controller
- * API 없이 서버 렌더링 방식으로 완전 작동
+ * 포트폴리오 Controller (환율 정보 지원)
+ * 
+ * ✅ 수정사항:
+ * - createForm에 환율 정보 추가
+ * - 미국 주식 포트폴리오 추가 지원
+ * 
+ * @version 2.0
  */
 @Controller
 @RequestMapping("/portfolio")
@@ -29,6 +37,9 @@ public class PortfolioController {
     
     @Autowired
     private StockService stockService;
+    
+    @Autowired
+    private ExchangeRateService exchangeRateService;
     
     /**
      * 포트폴리오 목록 페이지
@@ -53,6 +64,14 @@ public class PortfolioController {
             model.addAttribute("portfolioList", portfolioList);
             model.addAttribute("summary", summary);
             model.addAttribute("stockList", stockList);
+            
+            // ✅ 환율 정보 추가 (미국 주식 표시용)
+            try {
+                BigDecimal exchangeRate = exchangeRateService.getUSDToKRW();
+                model.addAttribute("exchangeRate", exchangeRate);
+            } catch (Exception e) {
+                model.addAttribute("exchangeRate", new BigDecimal("1310.00"));
+            }
             
             return "portfolio/list";
             
@@ -102,7 +121,7 @@ public class PortfolioController {
     }
     
     /**
-     * 포트폴리오 생성 폼
+     * 포트폴리오 생성 폼 (✅ 환율 정보 추가)
      */
     @GetMapping("/create")
     public String createForm(HttpSession session, Model model) {
@@ -117,11 +136,22 @@ public class PortfolioController {
             model.addAttribute("stockList", stockList);
             model.addAttribute("portfolioVO", new PortfolioVO());
             
+            // ✅ 환율 정보 추가
+            try {
+                BigDecimal exchangeRate = exchangeRateService.getUSDToKRW();
+                model.addAttribute("exchangeRate", exchangeRate);
+                System.out.println("✅ 환율 정보: 1 USD = " + exchangeRate + " KRW");
+            } catch (Exception e) {
+                System.err.println("⚠️ 환율 조회 실패, 기본값 사용: " + e.getMessage());
+                model.addAttribute("exchangeRate", new BigDecimal("1310.00"));
+            }
+            
             return "portfolio/create";
             
         } catch (Exception e) {
             e.printStackTrace();
             model.addAttribute("error", "종목 목록을 불러오는 중 오류가 발생했습니다.");
+            model.addAttribute("exchangeRate", new BigDecimal("1310.00"));
             return "portfolio/create";
         }
     }
@@ -145,6 +175,14 @@ public class PortfolioController {
             try {
                 List<Map<String, Object>> stockList = stockService.getAllStocks();
                 model.addAttribute("stockList", stockList);
+                
+                // 환율 정보도 다시 추가
+                try {
+                    BigDecimal exchangeRate = exchangeRateService.getUSDToKRW();
+                    model.addAttribute("exchangeRate", exchangeRate);
+                } catch (Exception e) {
+                    model.addAttribute("exchangeRate", new BigDecimal("1310.00"));
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -165,6 +203,14 @@ public class PortfolioController {
             try {
                 List<Map<String, Object>> stockList = stockService.getAllStocks();
                 model.addAttribute("stockList", stockList);
+                
+                // 환율 정보도 다시 추가
+                try {
+                    BigDecimal exchangeRate = exchangeRateService.getUSDToKRW();
+                    model.addAttribute("exchangeRate", exchangeRate);
+                } catch (Exception ex) {
+                    model.addAttribute("exchangeRate", new BigDecimal("1310.00"));
+                }
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
