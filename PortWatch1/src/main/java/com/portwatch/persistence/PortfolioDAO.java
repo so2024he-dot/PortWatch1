@@ -1,54 +1,47 @@
-    package com.portwatch.persistence;
+package com.portwatch.persistence;
 
 import com.portwatch.domain.PortfolioVO;
-import com.portwatch.domain.PortfolioStockVO;
 import java.util.List;
 import java.util.Map;
 
 /**
  * 포트폴리오 DAO 인터페이스
+ * 
+ * @author PortWatch
+ * @version 3.0
  */
 public interface PortfolioDAO {
     
     /**
      * 포트폴리오 추가
      */
-    void insertPortfolio(PortfolioVO portfolio) throws Exception;
+    void insert(PortfolioVO portfolioVO);
     
     /**
-     * 회원의 포트폴리오 목록 조회
+     * 포트폴리오 수정 (추가 매입 시 사용)
      */
-    List<PortfolioVO> selectPortfolioByMember(int memberId) throws Exception;
-    
-    /**
-     * 포트폴리오 ID로 조회
-     */
-    PortfolioVO selectPortfolioById(long portfolioId) throws Exception;
-    
-    /**
-     * 중복 확인
-     */
-    int checkDuplicate(Map<String, Object> params) throws Exception;
-    
-    /**
-     * 포트폴리오 수정
-     */
-    void updatePortfolio(PortfolioVO portfolio) throws Exception;
+    void update(PortfolioVO portfolioVO);
     
     /**
      * 포트폴리오 삭제
      */
-    void deletePortfolio(long portfolioId) throws Exception;
+    void delete(int portfolioId);
     
     /**
-     * 포트폴리오 요약 정보
+     * 회원의 전체 포트폴리오 조회
      */
-    Map<String, Object> getPortfolioSummary(int memberId) throws Exception;
+    List<PortfolioVO> selectByMember(int memberId);
     
     /**
-     * 포트폴리오에 속한 종목 목록
+     * 특정 포트폴리오 조회
      */
-    List<PortfolioStockVO> selectPortfolioStocks(Long portfolioId) throws Exception;
+    PortfolioVO selectById(int portfolioId);
+    
+    /**
+     * 회원의 특정 종목 보유 여부 확인 (추가 매입 지원)
+     * 
+     * @param params Map with memberId and stockId
+     * @return 이미 보유 중이면 PortfolioVO 반환, 없으면 null
+     */
+    PortfolioVO selectByMemberAndStock(Map<String, Object> params);
 }
-
-    
