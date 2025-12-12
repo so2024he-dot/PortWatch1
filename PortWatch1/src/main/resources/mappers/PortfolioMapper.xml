@@ -2,11 +2,8 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.portwatch.persistence.PortfolioDAO">
-
-    <!-- ============================================ -->
-    <!-- ResultMap 정의 -->
-    <!-- ============================================ -->
+<mapper namespace="com.portwatch.persistence.PortfolioDAO">  
+   <!--   ✅ 수정된 ResultMap (created_at 제거, industry 추가) --> 
     <resultMap id="PortfolioResultMap" type="com.portwatch.domain.PortfolioVO">
         <id property="portfolioId" column="portfolio_id" />
         <result property="memberId" column="member_id" />
@@ -14,14 +11,13 @@
         <result property="quantity" column="quantity" />
         <result property="avgPurchasePrice" column="avg_purchase_price" />
         <result property="purchaseDate" column="purchase_date" />
-        <result property="createdAt" column="created_at" />
         <result property="updatedAt" column="updated_at" />
         
-        <!-- 종목 정보 조인 (선택사항) -->
+        <!-- STOCK 테이블 조인 정보 -->
         <result property="stockCode" column="stock_code" />
         <result property="stockName" column="stock_name" />
         <result property="marketType" column="market_type" />
-        <result property="currentPrice" column="current_price" />
+        <result property="industry" column="industry" />
     </resultMap>
 
     <!-- ============================================ -->
@@ -35,7 +31,6 @@
             quantity,
             avg_purchase_price,
             purchase_date,
-            created_at,
             updated_at
         ) VALUES (
             #{memberId},
@@ -43,7 +38,6 @@
             #{quantity},
             #{avgPurchasePrice},
             #{purchaseDate},
-            NOW(),
             NOW()
         )
     </insert>
@@ -80,12 +74,11 @@
             p.quantity,
             p.avg_purchase_price,
             p.purchase_date,
-            p.created_at,
             p.updated_at,
             s.stock_code,
             s.stock_name,
             s.market_type,
-            s.current_price
+            s.industry
         FROM PORTFOLIO p
         INNER JOIN STOCK s ON p.stock_id = s.stock_id
         WHERE p.member_id = #{memberId}
@@ -103,12 +96,11 @@
             p.quantity,
             p.avg_purchase_price,
             p.purchase_date,
-            p.created_at,
             p.updated_at,
             s.stock_code,
             s.stock_name,
             s.market_type,
-            s.current_price
+            s.industry
         FROM PORTFOLIO p
         INNER JOIN STOCK s ON p.stock_id = s.stock_id
         WHERE p.portfolio_id = #{portfolioId}
@@ -116,7 +108,6 @@
 
     <!-- ============================================ -->
     <!-- SELECT: 회원의 특정 종목 보유 여부 확인 -->
-    <!-- 추가 매입 시 기존 보유 여부 확인용 -->
     <!-- ============================================ -->
     <select id="selectByMemberAndStock" parameterType="map" resultMap="PortfolioResultMap">
         SELECT 
@@ -126,12 +117,11 @@
             p.quantity,
             p.avg_purchase_price,
             p.purchase_date,
-            p.created_at,
             p.updated_at,
             s.stock_code,
             s.stock_name,
             s.market_type,
-            s.current_price
+            s.industry
         FROM PORTFOLIO p
         INNER JOIN STOCK s ON p.stock_id = s.stock_id
         WHERE p.member_id = #{memberId}

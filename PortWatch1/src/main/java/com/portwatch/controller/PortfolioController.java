@@ -27,7 +27,7 @@ import java.util.List;
  * 추가 매입 지원 + 로그인 세션 문제 해결
  * 
  * @author PortWatch
- * @version 3.1 (로그인 세션 문제 해결)
+ * @version 3.2 (StockService 타입 에러 수정)
  */
 @Controller
 @RequestMapping("/portfolio")
@@ -140,11 +140,31 @@ public class PortfolioController {
             model.addAttribute("exchangeRate", new BigDecimal("1310.00"));
         }
         
-        // 전체 종목 목록
+        // ✅ 수정: getAllStocks() → getAllStocksList()
+        // 전체 종목 목록 조회 (List<StockVO> 반환)
         try {
-            List<StockVO> stockList = stockService.getAllStocks();
+            List<StockVO> stockList = stockService.getAllStocksList(); // ✅ 타입 일치!
             model.addAttribute("stockList", stockList);
             System.out.println("✅ 전체 종목 수: " + stockList.size());
+            
+            // 시장별 종목 수 출력 (디버깅)
+            long kospiCount = stockList.stream()
+                .filter(s -> "KOSPI".equalsIgnoreCase(s.getMarketType()))
+                .count();
+            long kosdaqCount = stockList.stream()
+                .filter(s -> "KOSDAQ".equalsIgnoreCase(s.getMarketType()))
+                .count();
+            long usCount = stockList.stream()
+                .filter(s -> s.getMarketType() != null && 
+                       (s.getMarketType().equalsIgnoreCase("NASDAQ") || 
+                        s.getMarketType().equalsIgnoreCase("NYSE") ||
+                        s.getMarketType().equalsIgnoreCase("AMEX")))
+                .count();
+            
+            System.out.println("  - KOSPI: " + kospiCount + "개");
+            System.out.println("  - KOSDAQ: " + kosdaqCount + "개");
+            System.out.println("  - 미국 종목: " + usCount + "개");
+            
         } catch (Exception e) {
             System.err.println("❌ 종목 목록 조회 실패: " + e.getMessage());
             e.printStackTrace();

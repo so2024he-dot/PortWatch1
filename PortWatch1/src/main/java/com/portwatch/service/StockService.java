@@ -1,4 +1,4 @@
-    package com.portwatch.service;
+package com.portwatch.service;
 
 import com.portwatch.domain.StockVO;
 import java.util.List;
