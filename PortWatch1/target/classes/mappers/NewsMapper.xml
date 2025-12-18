@@ -2,65 +2,148 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.portwatch.persistence.NewsDAO">
-
-    <!-- 뉴스 저장 -->
-    <insert id="insertNews" parameterType="com.portwatch.domain.NewsVO">
-        INSERT INTO NEWS (news_title, news_content, news_source, news_url, news_pub_date, news_reg_date)
-        VALUES (#{newsTitle}, #{newsContent}, #{newsSource}, #{newsUrl}, #{newsPubDate}, NOW())
-    </insert>
+<mapper namespace="com.portwatch.dao.NewsDAO">
     
-    <!-- 최신 뉴스 조회 -->
-    <select id="selectLatestNews" parameterType="int" resultType="com.portwatch.domain.NewsVO">
-        SELECT 
-            news_id as newsId,
-            news_title as newsTitle,
-            news_content as newsContent,
-            news_source as newsSource,
-            news_url as newsUrl,
-            news_pub_date as newsPubDate,
-            news_reg_date as newsRegDate
-        FROM NEWS
-        ORDER BY news_reg_date DESC
-        LIMIT #{limit}
-    </select>
+    <!-- Result Map -->
+    <resultMap id="newsResultMap" type="com.portwatch.domain.NewsVO">
+        <id property="newsId" column="news_id"/>
+        <result property="stockCode" column="stock_code"/>
+        <result property="stockName" column="stock_name"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="summary" column="summary"/>
+        <result property="link" column="link"/>
+        <result property="source" column="source"/>
+        <result property="imageUrl" column="image_url"/>
+        <result property="publishedDate" column="published_date"/>
+        <result property="createdDate" column="created_date"/>
+        <result property="sentiment" column="sentiment"/>
+    </resultMap>
     
-    <!-- 특정 종목 관련 뉴스 조회 -->
-    <select id="selectNewsByStock" resultType="com.portwatch.domain.NewsVO">
+    <!-- 최근 뉴스 조회 -->
+    <select id="selectRecentNews" resultMap="newsResultMap">
         SELECT 
-            n.news_id as newsId,
-            n.news_title as newsTitle,
-            n.news_content as newsContent,
-            n.news_source as newsSource,
-            n.news_url as newsUrl,
-            n.news_pub_date as newsPubDate,
-            n.news_reg_date as newsRegDate
-        FROM NEWS n
-        INNER JOIN STOCK s ON n.news_title LIKE CONCAT('%', s.stock_name, '%')
-        WHERE s.stock_code = #{stockCode}
-        ORDER BY n.news_reg_date DESC
+            news_id,
+            stock_code,
+            stock_name,
+            title,
+            content,
+            summary,
+            link,
+            source,
+            image_url,
+            published_date,
+            created_date,
+            sentiment
+        FROM news
+        ORDER BY published_date DESC, created_date DESC
         LIMIT #{limit}
     </select>
     
     <!-- 뉴스 ID로 조회 -->
-    <select id="selectNewsById" parameterType="int" resultType="com.portwatch.domain.NewsVO">
+    <select id="selectNewsById" resultMap="newsResultMap">
         SELECT 
-            news_id as newsId,
-            news_title as newsTitle,
-            news_content as newsContent,
-            news_source as newsSource,
-            news_url as newsUrl,
-            news_pub_date as newsPubDate,
-            news_reg_date as newsRegDate
-        FROM NEWS
+            news_id,
+            stock_code,
+            stock_name,
+            title,
+            content,
+            summary,
+            link,
+            source,
+            image_url,
+            published_date,
+            created_date,
+            sentiment
+        FROM news
         WHERE news_id = #{newsId}
     </select>
     
-    <!-- 중복 뉴스 확인 (URL 기준) -->
-    <select id="checkDuplicateNews" parameterType="string" resultType="int">
-        SELECT COUNT(*) 
-        FROM NEWS 
-        WHERE news_url = #{newsUrl}
+    <!-- 종목별 뉴스 조회 -->
+    <select id="selectNewsByStockCode" resultMap="newsResultMap">
+        SELECT 
+            news_id,
+            stock_code,
+            stock_name,
+            title,
+            content,
+            summary,
+            link,
+            source,
+            image_url,
+            published_date,
+            created_date,
+            sentiment
+        FROM news
+        WHERE stock_code = #{stockCode}
+        ORDER BY published_date DESC, created_date DESC
+        LIMIT #{limit}
     </select>
-
+    
+    <!-- 뉴스 등록 -->
+    <insert id="insertNews" parameterType="com.portwatch.domain.NewsVO" 
+            useGeneratedKeys="true" keyProperty="newsId">
+        INSERT INTO news (
+            stock_code,
+            stock_name,
+            title,
+            content,
+            summary,
+            link,
+            source,
+            image_url,
+            published_date,
+            created_date,
+            sentiment
+        ) VALUES (
+            #{stockCode},
+            #{stockName},
+            #{title},
+            #{content},
+            #{summary},
+            #{link},
+            #{source},
+            #{imageUrl},
+            #{publishedDate},
+            NOW(),
+            #{sentiment}
+        )
+    </insert>
+    
+    <!-- 중복 뉴스 체크 -->
+    <select id="checkDuplicateNews" resultType="int">
+        SELECT COUNT(*)
+        FROM news
+        WHERE link = #{link}
+    </select>
+    
+    <!-- 오래된 뉴스 삭제 -->
+    <delete id="deleteOldNews">
+        DELETE FROM news
+        WHERE created_date &lt; DATE_SUB(NOW(), INTERVAL #{days} DAY)
+    </delete>
+    
+    <!-- 뉴스 수정 -->
+    <update id="updateNews" parameterType="com.portwatch.domain.NewsVO">
+        UPDATE news
+        SET
+            stock_code = #{stockCode},
+            stock_name = #{stockName},
+            title = #{title},
+            content = #{content},
+            summary = #{summary},
+            link = #{link},
+            source = #{source},
+            image_url = #{imageUrl},
+            published_date = #{publishedDate},
+            sentiment = #{sentiment}
+        WHERE news_id = #{newsId}
+    </update>
+    
+    <!-- 뉴스 삭제 -->
+    <delete id="deleteNews">
+        DELETE FROM news
+        WHERE news_id = #{newsId}
+    </delete>
+    
 </mapper>

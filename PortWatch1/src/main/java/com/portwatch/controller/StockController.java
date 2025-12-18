@@ -126,7 +126,7 @@ public class StockController {
             
             // 종목 관련 뉴스 가져오기
             try {
-                List<NewsVO> newsList = newsService.getNewsByStock(stockCode, 5);
+                List<NewsVO> newsList = newsService.getNewsByStockCode(stockCode, 5);
                 model.addAttribute("newsList", newsList);
             } catch (Exception e) {
                 System.err.println("뉴스 로드 실패: " + e.getMessage());

@@ -1,63 +1,50 @@
 package com.portwatch.domain;
 
-import java.sql.Timestamp;
+import java.util.Date;
 
 /**
- * 뉴스 VO
- * NEWS 테이블 매핑
+ * 뉴스 도메인 객체
+ * 
+ * @author PortWatch
+ * @version 1.0
  */
 public class NewsVO {
-    private Integer newsId;
-    private String newsTitle;
-    private String newsContent;
-    private String newsSource;
-    private String newsUrl;
-    private String stockCode;  // 종목 코드 (종목별 뉴스용)
-    private Timestamp newsPubDate;
-    private Timestamp newsRegDate;
+    
+    private Long newsId;              // 뉴스 ID (PK)
+    private String stockCode;         // 종목 코드
+    private String stockName;         // 종목명
+    private String title;             // 뉴스 제목
+    private String content;           // 뉴스 내용
+    private String summary;           // 뉴스 요약
+    private String link;              // 뉴스 원문 링크
+    private String source;            // 뉴스 출처 (네이버 금융, 다음 금융 등)
+    private String imageUrl;          // 이미지 URL
+    private Date publishedDate;       // 뉴스 발행일
+    private Date createdDate;         // 등록일
+    private String sentiment;         // 감성 분석 (긍정/부정/중립)
     
     // 기본 생성자
     public NewsVO() {}
     
+    // 전체 생성자
+    public NewsVO(String stockCode, String stockName, String title, String content, 
+                  String link, String source, Date publishedDate) {
+        this.stockCode = stockCode;
+        this.stockName = stockName;
+        this.title = title;
+        this.content = content;
+        this.link = link;
+        this.source = source;
+        this.publishedDate = publishedDate;
+    }
+    
     // Getters and Setters
-    public Integer getNewsId() {
+    public Long getNewsId() {
         return newsId;
     }
     
-    public void setNewsId(Integer newsId) {
+    public void setNewsId(Long newsId) {
         this.newsId = newsId;
-    }
-    
-    public String getNewsTitle() {
-        return newsTitle;
-    }
-    
-    public void setNewsTitle(String newsTitle) {
-        this.newsTitle = newsTitle;
-    }
-    
-    public String getNewsContent() {
-        return newsContent;
-    }
-    
-    public void setNewsContent(String newsContent) {
-        this.newsContent = newsContent;
-    }
-    
-    public String getNewsSource() {
-        return newsSource;
-    }
-    
-    public void setNewsSource(String newsSource) {
-        this.newsSource = newsSource;
-    }
-    
-    public String getNewsUrl() {
-        return newsUrl;
-    }
-    
-    public void setNewsUrl(String newsUrl) {
-        this.newsUrl = newsUrl;
     }
     
     public String getStockCode() {
@@ -68,30 +55,89 @@ public class NewsVO {
         this.stockCode = stockCode;
     }
     
-    public Timestamp getNewsPubDate() {
-        return newsPubDate;
+    public String getStockName() {
+        return stockName;
     }
     
-    public void setNewsPubDate(Timestamp newsPubDate) {
-        this.newsPubDate = newsPubDate;
+    public void setStockName(String stockName) {
+        this.stockName = stockName;
     }
     
-    public Timestamp getNewsRegDate() {
-        return newsRegDate;
+    public String getTitle() {
+        return title;
     }
     
-    public void setNewsRegDate(Timestamp newsRegDate) {
-        this.newsRegDate = newsRegDate;
+    public void setTitle(String title) {
+        this.title = title;
+    }
+    
+    public String getContent() {
+        return content;
+    }
+    
+    public void setContent(String content) {
+        this.content = content;
+    }
+    
+    public String getSummary() {
+        return summary;
+    }
+    
+    public void setSummary(String summary) {
+        this.summary = summary;
+    }
+    
+    public String getLink() {
+        return link;
+    }
+    
+    public void setLink(String link) {
+        this.link = link;
+    }
+    
+    public String getSource() {
+        return source;
+    }
+    
+    public void setSource(String source) {
+        this.source = source;
+    }
+    
+    public String getImageUrl() {
+        return imageUrl;
+    }
+    
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+    
+    public Date getPublishedDate() {
+        return publishedDate;
+    }
+    
+    public void setPublishedDate(Date publishedDate) {
+        this.publishedDate = publishedDate;
+    }
+    
+    public Date getCreatedDate() {
+        return createdDate;
+    }
+    
+    public void setCreatedDate(Date createdDate) {
+        this.createdDate = createdDate;
+    }
+    
+    public String getSentiment() {
+        return sentiment;
+    }
+    
+    public void setSentiment(String sentiment) {
+        this.sentiment = sentiment;
     }
     
     @Override
     public String toString() {
-        return "NewsVO{" +
-                "newsId=" + newsId +
-                ", newsTitle='" + newsTitle + '\'' +
-                ", newsSource='" + newsSource + '\'' +
-                ", stockCode='" + stockCode + '\'' +
-                ", newsPubDate=" + newsPubDate +
-                '}';
+        return "NewsVO [newsId=" + newsId + ", stockCode=" + stockCode + ", stockName=" + stockName 
+                + ", title=" + title + ", source=" + source + ", publishedDate=" + publishedDate + "]";
     }
 }
