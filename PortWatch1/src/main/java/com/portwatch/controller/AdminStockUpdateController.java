@@ -1,202 +1,293 @@
 package com.portwatch.controller;
 
-import com.portwatch.scheduler.StockPriceScheduler;
-import com.portwatch.service.StockPriceUpdateService;
-import com.portwatch.service.USStockPriceUpdateService;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.portwatch.service.StockPriceUpdateService;
+import com.portwatch.service.USStockPriceUpdateService;
 
 /**
- * 주가 업데이트 관리자 컨트롤러
- * 수동으로 주가 업데이트를 실행할 수 있는 API 제공
+ * 관리자용 주가 업데이트 API Controller
  * 
- * 주의: 실제 운영 환경에서는 관리자 권한 체크 필요
+ * 수동 크롤링 및 테스트용 엔드포인트 제공
+ * 
+ * @author PortWatch
+ * @version 3.0 (Spring 5.0.7 + MySQL 8.0)
  */
 @RestController
-@RequestMapping("/api/admin/stock-update")
+@RequestMapping("/api/admin")
 public class AdminStockUpdateController {
-
+    
     private static final Logger logger = LoggerFactory.getLogger(AdminStockUpdateController.class);
-
+    
     @Autowired
-    private StockPriceScheduler stockPriceScheduler;
-
+    private StockPriceUpdateService stockPriceUpdateService;
+    
     @Autowired
-    private StockPriceUpdateService koreanStockService;
-
-    @Autowired
-    private USStockPriceUpdateService usStockService;
-
+    private USStockPriceUpdateService usStockPriceUpdateService;
+    
     /**
-     * 한국 주식 수동 업데이트
-     * GET /api/admin/stock-update/korean
-     */
-    @GetMapping("/korean")
-    public ResponseEntity<Map<String, Object>> updateKoreanStocks() {
-        logger.info("🔧 [API] 한국 주식 수동 업데이트 요청");
-        
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            long startTime = System.currentTimeMillis();
-            int count = stockPriceScheduler.manualUpdateKorean();
-            long elapsedTime = (System.currentTimeMillis() - startTime) / 1000;
-            
-            response.put("success", true);
-            response.put("market", "KOREAN");
-            response.put("updatedCount", count);
-            response.put("elapsedSeconds", elapsedTime);
-            response.put("message", "한국 주식 업데이트 완료: " + count + "개 종목");
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            logger.error("❌ [API] 한국 주식 업데이트 실패", e);
-            
-            response.put("success", false);
-            response.put("market", "KOREAN");
-            response.put("error", e.getMessage());
-            
-            return ResponseEntity.status(500).body(response);
-        }
-    }
-
-    /**
-     * 미국 주식 수동 업데이트
-     * GET /api/admin/stock-update/us
-     */
-    @GetMapping("/us")
-    public ResponseEntity<Map<String, Object>> updateUSStocks() {
-        logger.info("🔧 [API] 미국 주식 수동 업데이트 요청");
-        
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            long startTime = System.currentTimeMillis();
-            int count = stockPriceScheduler.manualUpdateUS();
-            long elapsedTime = (System.currentTimeMillis() - startTime) / 1000;
-            
-            response.put("success", true);
-            response.put("market", "US");
-            response.put("updatedCount", count);
-            response.put("elapsedSeconds", elapsedTime);
-            response.put("message", "미국 주식 업데이트 완료: " + count + "개 종목");
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            logger.error("❌ [API] 미국 주식 업데이트 실패", e);
-            
-            response.put("success", false);
-            response.put("market", "US");
-            response.put("error", e.getMessage());
-            
-            return ResponseEntity.status(500).body(response);
-        }
-    }
-
-    /**
-     * 전체 주식 수동 업데이트 (한국 + 미국)
-     * GET /api/admin/stock-update/all
-     */
-    @GetMapping("/all")
-    public ResponseEntity<Map<String, Object>> updateAllStocks() {
-        logger.info("🔧 [API] 전체 주식 수동 업데이트 요청");
-        
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            long startTime = System.currentTimeMillis();
-            Map<String, Integer> updateResult = stockPriceScheduler.manualUpdateAll();
-            long elapsedTime = (System.currentTimeMillis() - startTime) / 1000;
-            
-            response.put("success", true);
-            response.put("market", "ALL");
-            response.put("koreanCount", updateResult.get("korean"));
-            response.put("usCount", updateResult.get("us"));
-            response.put("totalCount", updateResult.get("total"));
-            response.put("elapsedSeconds", elapsedTime);
-            response.put("message", "전체 주식 업데이트 완료: 한국 " + updateResult.get("korean") + 
-                    "개, 미국 " + updateResult.get("us") + "개");
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            logger.error("❌ [API] 전체 주식 업데이트 실패", e);
-            
-            response.put("success", false);
-            response.put("market", "ALL");
-            response.put("error", e.getMessage());
-            
-            return ResponseEntity.status(500).body(response);
-        }
-    }
-
-    /**
-     * 특정 종목 수동 업데이트
-     * GET /api/admin/stock-update/single/{stockCode}
+     * 전체 주식 업데이트 (한국 + 미국)
      * 
-     * 예: /api/admin/stock-update/single/005930 (삼성전자)
-     *     /api/admin/stock-update/single/AAPL (애플)
+     * GET /api/admin/update-all
+     * 
+     * 경고: 시간이 오래 걸릴 수 있습니다 (10분 이상)
      */
-    @GetMapping("/single/{stockCode}")
-    public ResponseEntity<Map<String, Object>> updateSingleStock(@PathVariable String stockCode) {
-        logger.info("🔧 [API] 단일 종목 업데이트 요청: {}", stockCode);
-        
+    @GetMapping("/update-all")
+    public ResponseEntity<Map<String, Object>> updateAll() {
         Map<String, Object> response = new HashMap<>();
+        
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        logger.info("🔄 전체 주식 현재가 업데이트 시작");
         
         try {
             long startTime = System.currentTimeMillis();
             
-            // 미국 주식인지 한국 주식인지 판단 (간단한 방법: 알파벳으로 시작하면 미국)
-            boolean isUSStock = stockCode.matches("^[A-Z]+$");
+            // 한국 주식
+            logger.info("🇰🇷 한국 주식 업데이트 시작...");
+            stockPriceUpdateService.updateAllStockPrices();
+            
+            // 미국 주식
+            logger.info("🇺🇸 미국 주식 업데이트 시작...");
+            usStockPriceUpdateService.updateAllUSStockPrices();
+            
+            long endTime = System.currentTimeMillis();
+            long duration = (endTime - startTime) / 1000; // 초
+            
+            response.put("success", true);
+            response.put("message", "전체 주식 현재가 업데이트 완료");
+            response.put("duration", duration + "초");
+            
+            logger.info("✅ 전체 업데이트 완료 ({}초 소요)", duration);
+            
+        } catch (Exception e) {
+            logger.error("❌ 전체 업데이트 실패", e);
+            response.put("success", false);
+            response.put("message", "업데이트 실패: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        } finally {
+            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        }
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * 한국 주식만 업데이트
+     * 
+     * GET /api/admin/update-korean
+     */
+    @GetMapping("/update-korean")
+    public ResponseEntity<Map<String, Object>> updateKorean() {
+        Map<String, Object> response = new HashMap<>();
+        
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        logger.info("🇰🇷 한국 주식 현재가 업데이트 시작");
+        
+        try {
+            long startTime = System.currentTimeMillis();
+            
+            stockPriceUpdateService.updateAllStockPrices();
+            
+            long endTime = System.currentTimeMillis();
+            long duration = (endTime - startTime) / 1000;
+            
+            response.put("success", true);
+            response.put("message", "한국 주식 현재가 업데이트 완료");
+            response.put("duration", duration + "초");
+            
+            logger.info("✅ 한국 주식 업데이트 완료 ({}초 소요)", duration);
+            
+        } catch (Exception e) {
+            logger.error("❌ 한국 주식 업데이트 실패", e);
+            response.put("success", false);
+            response.put("message", "업데이트 실패: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        } finally {
+            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        }
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * 미국 주식만 업데이트
+     * 
+     * GET /api/admin/update-us
+     * 
+     * 경고: API 제한으로 인해 매우 느릴 수 있습니다
+     */
+    @GetMapping("/update-us")
+    public ResponseEntity<Map<String, Object>> updateUS() {
+        Map<String, Object> response = new HashMap<>();
+        
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        logger.info("🇺🇸 미국 주식 현재가 업데이트 시작");
+        
+        try {
+            long startTime = System.currentTimeMillis();
+            
+            usStockPriceUpdateService.updateAllUSStockPrices();
+            
+            long endTime = System.currentTimeMillis();
+            long duration = (endTime - startTime) / 1000;
+            
+            response.put("success", true);
+            response.put("message", "미국 주식 현재가 업데이트 완료");
+            response.put("duration", duration + "초");
+            
+            logger.info("✅ 미국 주식 업데이트 완료 ({}초 소요)", duration);
+            
+        } catch (Exception e) {
+            logger.error("❌ 미국 주식 업데이트 실패", e);
+            response.put("success", false);
+            response.put("message", "업데이트 실패: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        } finally {
+            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        }
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * 특정 종목만 업데이트
+     * 
+     * GET /api/admin/update-stock?stockCode=005930
+     * 
+     * @param stockCode 종목 코드 (예: 005930, AAPL)
+     */
+    @GetMapping("/update-stock")
+    public ResponseEntity<Map<String, Object>> updateStock(
+            @RequestParam String stockCode) {
+        
+        Map<String, Object> response = new HashMap<>();
+        
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        logger.info("🔄 종목 현재가 업데이트: {}", stockCode);
+        
+        try {
+            // 한국 주식인지 미국 주식인지 판단
+            boolean isUSStock = stockCode.matches("[A-Z]{1,5}"); // 알파벳만
             
             if (isUSStock) {
-                usStockService.updateSingleUSStock(stockCode);
-                response.put("market", "US");
+                logger.info("🇺🇸 미국 주식으로 판단: {}", stockCode);
+                usStockPriceUpdateService.updateUSStockPrice(stockCode);
             } else {
-                koreanStockService.updateSingleStock(stockCode);
-                response.put("market", "KOREAN");
+                logger.info("🇰🇷 한국 주식으로 판단: {}", stockCode);
+                stockPriceUpdateService.updateStockPrice(stockCode);
             }
             
-            long elapsedTime = (System.currentTimeMillis() - startTime) / 1000;
-            
             response.put("success", true);
+            response.put("message", "종목 업데이트 완료: " + stockCode);
             response.put("stockCode", stockCode);
-            response.put("elapsedSeconds", elapsedTime);
-            response.put("message", "종목 " + stockCode + " 업데이트 완료");
+            response.put("type", isUSStock ? "미국 주식" : "한국 주식");
             
-            return ResponseEntity.ok(response);
+            logger.info("✅ 종목 업데이트 완료: {}", stockCode);
             
         } catch (Exception e) {
-            logger.error("❌ [API] 종목 {} 업데이트 실패", stockCode, e);
-            
+            logger.error("❌ 종목 업데이트 실패: {}", stockCode, e);
             response.put("success", false);
+            response.put("message", "업데이트 실패: " + e.getMessage());
             response.put("stockCode", stockCode);
-            response.put("error", e.getMessage());
-            
             return ResponseEntity.status(500).body(response);
+        } finally {
+            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         }
+        
+        return ResponseEntity.ok(response);
     }
-
+    
     /**
-     * 스케줄러 상태 확인
-     * GET /api/admin/stock-update/status
+     * 특정 시장만 업데이트 (KOSPI, KOSDAQ, NASDAQ, NYSE, AMEX)
+     * 
+     * GET /api/admin/update-market?marketType=KOSPI
+     * 
+     * @param marketType 시장 타입
      */
-    @GetMapping("/status")
-    public ResponseEntity<Map<String, Object>> getSchedulerStatus() {
+    @GetMapping("/update-market")
+    public ResponseEntity<Map<String, Object>> updateMarket(
+            @RequestParam String marketType) {
+        
         Map<String, Object> response = new HashMap<>();
         
-        response.put("schedulerEnabled", true);
-        response.put("koreanSchedule", "매일 00:00 (자정)");
-        response.put("usSchedule", "매일 06:00 (오전 6시)");
-        response.put("message", "스케줄러가 정상 작동 중입니다");
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        logger.info("📊 {} 시장 현재가 업데이트 시작", marketType);
+        
+        try {
+            long startTime = System.currentTimeMillis();
+            
+            // 미국 시장인지 한국 시장인지 판단
+            boolean isUSMarket = marketType.equals("NASDAQ") || 
+                                marketType.equals("NYSE") || 
+                                marketType.equals("AMEX");
+            
+            if (isUSMarket) {
+                usStockPriceUpdateService.updateByMarketType(marketType);
+            } else {
+                stockPriceUpdateService.updateByMarketType(marketType);
+            }
+            
+            long endTime = System.currentTimeMillis();
+            long duration = (endTime - startTime) / 1000;
+            
+            response.put("success", true);
+            response.put("message", marketType + " 시장 업데이트 완료");
+            response.put("marketType", marketType);
+            response.put("duration", duration + "초");
+            
+            logger.info("✅ {} 업데이트 완료 ({}초 소요)", marketType, duration);
+            
+        } catch (Exception e) {
+            logger.error("❌ {} 업데이트 실패", marketType, e);
+            response.put("success", false);
+            response.put("message", "업데이트 실패: " + e.getMessage());
+            response.put("marketType", marketType);
+            return ResponseEntity.status(500).body(response);
+        } finally {
+            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        }
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * 크롤링 시스템 상태 확인
+     * 
+     * GET /api/admin/update-status
+     */
+    @GetMapping("/update-status")
+    public ResponseEntity<Map<String, Object>> getStatus() {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            response.put("success", true);
+            response.put("message", "크롤링 시스템 정상 작동 중");
+            response.put("koreanService", "StockPriceUpdateService");
+            response.put("usService", "USStockPriceUpdateService");
+            response.put("availableEndpoints", new String[] {
+                "/api/admin/update-all",
+                "/api/admin/update-korean",
+                "/api/admin/update-us",
+                "/api/admin/update-stock?stockCode={code}",
+                "/api/admin/update-market?marketType={market}",
+                "/api/admin/update-status"
+            });
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "시스템 오류: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
         
         return ResponseEntity.ok(response);
     }

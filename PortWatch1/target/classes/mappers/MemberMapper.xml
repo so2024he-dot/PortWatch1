@@ -4,12 +4,13 @@
 
 <mapper namespace="com.portwatch.persistence.MemberDAO">
 
-    <insert id="insertMember" parameterType="com.portwatch.domain.MemberVO">
+    <!-- ⭐ typeAliasesPackage 설정으로 인해 MemberVO만 사용 가능 -->
+    <insert id="insertMember" parameterType="MemberVO">
         INSERT INTO MEMBER (member_email, member_pass, member_name, member_phone, created_at, updated_at)
         VALUES (#{memberEmail}, #{memberPass}, #{memberName}, #{memberPhone}, NOW(), NOW())
     </insert>
     
-    <select id="selectMemberByEmail" parameterType="string" resultType="com.portwatch.domain.MemberVO">
+    <select id="selectMemberByEmail" parameterType="string" resultType="MemberVO">
         SELECT 
             member_id as memberId,
             member_email as memberEmail,
@@ -22,7 +23,7 @@
         WHERE member_email = #{email}
     </select>
     
-    <select id="selectMemberById" parameterType="int" resultType="com.portwatch.domain.MemberVO">
+    <select id="selectMemberById" parameterType="int" resultType="MemberVO">
         SELECT 
             member_id as memberId,
             member_email as memberEmail,
@@ -39,7 +40,7 @@
         SELECT COUNT(*) FROM MEMBER WHERE member_email = #{email}
     </select>
     
-    <update id="updateMember" parameterType="com.portwatch.domain.MemberVO">
+    <update id="updateMember" parameterType="MemberVO">
         UPDATE MEMBER
         SET member_name = #{memberName},
             member_phone = #{memberPhone},

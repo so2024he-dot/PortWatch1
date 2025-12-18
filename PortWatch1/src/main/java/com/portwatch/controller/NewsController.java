@@ -1,19 +1,30 @@
-    package com.portwatch.controller;
+package com.portwatch.controller;
 
-import com.portwatch.domain.NewsVO;
-import com.portwatch.service.NewsService;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpSession;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.util.List;
+import com.portwatch.domain.MemberVO;
+import com.portwatch.domain.NewsVO;
+import com.portwatch.service.NewsService;
 
 /**
  * 뉴스 컨트롤러
+ * 
+ * @author PortWatch
+ * @version 2.0 (자동 새로고침 추가)
  */
 @Controller
 @RequestMapping("/news")
@@ -24,40 +35,135 @@ public class NewsController {
     
     /**
      * 뉴스 목록 페이지
+     * GET /news/list
      */
     @GetMapping("/list")
-    public String newsList(@RequestParam(defaultValue = "20") int limit, Model model) {
+    public String newsList(HttpSession session, Model model) {
+        
         try {
-            // 실시간 뉴스 크롤링
-            List<NewsVO> newsList = newsService.fetchNaverFinanceNews(limit);
+            // 로그인 체크 (선택사항)
+            MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
+            
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            System.out.println("📰 뉴스 목록 조회");
+            
+            // 뉴스 목록 조회 (최신 50개)
+            List<NewsVO> newsList = newsService.getRecentNews(50);
+            
+            System.out.println("  - 뉴스 개수: " + (newsList != null ? newsList.size() : 0));
+            System.out.println("✅ 뉴스 목록 조회 완료!");
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
             model.addAttribute("newsList", newsList);
-            model.addAttribute("newsCount", newsList.size());
+            
+            return "news/list";
             
         } catch (Exception e) {
             e.printStackTrace();
-            model.addAttribute("error", "뉴스를 불러오는 중 오류가 발생했습니다.");
+            model.addAttribute("error", e.getMessage());
+            return "error/500";
         }
-        
-        return "news/news_list";  // ⭐ 수정: list → news_list
     }
     
     /**
-     * 종목별 뉴스
+     * 뉴스 새로고침 API (AJAX)
+     * POST /news/refresh
      */
-    @GetMapping("/stock/{stockCode}")
-    public String stockNews(@PathVariable String stockCode, Model model) {
+    @PostMapping("/refresh")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> refreshNews() {
+        
+        Map<String, Object> response = new HashMap<>();
+        
         try {
-            List<NewsVO> newsList = newsService.getNewsByStock(stockCode, 10);
-            model.addAttribute("newsList", newsList);
-            model.addAttribute("stockCode", stockCode);
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            System.out.println("🔄 뉴스 자동 새로고침");
+            
+            // 뉴스 크롤링 실행
+            int count = newsService.crawlAndSaveNews();
+            
+            System.out.println("  - 수집된 뉴스: " + count + "개");
+            System.out.println("✅ 뉴스 새로고침 완료!");
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            response.put("success", true);
+            response.put("message", "뉴스를 새로고침했습니다.");
+            response.put("count", count);
+            
+            return ResponseEntity.ok(response);
             
         } catch (Exception e) {
             e.printStackTrace();
-            model.addAttribute("error", "뉴스를 불러오는 중 오류가 발생했습니다.");
+            
+            System.out.println("❌ 뉴스 새로고침 실패: " + e.getMessage());
+            
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
+    }
+    
+    /**
+     * 뉴스 상세 페이지
+     * GET /news/detail/{newsId}
+     */
+    @GetMapping("/detail/{newsId}")
+    public String newsDetail(Long newsId, Model model) {
         
-        return "news/stock";
+        try {
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            System.out.println("📰 뉴스 상세 조회");
+            System.out.println("  - 뉴스 ID: " + newsId);
+            
+            // 뉴스 조회
+            NewsVO news = newsService.getNewsById(newsId);
+            
+            if (news == null) {
+                model.addAttribute("error", "뉴스를 찾을 수 없습니다.");
+                return "error/404";
+            }
+            
+            System.out.println("  - 뉴스 제목: " + news.getTitle());
+            System.out.println("✅ 뉴스 상세 조회 완료!");
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            model.addAttribute("news", news);
+            
+            return "news/detail";
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("error", e.getMessage());
+            return "error/500";
+        }
+    }
+    
+    /**
+     * 종목별 뉴스 조회 API
+     * GET /news/api/stock/{stockCode}
+     */
+    @GetMapping("/api/stock/{stockCode}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getStockNews(String stockCode) {
+        
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            // 종목 뉴스 조회
+            List<NewsVO> newsList = newsService.getNewsByStockCode(stockCode, 20);
+            
+            response.put("success", true);
+            response.put("newsList", newsList);
+            response.put("count", newsList.size());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 }
-
-    

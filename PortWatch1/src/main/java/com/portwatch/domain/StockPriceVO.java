@@ -140,4 +140,19 @@ public class StockPriceVO {
                 ", tradingValue=" + tradingValue +
                 '}';
     }
+
+	public void setCurrentPrice(BigDecimal currentPrice) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void setPriceChange(BigDecimal priceChange) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void setPriceChangeRate(BigDecimal priceChangeRate) {
+		// TODO Auto-generated method stub
+		
+	}
 }

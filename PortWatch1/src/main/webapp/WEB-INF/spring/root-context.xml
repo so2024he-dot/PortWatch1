@@ -98,22 +98,13 @@
 	<task:annotation-driven />
 
 	<!-- ============================================ -->
-	<!-- 7. Properties 파일 로드 (선택사항) -->
+	<!-- 7. Properties 파일 로드 -->
 	<!-- ============================================ -->
 	<!-- application.properties 파일에서 설정 값 읽기 -->
 	<context:property-placeholder
 		location="classpath:application.properties" ignore-unresolvable="true"
 		ignore-resource-not-found="true" />
+		
 
-	<!-- ============================================ -->
-	<!-- 8. 미국 주식 API 설정 (XML 직접 설정 방식) -->
-	<!-- ============================================ -->
-	<bean id="usStockPriceUpdateService" 
-		class="com.portwatch.service.USStockPriceUpdateServiceImpl">
-		<!-- 여기에 발급받은 Alpha Vantage API 키를 직접 입력하세요! -->
-		<property name="apiKey" value="NM8OJLU28PMWSLOB" />
-		<property name="apiUrl" value="https://www.alphavantage.co/query" />
-	</bean>
-	
 
 </beans>

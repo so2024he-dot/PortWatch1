@@ -1,8 +1,12 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
 <jsp:include page="../common/header.jsp" />
+
+<!-- Chart.js 라이브러리 -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 <style>
     .page-header {
@@ -102,8 +106,16 @@
     .chart-title {
         font-size: 1.25rem;
         font-weight: 600;
+        margin-bottom: 1.5rem;
         color: #1f2937;
-        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 350px;
     }
     
     .portfolio-table {
@@ -126,7 +138,65 @@
         font-size: 1.25rem;
         font-weight: 600;
         color: #1f2937;
-        margin: 0;
+    }
+    
+    .btn-add {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+    
+    .btn-add:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    .portfolio-list-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .portfolio-list-table thead {
+        background: #f9fafb;
+    }
+    
+    .portfolio-list-table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: #6b7280;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .portfolio-list-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .portfolio-list-table tbody tr {
+        transition: all 0.2s;
+    }
+    
+    .portfolio-list-table tbody tr:hover {
+        background: #f9fafb;
+    }
+    
+    .stock-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
     }
     
     .stock-name {
@@ -139,98 +209,111 @@
         color: #6b7280;
     }
     
-    .price-positive {
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .badge-kospi {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .badge-kosdaq {
+        background: #f3e8ff;
+        color: #6b21a8;
+    }
+    
+    .badge-nasdaq,
+    .badge-nyse {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .profit-up {
         color: #dc2626;
         font-weight: 600;
     }
     
-    .price-negative {
+    .profit-down {
         color: #2563eb;
         font-weight: 600;
     }
     
-    .action-buttons {
+    .btn-group {
         display: flex;
         gap: 0.5rem;
     }
     
     .btn-sm {
-        padding: 0.375rem 0.75rem;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 0.375rem;
         font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-edit {
+        background: #fbbf24;
+        color: #78350f;
+    }
+    
+    .btn-delete {
+        background: #ef4444;
+        color: white;
+    }
+    
+    .btn-sm:hover {
+        opacity: 0.8;
+        transform: translateY(-2px);
     }
     
     .empty-state {
         text-align: center;
-        padding: 3rem 1rem;
+        padding: 4rem 2rem;
         color: #6b7280;
     }
     
-    .empty-icon {
+    .empty-state i {
         font-size: 4rem;
         margin-bottom: 1rem;
-        opacity: 0.5;
+        opacity: 0.3;
+    }
+    
+    .animate-fade-in {
+        animation: fadeIn 0.5s ease-in;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
     
     @media (max-width: 768px) {
-        .page-header {
-            padding: 1.5rem;
-        }
-        
-        .page-title {
-            font-size: 1.5rem;
-        }
-        
         .summary-grid {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
-        }
-        
-        .summary-card {
-            padding: 1rem;
+            grid-template-columns: 1fr 1fr;
         }
         
         .summary-value {
             font-size: 1.5rem;
-        }
-        
-        .summary-icon {
-            font-size: 2rem;
-        }
-        
-        .portfolio-table {
-            padding: 1rem;
         }
         
         .table-responsive {
             font-size: 0.875rem;
         }
     }
-    
-    @media (max-width: 576px) {
-        .summary-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .summary-value {
-            font-size: 1.25rem;
-        }
-    }
 </style>
-
-<!-- Alert Messages -->
-<c:if test="${not empty message}">
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle me-2"></i>${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-</c:if>
-
-<c:if test="${not empty error}">
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="bi bi-exclamation-circle me-2"></i>${error}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-</c:if>
 
 <!-- Page Header -->
 <div class="page-header animate-fade-in">
@@ -238,7 +321,7 @@
         <h1 class="page-title">
             <i class="bi bi-briefcase me-2"></i>내 포트폴리오
         </h1>
-        <a href="${pageContext.request.contextPath}/portfolio/create" class="btn btn-primary">
+        <a href="${pageContext.request.contextPath}/portfolio/create" class="btn btn-add">
             <i class="bi bi-plus-circle me-2"></i>종목 추가
         </a>
     </div>
@@ -294,101 +377,107 @@
 </div>
 
 <!-- Charts -->
-<div class="row g-3 mb-4">
+<c:if test="${not empty portfolioList}">
+<div class="row g-3 mb-4 animate-fade-in" style="animation-delay: 0.2s;">
     <div class="col-lg-6">
-        <div class="chart-card animate-fade-in" style="animation-delay: 0.2s;">
+        <div class="chart-card">
             <h5 class="chart-title">
-                <i class="bi bi-pie-chart me-2"></i>포트폴리오 구성
+                <i class="bi bi-pie-chart"></i> 포트폴리오 구성
             </h5>
-            <canvas id="portfolioChart" height="250"></canvas>
+            <div class="chart-container">
+                <canvas id="portfolioChart"></canvas>
+            </div>
         </div>
     </div>
     
     <div class="col-lg-6">
-        <div class="chart-card animate-fade-in" style="animation-delay: 0.3s;">
+        <div class="chart-card">
             <h5 class="chart-title">
-                <i class="bi bi-bar-chart me-2"></i>수익률 분석
+                <i class="bi bi-bar-chart"></i> 수익률 분석
             </h5>
-            <canvas id="profitChart" height="250"></canvas>
+            <div class="chart-container">
+                <canvas id="profitChart"></canvas>
+            </div>
         </div>
     </div>
 </div>
+</c:if>
 
 <!-- Portfolio Table -->
-<div class="portfolio-table animate-fade-in" style="animation-delay: 0.4s;">
+<div class="portfolio-table animate-fade-in" style="animation-delay: 0.3s;">
     <div class="table-header">
         <h5 class="table-title">
-            <i class="bi bi-list-ul me-2"></i>보유 종목
+            <i class="bi bi-table me-2"></i>보유 종목
         </h5>
     </div>
     
     <c:choose>
         <c:when test="${empty portfolioList}">
             <div class="empty-state">
-                <div class="empty-icon">
-                    <i class="bi bi-inbox"></i>
-                </div>
-                <h5>등록된 종목이 없습니다</h5>
-                <p>종목 추가 버튼을 눌러 첫 번째 종목을 추가해보세요!</p>
-                <a href="${pageContext.request.contextPath}/portfolio/create" class="btn btn-primary mt-3">
-                    <i class="bi bi-plus-circle me-2"></i>종목 추가
+                <i class="bi bi-inbox"></i>
+                <h4>보유 중인 종목이 없습니다</h4>
+                <p>종목을 추가하여 포트폴리오를 시작해보세요</p>
+                <a href="${pageContext.request.contextPath}/portfolio/create" class="btn btn-add mt-3">
+                    <i class="bi bi-plus-circle me-2"></i>첫 종목 추가하기
                 </a>
             </div>
         </c:when>
         <c:otherwise>
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table class="portfolio-list-table">
                     <thead>
                         <tr>
-                            <th>종목명</th>
-                            <th class="text-end">보유수량</th>
-                            <th class="text-end d-none d-md-table-cell">평균단가</th>
-                            <th class="text-end">현재가</th>
-                            <th class="text-end d-none d-lg-table-cell">평가금액</th>
-                            <th class="text-end">손익</th>
-                            <th class="text-end">수익률</th>
-                            <th class="text-center">관리</th>
+                            <th>종목</th>
+                            <th>시장</th>
+                            <th>보유수량</th>
+                            <th>평균매입가</th>
+                            <th>현재가</th>
+                            <th>평가금액</th>
+                            <th>손익</th>
+                            <th>수익률</th>
+                            <th>관리</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <c:forEach var="item" items="${portfolioList}">
+                        <c:forEach items="${portfolioList}" var="p">
                             <tr>
                                 <td>
-                                    <div class="stock-name">${item.stockName}</div>
-                                    <div class="stock-code">${item.stockCode}</div>
+                                    <div class="stock-info">
+                                        <span class="stock-name">${p.stockName}</span>
+                                        <span class="stock-code">${p.stockCode}</span>
+                                    </div>
                                 </td>
-                                <td class="text-end">
-                                    <fmt:formatNumber value="${item.quantity}" type="number" pattern="#,##0" />
+                                <td>
+                                    <span class="badge badge-${fn:toLowerCase(p.marketType)}">
+                                        ${p.marketType}
+                                    </span>
                                 </td>
-                                <td class="text-end d-none d-md-table-cell">
-                                    <fmt:formatNumber value="${item.avgPurchasePrice}" type="number" pattern="#,##0" />원
+                                <td>
+                                    <fmt:formatNumber value="${p.quantity}" pattern="#,##0.####" />주
                                 </td>
-                                <td class="text-end">
-                                    <fmt:formatNumber value="${item.currentPrice}" type="number" pattern="#,##0" />원
+                                <td>
+                                    <fmt:formatNumber value="${p.avgPurchasePrice}" pattern="#,##0" />원
                                 </td>
-                                <td class="text-end d-none d-lg-table-cell">
-                                    <fmt:formatNumber value="${item.totalCurrentValue}" type="number" pattern="#,##0" />원
+                                <td>
+                                    <fmt:formatNumber value="${p.currentPrice}" pattern="#,##0" />원
                                 </td>
-                                <td class="text-end ${item.profit >= 0 ? 'price-positive' : 'price-negative'}">
-                                    <i class="bi bi-${item.profit >= 0 ? 'arrow-up' : 'arrow-down'}"></i>
-                                    ${item.profit >= 0 ? '+' : ''}
-                                    <fmt:formatNumber value="${item.profit}" type="number" pattern="#,##0" />원
+                                <td>
+                                    <fmt:formatNumber value="${p.totalCurrentValue}" pattern="#,##0" />원
                                 </td>
-                                <td class="text-end ${item.profitRate >= 0 ? 'price-positive' : 'price-negative'}">
-                                    <i class="bi bi-${item.profitRate >= 0 ? 'arrow-up' : 'arrow-down'}"></i>
-                                    ${item.profitRate >= 0 ? '+' : ''}
-                                    <fmt:formatNumber value="${item.profitRate}" type="number" pattern="#,##0.00" />%
+                                <td class="${p.profit >= 0 ? 'profit-up' : 'profit-down'}">
+                                    <fmt:formatNumber value="${p.profit}" pattern="+#,##0;-#,##0" />원
                                 </td>
-                                <td class="text-center">
-                                    <div class="action-buttons justify-content-center">
-                                        <form action="${pageContext.request.contextPath}/portfolio/delete/${item.portfolioId}" 
-                                              method="post" 
-                                              onsubmit="return confirm('정말 삭제하시겠습니까?');" 
-                                              style="display: inline;">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
+                                <td class="${p.profitRate >= 0 ? 'profit-up' : 'profit-down'}">
+                                    <fmt:formatNumber value="${p.profitRate}" pattern="+#,##0.00;-#,##0.00" />%
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button class="btn-sm btn-edit" onclick="editPortfolio(${p.portfolioId})">
+                                            <i class="bi bi-pencil"></i> 수정
+                                        </button>
+                                        <button class="btn-sm btn-delete" onclick="deletePortfolio(${p.portfolioId}, '${p.stockName}')">
+                                            <i class="bi bi-trash"></i> 삭제
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -400,105 +489,168 @@
     </c:choose>
 </div>
 
-<script>
-// Auto-hide alerts
-setTimeout(function() {
-    $('.alert').fadeOut('slow');
-}, 3000);
-
-// Portfolio Composition Chart
+<!-- Chart.js Script -->
 <c:if test="${not empty portfolioList}">
-const portfolioData = {
-    labels: [
-        <c:forEach var="item" items="${portfolioList}" varStatus="status">
-        '${item.stockName}'${not status.last ? ',' : ''}
+<script>
+    console.log('=== 차트 초기화 시작 ===');
+    
+    // 데이터 준비
+    const portfolioData = [
+        <c:forEach items="${portfolioList}" var="p" varStatus="status">
+        {
+            name: '${p.stockName}',
+            value: ${p.totalCurrentValue},
+            rate: ${p.profitRate}
+        }<c:if test="${!status.last}">,</c:if>
         </c:forEach>
-    ],
-    datasets: [{
-        data: [
-            <c:forEach var="item" items="${portfolioList}" varStatus="status">
-            ${item.totalCurrentValue}${not status.last ? ',' : ''}
-            </c:forEach>
-        ],
-        backgroundColor: [
-            'rgba(102, 126, 234, 0.8)',
-            'rgba(118, 75, 162, 0.8)',
-            'rgba(16, 185, 129, 0.8)',
-            'rgba(59, 130, 246, 0.8)',
-            'rgba(245, 158, 11, 0.8)',
-            'rgba(239, 68, 68, 0.8)',
-            'rgba(168, 85, 247, 0.8)',
-            'rgba(236, 72, 153, 0.8)'
-        ]
-    }]
-};
-
-const portfolioChart = new Chart(document.getElementById('portfolioChart'), {
-    type: 'doughnut',
-    data: portfolioData,
-    options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: {
-            legend: {
-                position: 'bottom',
-                labels: {
-                    padding: 15,
-                    font: {
-                        size: 12
+    ];
+    
+    console.log('포트폴리오 데이터:', portfolioData);
+    
+    // 색상 팔레트
+    const colors = [
+        '#667eea', '#764ba2', '#f093fb', '#4facfe',
+        '#43e97b', '#fa709a', '#fee140', '#30cfd0',
+        '#a8edea', '#fed6e3', '#c471f5', '#f64f59'
+    ];
+    
+    // 1. 포트폴리오 구성 도넛 차트
+    const ctx1 = document.getElementById('portfolioChart');
+    if (ctx1) {
+        new Chart(ctx1, {
+            type: 'doughnut',
+            data: {
+                labels: portfolioData.map(d => d.name),
+                datasets: [{
+                    data: portfolioData.map(d => d.value),
+                    backgroundColor: colors.slice(0, portfolioData.length),
+                    borderWidth: 3,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            padding: 15,
+                            font: { size: 12 },
+                            generateLabels: function(chart) {
+                                const data = chart.data;
+                                if (data.labels.length && data.datasets.length) {
+                                    return data.labels.map((label, i) => {
+                                        const value = data.datasets[0].data[i];
+                                        const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((value / total) * 100).toFixed(1);
+                                        return {
+                                            text: label + ' (' + percentage + '%)',
+                                            fillStyle: data.datasets[0].backgroundColor[i],
+                                            hidden: false,
+                                            index: i
+                                        };
+                                    });
+                                }
+                                return [];
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return label + ': ' + value.toLocaleString() + '원 (' + percentage + '%)';
+                            }
+                        }
                     }
                 }
             }
-        }
+        });
+        console.log('✅ 도넛 차트 생성 완료');
     }
-});
-
-// Profit Chart
-const profitData = {
-    labels: [
-        <c:forEach var="item" items="${portfolioList}" varStatus="status">
-        '${item.stockName}'${not status.last ? ',' : ''}
-        </c:forEach>
-    ],
-    datasets: [{
-        label: '수익률 (%)',
-        data: [
-            <c:forEach var="item" items="${portfolioList}" varStatus="status">
-            ${item.profitRate}${not status.last ? ',' : ''}
-            </c:forEach>
-        ],
-        backgroundColor: [
-            <c:forEach var="item" items="${portfolioList}" varStatus="status">
-            '${item.profitRate >= 0 ? "rgba(16, 185, 129, 0.8)" : "rgba(239, 68, 68, 0.8)"}'${not status.last ? ',' : ''}
-            </c:forEach>
-        ]
-    }]
-};
-
-const profitChart = new Chart(document.getElementById('profitChart'), {
-    type: 'bar',
-    data: profitData,
-    options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: {
-            legend: {
-                display: false
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    callback: function(value) {
-                        return value + '%';
+    
+    // 2. 수익률 막대 그래프
+    const ctx2 = document.getElementById('profitChart');
+    if (ctx2) {
+        new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: portfolioData.map(d => d.name),
+                datasets: [{
+                    label: '수익률 (%)',
+                    data: portfolioData.map(d => d.rate),
+                    backgroundColor: portfolioData.map(d => 
+                        d.rate >= 0 ? 'rgba(220, 38, 38, 0.7)' : 'rgba(37, 99, 235, 0.7)'
+                    ),
+                    borderColor: portfolioData.map(d => 
+                        d.rate >= 0 ? 'rgb(220, 38, 38)' : 'rgb(37, 99, 235)'
+                    ),
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return '수익률: ' + context.parsed.y.toFixed(2) + '%';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
                     }
                 }
             }
-        }
+        });
+        console.log('✅ 막대 그래프 생성 완료');
     }
-});
+    
+    console.log('=== 차트 초기화 완료 ===');
+</script>
 </c:if>
+
+<script>
+function editPortfolio(id) {
+    location.href = '${pageContext.request.contextPath}/portfolio/edit?id=' + id;
+}
+
+function deletePortfolio(id, name) {
+    if (!confirm(name + ' 종목을 삭제하시겠습니까?')) {
+        return;
+    }
+    
+    fetch('${pageContext.request.contextPath}/portfolio/delete/' + id, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            alert('✅ 삭제되었습니다.');
+            location.reload();
+        } else {
+            alert('❌ 삭제 실패: ' + result.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('❌ 삭제 중 오류가 발생했습니다.');
+    });
+}
 </script>
 
 <jsp:include page="../common/footer.jsp" />

@@ -1,15 +1,20 @@
 package com.portwatch.persistence;
 
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
 import com.portwatch.domain.WatchlistVO;
 import com.portwatch.domain.WatchlistWithPriceVO;
-import org.apache.ibatis.annotations.Param;
+
 import java.util.List;
 
 /**
  * 관심종목 DAO 인터페이스
+ * MyBatis가 자동으로 구현체를 생성
  * 
  * memberId 기반 (DB의 member_id 컬럼)
  */
+@Mapper  // ⭐ MyBatis Mapper 인터페이스임을 명시
 public interface WatchlistDAO {
     
     // ========================================

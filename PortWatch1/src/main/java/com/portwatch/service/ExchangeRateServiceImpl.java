@@ -22,7 +22,7 @@ import java.net.URL;
  * @author PortWatch
  * @version 1.0
  */
-@Service("exchangeRateService")
+@Service
 public class ExchangeRateServiceImpl implements ExchangeRateService {
     
     private static final Logger logger = LoggerFactory.getLogger(ExchangeRateServiceImpl.class);
@@ -55,6 +55,57 @@ public class ExchangeRateServiceImpl implements ExchangeRateService {
         } else {
             // API 호출 (캐시 사용)
             return getExchangeRateFromAPI();
+        }
+    }
+    
+    /**
+     * 통화 코드로 환율 조회 (범용 메서드)
+     * 
+     * @param fromCurrency 출발 통화 (예: USD, EUR, JPY)
+     * @param toCurrency 도착 통화 (예: KRW)
+     * @return 환율
+     */
+    @Override
+    public BigDecimal getExchangeRate(String fromCurrency, String toCurrency) {
+        try {
+            // 같은 통화면 1.0 반환
+            if (fromCurrency.equals(toCurrency)) {
+                return BigDecimal.ONE;
+            }
+            
+            // KRW → KRW
+            if ("KRW".equals(fromCurrency) && "KRW".equals(toCurrency)) {
+                return BigDecimal.ONE;
+            }
+            
+            // USD → KRW
+            if ("USD".equals(fromCurrency) && "KRW".equals(toCurrency)) {
+                return getUSDToKRW();
+            }
+            
+            // KRW → USD
+            if ("KRW".equals(fromCurrency) && "USD".equals(toCurrency)) {
+                BigDecimal usdToKrw = getUSDToKRW();
+                return BigDecimal.ONE.divide(usdToKrw, 6, RoundingMode.HALF_UP);
+            }
+            
+            // EUR → KRW (유로 고정 환율: 1 EUR = 1,430 KRW)
+            if ("EUR".equals(fromCurrency) && "KRW".equals(toCurrency)) {
+                return new BigDecimal("1430.00");
+            }
+            
+            // JPY → KRW (엔화 고정 환율: 100 JPY = 920 KRW)
+            if ("JPY".equals(fromCurrency) && "KRW".equals(toCurrency)) {
+                return new BigDecimal("9.20"); // 1 JPY = 9.20 KRW
+            }
+            
+            // 지원하지 않는 통화 조합
+            logger.warn("⚠️ 지원하지 않는 통화 조합: {} → {}", fromCurrency, toCurrency);
+            return BigDecimal.ONE;
+            
+        } catch (Exception e) {
+            logger.error("❌ 환율 조회 실패: {} → {}", fromCurrency, toCurrency, e);
+            return BigDecimal.ONE;
         }
     }
     

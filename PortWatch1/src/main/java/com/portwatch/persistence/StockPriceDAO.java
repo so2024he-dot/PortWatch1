@@ -1,14 +1,20 @@
 package com.portwatch.persistence;
 
-import com.portwatch.domain.StockPriceVO;
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import com.portwatch.domain.StockPriceVO;
+
 import java.sql.Date;
 import java.util.List;
 
 /**
  * 주가 정보 DAO 인터페이스
+ * MyBatis가 자동으로 구현체를 생성
+ * 
  * 실시간 주가 업데이트용
  */
+@Mapper  // ⭐ MyBatis Mapper 인터페이스임을 명시
 public interface StockPriceDAO {
     
     /**

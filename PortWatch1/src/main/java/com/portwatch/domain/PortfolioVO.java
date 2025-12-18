@@ -2,19 +2,17 @@ package com.portwatch.domain;
 
 import javax.validation.constraints.*;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.sql.Date;
 import java.sql.Timestamp;
 
 /**
- * 포트폴리오 VO (분할 매수 지원)
+ * 포트폴리오 VO
  * 
- * ✅ 수정 사항:
- * - createdAt 필드 제거 (DB 컬럼 없음)
- * - quantity: BigDecimal (0.01주 단위 지원)
- * - industry 필드 추가
+ * ✅ BigDecimal quantity 지원 (소수점 수량 가능)
+ * ✅ Timestamp purchaseDate 사용
+ * ✅ 현재 MySQL DDL에 완벽히 맞춤
  * 
- * @version 3.2 (환원 버전 수정)
+ * @author PortWatch
+ * @version 6.0 (결제 시스템 연동)
  */
 public class PortfolioVO {
     
@@ -23,37 +21,34 @@ public class PortfolioVO {
     private Integer memberId;
     private Integer stockId;
     
-    // ✅ 수량: BigDecimal (분할 매수 지원)
+    // 보유 정보
     @NotNull(message = "보유 수량은 필수 입력 항목입니다.")
-    @DecimalMin(value = "0.01", message = "수량은 0.01 이상이어야 합니다.")
-    private BigDecimal quantity;
+    @DecimalMin(value = "0.0001", message = "수량은 0보다 커야 합니다.")
+    private BigDecimal quantity;  // ✅ BigDecimal로 변경 (소수점 수량 지원)
     
     @NotNull(message = "평균 매입가는 필수 입력 항목입니다.")
     @DecimalMin(value = "0.01", message = "평균 매입가는 0보다 커야 합니다.")
     private BigDecimal avgPurchasePrice;
     
-    private Date purchaseDate;
-    private Timestamp updatedAt;  // ✅ created_at 제거, updated_at만 사용
+    private Timestamp purchaseDate;  // ✅ Timestamp로 변경
+    private Timestamp updatedAt;
     
     // 조인 정보 (STOCK 테이블)
     private String stockCode;
     private String stockName;
     private String marketType;
-    private String industry;  // ✅ 추가
+    private String industry;
     
-    // 주가 정보 (런타임에 설정)
+    // 주가 정보 (STOCK_PRICE 테이블)
     private BigDecimal currentPrice;
-    
-    // 계산 필드
-    private BigDecimal totalPurchaseAmount;
-    private BigDecimal totalCurrentValue;
-    private BigDecimal profit;
-    private BigDecimal profitRate;
     
     // 기본 생성자
     public PortfolioVO() {}
     
+    // ================================================
     // Getters and Setters
+    // ================================================
+    
     public Long getPortfolioId() {
         return portfolioId;
     }
@@ -94,11 +89,11 @@ public class PortfolioVO {
         this.avgPurchasePrice = avgPurchasePrice;
     }
     
-    public Date getPurchaseDate() {
+    public Timestamp getPurchaseDate() {
         return purchaseDate;
     }
     
-    public void setPurchaseDate(Date purchaseDate) {
+    public void setPurchaseDate(Timestamp purchaseDate) {
         this.purchaseDate = purchaseDate;
     }
     
@@ -150,27 +145,40 @@ public class PortfolioVO {
         this.currentPrice = currentPrice;
     }
     
-    // ✅ 계산 필드 Getters
+    // ================================================
+    // 계산 메서드 (자동 계산)
+    // ================================================
+    
+    /**
+     * 총 매입금액 = 수량 × 평균 매입가
+     */
     public BigDecimal getTotalPurchaseAmount() {
         if (quantity != null && avgPurchasePrice != null) {
-            return avgPurchasePrice.multiply(quantity)
-                    .setScale(2, RoundingMode.HALF_UP);
+            return avgPurchasePrice.multiply(quantity);
         }
         return BigDecimal.ZERO;
     }
     
+    /**
+     * 총 평가금액 = 수량 × 현재가
+     */
     public BigDecimal getTotalCurrentValue() {
         if (quantity != null && currentPrice != null) {
-            return currentPrice.multiply(quantity)
-                    .setScale(2, RoundingMode.HALF_UP);
+            return currentPrice.multiply(quantity);
         }
         return BigDecimal.ZERO;
     }
     
+    /**
+     * 평가손익 = 총 평가금액 - 총 매입금액
+     */
     public BigDecimal getProfit() {
         return getTotalCurrentValue().subtract(getTotalPurchaseAmount());
     }
     
+    /**
+     * 수익률(%) = ((현재가 - 평균 매입가) / 평균 매입가) × 100
+     */
     public BigDecimal getProfitRate() {
         BigDecimal purchaseAmount = getTotalPurchaseAmount();
         if (purchaseAmount.compareTo(BigDecimal.ZERO) == 0) {
@@ -181,47 +189,8 @@ public class PortfolioVO {
         }
         
         return currentPrice.subtract(avgPurchasePrice)
-                .divide(avgPurchasePrice, 4, RoundingMode.HALF_UP)
+                .divide(avgPurchasePrice, 4, BigDecimal.ROUND_HALF_UP)
                 .multiply(new BigDecimal(100));
-    }
-    
-    // ✅ 시장 아이콘 (편의 메서드)
-    public String getMarketIcon() {
-        if (marketType == null) return "❓";
-        switch (marketType.toUpperCase()) {
-            case "KOSPI":
-            case "KOSDAQ":
-                return "🇰🇷";
-            case "NASDAQ":
-            case "NYSE":
-            case "AMEX":
-                return "🇺🇸";
-            default:
-                return "🌐";
-        }
-    }
-    
-    // ✅ 업종 아이콘 (편의 메서드)
-    public String getIndustryIcon() {
-        if (industry == null) return "📊";
-        String industryLower = industry.toLowerCase();
-        
-        if (industryLower.contains("반도체") || industryLower.contains("semiconductor")) {
-            return "💾";
-        } else if (industryLower.contains("바이오") || industryLower.contains("bio") || 
-                   industryLower.contains("healthcare") || industryLower.contains("의약")) {
-            return "💊";
-        } else if (industryLower.contains("전지") || industryLower.contains("battery")) {
-            return "🔋";
-        } else if (industryLower.contains("자동차") || industryLower.contains("automotive")) {
-            return "🚗";
-        } else if (industryLower.contains("금융") || industryLower.contains("financial")) {
-            return "💰";
-        } else if (industryLower.contains("tech") || industryLower.contains("소프트웨어")) {
-            return "💻";
-        } else {
-            return "📊";
-        }
     }
     
     @Override

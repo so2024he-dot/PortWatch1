@@ -31,4 +31,6 @@ public interface ExchangeRateService {
      * @return 달러 금액
      */
     BigDecimal convertKRWToUSD(BigDecimal krwAmount) throws Exception;
+
+	BigDecimal getExchangeRate(String currency, String string);
 }

@@ -64,7 +64,7 @@ public class StockServiceImpl implements StockService {
         }
         // 키워드만 있는 경우
         else if (keyword != null && !keyword.isEmpty()) {
-            return stockDAO.searchStocks(keyword);
+            return stockDAO.searchStocksByCode(keyword);
         }
         // 시장 타입만 있는 경우
         else if (marketType != null && !marketType.isEmpty() && !marketType.equals("ALL")) {

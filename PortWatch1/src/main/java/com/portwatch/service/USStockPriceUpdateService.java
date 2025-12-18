@@ -52,4 +52,16 @@ public interface USStockPriceUpdateService {
      * @return 주가 히스토리 리스트
      */
     List<StockPriceVO> getUSStockPriceHistory(String stockSymbol, int days) throws Exception;
+
+	/**
+	 * 전체 미국 주식 현재가 업데이트
+	 */
+	void updateAllUSStockPrices();
+
+	/**
+	 * 특정 종목의 현재가 업데이트
+	 */
+	void updateUSStockPrice(String stockCode);
+
+	void updateByMarketType(String marketType);
 }

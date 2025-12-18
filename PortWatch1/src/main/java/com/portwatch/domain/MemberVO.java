@@ -1,10 +1,8 @@
-    package com.portwatch.domain;
+package com.portwatch.domain;
 
 import javax.validation.constraints.*;
-
 import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.NotBlank;
-
 import java.sql.Timestamp;
 
 /**
@@ -105,5 +103,3 @@ public class MemberVO {
                 '}';
     }
 }
-
-    

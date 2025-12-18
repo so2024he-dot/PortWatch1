@@ -1,4 +1,4 @@
-    package com.portwatch.service;
+package com.portwatch.service;
 
 import com.portwatch.domain.StockPriceVO;
 import java.util.List;
@@ -38,6 +38,18 @@ public interface StockPriceUpdateService {
      * 주가 히스토리 조회
      */
     List<StockPriceVO> getStockPriceHistory(String stockCode, int days) throws Exception;
+
+	/**
+	 * 전체 한국 주식 현재가 업데이트
+	 */
+	void updateAllStockPrices();
+
+	/**
+	 * 특정 종목의 현재가 업데이트
+	 */
+	void updateStockPrice(String stockCode);
+
+	void updateByMarketType(String marketType);
 }
 
     

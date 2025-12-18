@@ -1,12 +1,15 @@
-    package com.portwatch.persistence;
+package com.portwatch.persistence;
 
-import com.portwatch.domain.NewsVO;
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import com.portwatch.domain.NewsVO;
 import java.util.List;
 
 /**
  * 뉴스 DAO 인터페이스
+ * MyBatis가 자동으로 구현체를 생성
  */
+@Mapper  // ⭐ MyBatis Mapper 인터페이스임을 명시
 public interface NewsDAO {
     
     /**
@@ -35,5 +38,3 @@ public interface NewsDAO {
      */
     int checkDuplicateNews(String newsUrl) throws Exception;
 }
-
-    
