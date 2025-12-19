@@ -12,7 +12,7 @@ import java.sql.Timestamp;
 public class MemberVO {
     
     // 기본 정보
-    private Integer memberId;
+    private String memberId;
     
     @NotBlank(message = "이메일은 필수 입력 항목입니다.")
     @Email(message = "올바른 이메일 형식이 아닙니다.")
@@ -35,7 +35,7 @@ public class MemberVO {
     public MemberVO() {}
     
     // Getters and Setters
-    public Integer getMemberId() {
+    public String getMemberId() {
         return memberId;
     }
     

@@ -141,31 +141,20 @@ public class StockPriceVO {
                 '}';
     }
 
-	
+	public void setCurrentPrice(BigDecimal currentPrice) {
+		this.setCurrentPrice(currentPrice);		
+	}
+
 	public void setPriceChange(BigDecimal priceChange) {
-		// TODO Auto-generated method stub
-		
+		this.setPriceChange(priceChange);			
 	}
 
 	public void setPriceChangeRate(BigDecimal priceChangeRate) {
-		// TODO Auto-generated method stub
+		this.setPriceChangeRate(priceChangeRate);
 		
 	}
 
-	public void setCurrentPrice11(BigDecimal currentPrice) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void setCurrentPrice(BigDecimal currentPrice) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void setCurrentPrice(Double currentPrice) {
-		// TODO Auto-generated method stub
-		
-	}
+	
 
 	
 	

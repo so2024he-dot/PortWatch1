@@ -1,11 +1,13 @@
 package com.portwatch.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.portwatch.domain.PortfolioItemVO;
 import com.portwatch.domain.PortfolioVO;
 import com.portwatch.domain.StockVO;
 import com.portwatch.persistence.PortfolioDAO;
@@ -281,4 +283,52 @@ public class PortfolioServiceImpl implements PortfolioService {
             return false;
         }
     }
+
+	@Override
+	public Map<String, Object> getPortfolioSummary(String memberId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<PortfolioVO> getPortfolioList(Integer memberId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Map<String, Object> getPortfolioSummary(Integer memberId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean addStockToPortfolio(PortfolioItemVO item) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void updatePortfolio(PortfolioVO portfolio) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void deleteAllPortfolio(Long portfolioId) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean checkDuplicate(Integer memberId, Integer stockId) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void deletePortfolio(Long portfolioId) {
+		// TODO Auto-generated method stub
+		
+	}
 }

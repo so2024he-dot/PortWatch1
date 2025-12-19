@@ -50,7 +50,7 @@ public class WatchlistController {
             return "redirect:/member/login";
         }
         
-        Integer memberId = member.getMemberId();
+        String memberId = member.getMemberId();
         
         try {
             // ✅ 관심종목 + 현재가 정보 조회
@@ -107,7 +107,7 @@ public class WatchlistController {
             return "{\"success\": false, \"message\": \"로그인이 필요합니다\"}";
         }
         
-        Integer memberId = member.getMemberId();
+        String memberId = member.getMemberId();
         
         try {
             // stockCode로 요청한 경우 stockId 찾기

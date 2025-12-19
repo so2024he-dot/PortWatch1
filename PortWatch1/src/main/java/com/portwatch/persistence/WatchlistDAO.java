@@ -68,4 +68,8 @@ public interface WatchlistDAO {
      * 특정 관심종목 + 현재가 조회
      */
     WatchlistWithPriceVO selectWatchlistWithPriceById(Integer watchlistId);
+
+	List<WatchlistWithPriceVO> selectWatchlistWithPrices(String memberId);
+
+	int checkExists(String memberId, Integer stockId);
 }

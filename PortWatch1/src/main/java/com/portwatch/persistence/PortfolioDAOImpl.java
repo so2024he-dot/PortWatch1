@@ -29,7 +29,7 @@ public class PortfolioDAOImpl implements PortfolioDAO {
     private SqlSession sqlSession;
     
     @Override
-    public void insertPortfolio(PortfolioVO portfolio) throws Exception {
+    public int insertPortfolio(PortfolioVO portfolio) throws Exception {
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         System.out.println("💾 DAO: 포트폴리오 추가");
         System.out.println("  - memberId: " + portfolio.getMemberId());
@@ -41,6 +41,7 @@ public class PortfolioDAOImpl implements PortfolioDAO {
         
         System.out.println("✅ DAO: 추가 완료!");
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+		return 0;
     }
     
     public List<PortfolioVO> selectPortfolioByMember(int memberId) throws Exception {
@@ -94,7 +95,7 @@ public class PortfolioDAOImpl implements PortfolioDAO {
     }
     
     @Override
-    public void updatePortfolio(PortfolioVO portfolio) throws Exception {
+    public int updatePortfolio(PortfolioVO portfolio) {
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         System.out.println("🔄 DAO: 포트폴리오 수정");
         System.out.println("  - portfolioId: " + portfolio.getPortfolioId());
@@ -105,6 +106,7 @@ public class PortfolioDAOImpl implements PortfolioDAO {
         
         System.out.println("✅ DAO: 수정 완료!");
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+		return 0;
     }
     
     public void deletePortfolio(long portfolioId) throws Exception {

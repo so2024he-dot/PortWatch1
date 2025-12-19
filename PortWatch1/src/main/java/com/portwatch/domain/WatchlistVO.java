@@ -69,4 +69,9 @@ public class WatchlistVO {
                 ", addedAt=" + addedAt +
                 '}';
     }
+
+	public void setMemberId(String memberId2) {
+		this.setMemberId(memberId);
+		
+	}
 }
