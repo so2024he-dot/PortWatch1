@@ -1,5 +1,6 @@
 package com.portwatch.persistence;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -7,6 +8,7 @@ import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import com.portwatch.domain.PortfolioStockVO;
 import com.portwatch.domain.PortfolioVO;
 
 /**
@@ -41,7 +43,6 @@ public class PortfolioDAOImpl implements PortfolioDAO {
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     }
     
-    @Override
     public List<PortfolioVO> selectPortfolioByMember(int memberId) throws Exception {
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         System.out.println("📋 DAO: 회원별 포트폴리오 목록 조회");
@@ -61,7 +62,6 @@ public class PortfolioDAOImpl implements PortfolioDAO {
         return result;
     }
     
-    @Override
     public PortfolioVO selectPortfolioById(long portfolioId) throws Exception {
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         System.out.println("🔍 DAO: 포트폴리오 ID로 조회");
@@ -80,7 +80,6 @@ public class PortfolioDAOImpl implements PortfolioDAO {
         return result;
     }
     
-    @Override
     public int checkDuplicate(Map<String, Object> params) throws Exception {
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         System.out.println("🔍 DAO: 중복 확인");
@@ -100,7 +99,7 @@ public class PortfolioDAOImpl implements PortfolioDAO {
         System.out.println("🔄 DAO: 포트폴리오 수정");
         System.out.println("  - portfolioId: " + portfolio.getPortfolioId());
         System.out.println("  - quantity: " + portfolio.getQuantity());
-        System.out.println("  - avgPurchasePrice: " + portfolio.getAvgPurchasePrice());
+        System.out.println("  - avgPurchasePrice: " + ((PortfolioVO) portfolio).getAvgPurchasePrice());
         
         sqlSession.update(NAMESPACE + ".updatePortfolio", portfolio);
         
@@ -108,7 +107,6 @@ public class PortfolioDAOImpl implements PortfolioDAO {
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     }
     
-    @Override
     public void deletePortfolio(long portfolioId) throws Exception {
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         System.out.println("🗑️ DAO: 포트폴리오 삭제");
@@ -120,7 +118,6 @@ public class PortfolioDAOImpl implements PortfolioDAO {
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     }
     
-    @Override
     public Map<String, Object> getPortfolioSummary(int memberId) throws Exception {
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         System.out.println("📊 DAO: 포트폴리오 요약 조회");
@@ -138,4 +135,70 @@ public class PortfolioDAOImpl implements PortfolioDAO {
         
         return result;
     }
+ // PortfolioDAOImpl.java 수정본 (하단 TODO 부분)
+
+    public int insertPortfolioStock(PortfolioStockVO stock) throws Exception {
+        return sqlSession.insert(NAMESPACE + ".insertPortfolioStock", stock);
+    }
+
+    public List<PortfolioStockVO> selectPortfolioStocks(Long portfolioId) throws Exception {
+        return sqlSession.selectList(NAMESPACE + ".selectPortfolioStocks", portfolioId);
+    }
+
+    public PortfolioStockVO selectPortfolioStock(Long portfolioId, String stockCode) throws Exception {
+        Map<String, Object> params = new HashMap<>();
+        params.put("portfolioId", portfolioId);
+        params.put("stockCode", stockCode);
+        return sqlSession.selectOne(NAMESPACE + ".selectPortfolioStock", params);
+    }
+
+    public int updatePortfolioStock(PortfolioStockVO stock) throws Exception {
+        return sqlSession.update(NAMESPACE + ".updatePortfolioStock", stock);
+    }
+
+    public int deletePortfolioStock(Long portfolioId, String stockCode) throws Exception {
+        Map<String, Object> params = new HashMap<>();
+        params.put("portfolioId", portfolioId);
+        params.put("stockCode", stockCode);
+        return sqlSession.delete(NAMESPACE + ".deletePortfolioStock", params);
+    }
+
+	@Override
+	public List<PortfolioVO> selectPortfolioByMemberId(String memberId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public PortfolioVO selectPortfolioByMemberAndStock(String memberId, String stockCode) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public int deletePortfolio(String memberId, String stockCode) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public int deleteAllPortfolio(String memberId) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public int countPortfolio(String memberId) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public void deletePortfolio(Long portfolioId) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	
+	
 }

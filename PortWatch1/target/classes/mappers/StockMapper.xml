@@ -1,307 +1,211 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
-    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.portwatch.persistence.StockDAO">
 
-    <!-- ============================================ -->
-    <!-- ResultMap 정의 (현재 MySQL DDL에 맞춤) -->
-    <!-- ============================================ -->
+    <!-- ========================================
+         ResultMap 정의
+         ======================================== -->
+    
     <resultMap id="StockResultMap" type="StockVO">
         <id property="stockId" column="stock_id"/>
         <result property="stockCode" column="stock_code"/>
         <result property="stockName" column="stock_name"/>
         <result property="marketType" column="market_type"/>
+        <result property="country" column="country"/>
         <result property="industry" column="industry"/>
-        <result property="updatedAt" column="updated_at"/>
         <result property="currentPrice" column="current_price"/>
-        <result property="openPrice" column="open_price"/>
-        <result property="highPrice" column="high_price"/>
-        <result property="lowPrice" column="low_price"/>
-        <result property="closePrice" column="close_price"/>
         <result property="priceChange" column="price_change"/>
         <result property="priceChangeRate" column="price_change_rate"/>
         <result property="volume" column="volume"/>
-        <result property="tradingValue" column="trading_value"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
     </resultMap>
 
-    <!-- ============================================ -->
-    <!-- 모든 종목 조회 (Map 형태) -->
-    <!-- ============================================ -->
-    <select id="selectAllStocks" resultType="map">
+    <!-- ========================================
+         기본 CRUD
+         ======================================== -->
+    
+    <!-- 종목 코드로 조회 (StockVO 전체 반환) -->
+    <select id="selectStockByCode" parameterType="string" resultMap="StockResultMap">
         SELECT 
-            stock_id,
-            stock_code,
-            stock_name,
-            market_type,
-            industry
-        FROM STOCK
+            stock_id, stock_code, stock_name, market_type,
+            country, industry, current_price, price_change,
+            price_change_rate, volume, created_at, updated_at
+        FROM stock 
+        WHERE stock_code = #{stockCode}
+    </select>
+    
+    <!-- 종목 ID로 조회 -->
+    <select id="selectStockById" parameterType="int" resultMap="StockResultMap">
+        SELECT 
+            stock_id, stock_code, stock_name, market_type,
+            country, industry, current_price, price_change,
+            price_change_rate, volume, created_at, updated_at
+        FROM stock 
+        WHERE stock_id = #{stockId}
+    </select>
+    
+    <!-- 전체 종목 조회 -->
+    <select id="selectAllStocks" resultMap="StockResultMap">
+        SELECT 
+            stock_id, stock_code, stock_name, market_type,
+            country, industry, current_price, price_change,
+            price_change_rate, volume, created_at, updated_at
+        FROM stock
+        ORDER BY stock_name
+    </select>
+
+    <!-- ========================================
+         필터링 쿼리
+         ======================================== -->
+    
+    <!-- 나라별 조회 -->
+    <select id="selectStocksByCountry" parameterType="string" resultMap="StockResultMap">
+        SELECT 
+            stock_id, stock_code, stock_name, market_type,
+            country, industry, current_price, price_change,
+            price_change_rate, volume, created_at, updated_at
+        FROM stock
+        WHERE country = #{country}
         ORDER BY stock_name
     </select>
     
-    <!-- ============================================ -->
-    <!-- 모든 종목 조회 (VO 형태) -->
-    <!-- ============================================ -->
-    <select id="selectAll" resultMap="StockResultMap">
+    <!-- 시장별 조회 -->
+    <select id="selectStocksByMarketType" parameterType="string" resultMap="StockResultMap">
         SELECT 
-            s.stock_id,
-            s.stock_code,
-            s.stock_name,
-            s.market_type,
-            s.industry,
-            s.updated_at,
-            sp.close_price as current_price
-        FROM STOCK s
-        LEFT JOIN (
-            SELECT 
-                stock_id, 
-                close_price,
-                ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY trade_date DESC) as rn
-            FROM STOCK_PRICE
-        ) sp ON s.stock_id = sp.stock_id AND sp.rn = 1
-        ORDER BY s.stock_name
+            stock_id, stock_code, stock_name, market_type,
+            country, industry, current_price, price_change,
+            price_change_rate, volume, created_at, updated_at
+        FROM stock
+        WHERE market_type = #{marketType}
+        ORDER BY stock_name
     </select>
     
-    <!-- ============================================ -->
-    <!-- 최근 30일 주가 조회 -->
-    <!-- ============================================ -->
-    <!-- ⭐ 수정: com.itwillbs → com.portwatch ⭐ -->
-    <select id="getRecentPrices" resultType="com.portwatch.domain.StockPriceVO">
-        SELECT
-            stock_id,
-            trade_date,
-            open_price,
-            high_price,
-            low_price,
-            close_price,
-            volume,
-            trading_value
-        FROM STOCK_PRICE
-        WHERE stock_id = #{stockId}
-        ORDER BY trade_date DESC
-        LIMIT 30
-    </select>
-    
-    <!-- ============================================ -->
-    <!-- 종목 코드로 조회 -->
-    <!-- ============================================ -->
-    <select id="selectByCode" parameterType="string" resultMap="StockResultMap">
+    <!-- 업종별 조회 -->
+    <select id="selectStocksByIndustry" parameterType="string" resultMap="StockResultMap">
         SELECT 
-            s.stock_id,
-            s.stock_code,
-            s.stock_name,
-            s.market_type,
-            s.industry,
-            s.updated_at,
-            sp.close_price as current_price,
-            sp.open_price,
-            sp.high_price,
-            sp.low_price,
-            sp.volume,
-            sp.trading_value
-        FROM STOCK s
-        LEFT JOIN (
-            SELECT 
-                stock_id, 
-                open_price,
-                high_price,
-                low_price,
-                close_price,
-                volume,
-                trading_value,
-                ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY trade_date DESC) as rn
-            FROM STOCK_PRICE
-        ) sp ON s.stock_id = sp.stock_id AND sp.rn = 1
-        WHERE s.stock_code = #{stockCode}
+            stock_id, stock_code, stock_name, market_type,
+            country, industry, current_price, price_change,
+            price_change_rate, volume, created_at, updated_at
+        FROM stock
+        WHERE industry = #{industry}
+        ORDER BY stock_name
     </select>
     
-    <!-- ============================================ -->
-    <!-- 종목 ID로 조회 -->
-    <!-- ============================================ -->
-    <select id="selectById" parameterType="int" resultMap="StockResultMap">
-        SELECT 
-            s.stock_id,
-            s.stock_code,
-            s.stock_name,
-            s.market_type,
-            s.industry,
-            s.updated_at,
-            sp.close_price as current_price
-        FROM STOCK s
-        LEFT JOIN (
-            SELECT 
-                stock_id, 
-                close_price,
-                ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY trade_date DESC) as rn
-            FROM STOCK_PRICE
-        ) sp ON s.stock_id = sp.stock_id AND sp.rn = 1
-        WHERE s.stock_id = #{stockId}
-    </select>
-    
-    <!-- ============================================ -->
-    <!-- 종목 검색 (이름 또는 코드) -->
-    <!-- ============================================ -->
+    <!-- 검색 (종목명 또는 종목코드) -->
     <select id="searchStocks" parameterType="string" resultMap="StockResultMap">
         SELECT 
-            s.stock_id,
-            s.stock_code,
-            s.stock_name,
-            s.market_type,
-            s.industry,
-            sp.close_price as current_price
-        FROM STOCK s
-        LEFT JOIN (
-            SELECT 
-                stock_id, 
-                close_price,
-                ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY trade_date DESC) as rn
-            FROM STOCK_PRICE
-        ) sp ON s.stock_id = sp.stock_id AND sp.rn = 1
-        WHERE s.stock_name LIKE CONCAT('%', #{keyword}, '%')
-           OR s.stock_code LIKE CONCAT('%', #{keyword}, '%')
-        ORDER BY s.stock_name
+            stock_id, stock_code, stock_name, market_type,
+            country, industry, current_price, price_change,
+            price_change_rate, volume, created_at, updated_at
+        FROM stock
+        WHERE stock_name LIKE CONCAT('%', #{keyword}, '%')
+           OR stock_code LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY stock_name
+        LIMIT 50
     </select>
+
+    <!-- ========================================
+         정렬 쿼리
+         ======================================== -->
     
-    <!-- ============================================ -->
-    <!-- 종목 검색 (키워드 + 시장 타입) -->
-    <!-- ============================================ -->
-    <select id="searchStocksWithMarket" resultMap="StockResultMap">
-        SELECT 
-            s.stock_id,
-            s.stock_code,
-            s.stock_name,
-            s.market_type,
-            s.industry,
-            sp.close_price as current_price
-        FROM STOCK s
-        LEFT JOIN (
-            SELECT 
-                stock_id, 
-                close_price,
-                ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY trade_date DESC) as rn
-            FROM STOCK_PRICE
-        ) sp ON s.stock_id = sp.stock_id AND sp.rn = 1
-        WHERE (s.stock_name LIKE CONCAT('%', #{keyword}, '%')
-           OR s.stock_code LIKE CONCAT('%', #{keyword}, '%'))
-          AND s.market_type = #{marketType}
-        ORDER BY s.stock_name
-    </select>
-    
-    <!-- ============================================ -->
-    <!-- 자동완성 (제한된 개수) -->
-    <!-- ============================================ -->
-    <select id="autocomplete" resultMap="StockResultMap">
-        SELECT 
-            s.stock_id,
-            s.stock_code,
-            s.stock_name,
-            s.market_type,
-            s.industry
-        FROM STOCK s
-        WHERE s.stock_name LIKE CONCAT('%', #{keyword}, '%')
-           OR s.stock_code LIKE CONCAT('%', #{keyword}, '%')
-        ORDER BY 
-            CASE 
-                WHEN s.stock_name LIKE CONCAT(#{keyword}, '%') THEN 1
-                WHEN s.stock_code LIKE CONCAT(#{keyword}, '%') THEN 2
-                ELSE 3
-            END,
-            s.stock_name
-        LIMIT #{limit}
-    </select>
-    
-    <!-- ============================================ -->
-    <!-- 시장별 종목 조회 -->
-    <!-- ============================================ -->
-    <select id="selectByMarket" parameterType="string" resultMap="StockResultMap">
-        SELECT 
-            s.stock_id,
-            s.stock_code,
-            s.stock_name,
-            s.market_type,
-            s.industry,
-            sp.close_price as current_price
-        FROM STOCK s
-        LEFT JOIN (
-            SELECT 
-                stock_id, 
-                close_price,
-                ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY trade_date DESC) as rn
-            FROM STOCK_PRICE
-        ) sp ON s.stock_id = sp.stock_id AND sp.rn = 1
-        WHERE s.market_type = #{marketType}
-        ORDER BY s.stock_name
-    </select>
-    
-    <!-- ============================================ -->
     <!-- 거래량 상위 종목 -->
-    <!-- ============================================ -->
-    <select id="selectTopVolume" parameterType="int" resultMap="StockResultMap">
+    <select id="selectStocksOrderByVolume" parameterType="int" resultMap="StockResultMap">
         SELECT 
-            s.stock_id,
-            s.stock_code,
-            s.stock_name,
-            s.market_type,
-            s.industry,
-            sp.close_price as current_price,
-            sp.volume
-        FROM STOCK s
-        INNER JOIN (
-            SELECT 
-                stock_id, 
-                close_price,
-                volume,
-                ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY trade_date DESC) as rn
-            FROM STOCK_PRICE
-        ) sp ON s.stock_id = sp.stock_id AND sp.rn = 1
-        WHERE sp.volume IS NOT NULL
-        ORDER BY sp.volume DESC
+            stock_id, stock_code, stock_name, market_type,
+            country, industry, current_price, price_change,
+            price_change_rate, volume, created_at, updated_at
+        FROM stock
+        WHERE volume IS NOT NULL
+        ORDER BY volume DESC
         LIMIT #{limit}
     </select>
     
-    <!-- ============================================ -->
-    <!-- 상승률 상위 종목 -->
-    <!-- ============================================ -->
-    <select id="selectTopGainers" parameterType="int" resultMap="StockResultMap">
+    <!-- 등락률 상위 종목 -->
+    <select id="selectStocksOrderByChangeRate" parameterType="int" resultMap="StockResultMap">
         SELECT 
-            s.stock_id,
-            s.stock_code,
-            s.stock_name,
-            s.market_type,
-            s.industry,
-            today.close_price as current_price,
-            (today.close_price - yesterday.close_price) as price_change,
-            ROUND(((today.close_price - yesterday.close_price) / yesterday.close_price) * 100, 2) as price_change_rate
-        FROM STOCK s
-        INNER JOIN (
-            SELECT 
-                stock_id, 
-                close_price,
-                trade_date,
-                ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY trade_date DESC) as rn
-            FROM STOCK_PRICE
-        ) today ON s.stock_id = today.stock_id AND today.rn = 1
-        INNER JOIN (
-            SELECT 
-                stock_id, 
-                close_price,
-                trade_date,
-                ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY trade_date DESC) as rn
-            FROM STOCK_PRICE
-        ) yesterday ON s.stock_id = yesterday.stock_id AND yesterday.rn = 2
-        WHERE today.close_price > yesterday.close_price
+            stock_id, stock_code, stock_name, market_type,
+            country, industry, current_price, price_change,
+            price_change_rate, volume, created_at, updated_at
+        FROM stock
+        WHERE price_change_rate IS NOT NULL
         ORDER BY price_change_rate DESC
         LIMIT #{limit}
     </select>
 
-<!-- 현재가 업데이트 (크롤링용) -->
-<update id="updateCurrentPrice">
-    UPDATE STOCK
-    SET 
-        current_price = #{currentPrice},
-        price_change = #{priceChange},
-        price_change_rate = #{priceChangeRate},
-        updated_at = NOW()
-    WHERE stock_code = #{stockCode}
-</update>
+    <!-- ========================================
+         업종 목록
+         ======================================== -->
+    
+    <!-- 전체 업종 목록 조회 -->
+    <select id="selectAllIndustries" resultType="string">
+        SELECT DISTINCT industry
+        FROM stock
+        WHERE industry IS NOT NULL
+        ORDER BY industry
+    </select>
+
+    <!-- ========================================
+         데이터 수정
+         ======================================== -->
+    
+    <!-- 종목 정보 업데이트 -->
+    <update id="updateStock" parameterType="StockVO">
+        UPDATE stock
+        SET stock_name = #{stockName},
+            market_type = #{marketType},
+            country = #{country},
+            industry = #{industry},
+            current_price = #{currentPrice},
+            price_change = #{priceChange},
+            price_change_rate = #{priceChangeRate},
+            volume = #{volume},
+            updated_at = NOW()
+        WHERE stock_code = #{stockCode}
+    </update>
+    
+    <!-- 가격 정보만 업데이트 -->
+    <update id="updateStockPrice" parameterType="map">
+        UPDATE stock
+        SET current_price = #{currentPrice},
+            price_change = #{priceChange},
+            price_change_rate = #{priceChangeRate},
+            volume = #{volume},
+            updated_at = NOW()
+        WHERE stock_code = #{stockCode}
+    </update>
+
+    <!-- ========================================
+         데이터 삽입
+         ======================================== -->
+    
+    <!-- 새 종목 추가 -->
+    <insert id="insertStock" parameterType="StockVO">
+        INSERT INTO stock (
+            stock_code, stock_name, market_type, country,
+            industry, current_price, price_change,
+            price_change_rate, volume, created_at, updated_at
+        ) VALUES (
+            #{stockCode}, #{stockName}, #{marketType}, #{country},
+            #{industry}, #{currentPrice}, #{priceChange},
+            #{priceChangeRate}, #{volume}, NOW(), NOW()
+        )
+    </insert>
+
+    <!-- ========================================
+         통계 쿼리
+         ======================================== -->
+    
+    <!-- 전체 종목 수 -->
+    <select id="countAllStocks" resultType="int">
+        SELECT COUNT(*) FROM stock
+    </select>
+    
+    <!-- 나라별 종목 수 -->
+    <select id="countStocksByCountry" parameterType="string" resultType="int">
+        SELECT COUNT(*) FROM stock WHERE country = #{country}
+    </select>
+
 </mapper>

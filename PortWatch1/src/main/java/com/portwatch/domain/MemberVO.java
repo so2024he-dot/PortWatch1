@@ -39,7 +39,7 @@ public class MemberVO {
         return memberId;
     }
     
-    public void setMemberId(Integer memberId) {
+    public void setMemberId(String memberId) {
         this.memberId = memberId;
     }
     

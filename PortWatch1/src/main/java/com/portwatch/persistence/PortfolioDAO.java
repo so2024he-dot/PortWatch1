@@ -1,55 +1,74 @@
 package com.portwatch.persistence;
 
-import org.apache.ibatis.annotations.Mapper;
-import com.portwatch.domain.PortfolioVO;
 import java.util.List;
-import java.util.Map;
+import org.apache.ibatis.annotations.Param;
+import com.portwatch.domain.PortfolioVO;
 
 /**
- * 포트폴리오 DAO 인터페이스
- * MyBatis가 자동으로 구현체를 생성
- * 
- * ✅ 이전 작동 버전 기반
- * ✅ 간단하고 명확한 메서드명
+ * ✅ 포트폴리오 DAO 인터페이스
  * 
  * @author PortWatch
- * @version 5.0 (Spring 5.0.7 + MySQL 8.0)
+ * @version 1.0
  */
-@Mapper  // ⭐ MyBatis Mapper 인터페이스임을 명시
 public interface PortfolioDAO {
     
     /**
+     * 회원의 전체 포트폴리오 조회
+     * @param memberId 회원 ID
+     * @return 포트폴리오 목록
+     */
+    List<PortfolioVO> selectPortfolioByMemberId(@Param("memberId") String memberId);
+    
+    /**
+     * 특정 종목의 포트폴리오 조회
+     * @param memberId 회원 ID
+     * @param stockCode 종목 코드
+     * @return 포트폴리오 (없으면 null)
+     */
+    PortfolioVO selectPortfolioByMemberAndStock(
+        @Param("memberId") String memberId, 
+        @Param("stockCode") String stockCode
+    );
+    
+    /**
      * 포트폴리오 추가
+     * @param portfolio 포트폴리오 정보
+     * @return 추가된 행 수
+     * @throws Exception 
      */
-    void insertPortfolio(PortfolioVO portfolio) throws Exception;
+    int insertPortfolio(PortfolioVO portfolio) throws Exception;
     
     /**
-     * 회원의 포트폴리오 목록 조회
+     * 포트폴리오 수정 (수량, 평균가 업데이트)
+     * @param portfolio 포트폴리오 정보
+     * @return 수정된 행 수
      */
-    List<PortfolioVO> selectPortfolioByMember(int memberId) throws Exception;
+    int updatePortfolio(PortfolioVO portfolio);
     
     /**
-     * 포트폴리오 ID로 조회
+     * 포트폴리오 삭제 (특정 종목)
+     * @param memberId 회원 ID
+     * @param stockCode 종목 코드
+     * @return 삭제된 행 수
      */
-    PortfolioVO selectPortfolioById(long portfolioId) throws Exception;
+    int deletePortfolio(
+        @Param("memberId") String memberId, 
+        @Param("stockCode") String stockCode
+    );
     
     /**
-     * 중복 확인 (회원 + 종목)
+     * 포트폴리오 전체 삭제 (회원의 모든 포트폴리오)
+     * @param memberId 회원 ID
+     * @return 삭제된 행 수
      */
-    int checkDuplicate(Map<String, Object> params) throws Exception;
+    int deleteAllPortfolio(@Param("memberId") String memberId);
     
     /**
-     * 포트폴리오 수정
+     * 포트폴리오 보유 종목 수 조회
+     * @param memberId 회원 ID
+     * @return 종목 수
      */
-    void updatePortfolio(PortfolioVO portfolio) throws Exception;
-    
-    /**
-     * 포트폴리오 삭제
-     */
-    void deletePortfolio(long portfolioId) throws Exception;
-    
-    /**
-     * 포트폴리오 요약 정보
-     */
-    Map<String, Object> getPortfolioSummary(int memberId) throws Exception;
+    int countPortfolio(@Param("memberId") String memberId);
+
+	void deletePortfolio(Long portfolioId);
 }

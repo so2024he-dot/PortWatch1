@@ -18,96 +18,122 @@
            http://www.springframework.org/schema/task/spring-task.xsd">
 
 	<!-- ============================================ -->
-	<!-- 1. 데이터베이스 설정 (MySQL) -->
+	<!-- 1. 데이터베이스 설정 (MySQL 8.0) -->
 	<!-- ============================================ -->
 	<bean id="dataSource"
 		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
 		<property name="driverClassName"
 			value="com.mysql.cj.jdbc.Driver" />
+		
+		<!-- ✅ MySQL 8.0 최적화 설정 -->
 		<property name="url"
 			value="jdbc:mysql://itwillbs.com:3306/c6d2507t2p2?
-        useSSL=false&amp;serverTimezone=Asia/Seoul&amp;characterEncoding=UTF-8" />
+			useSSL=false&amp;
+			serverTimezone=Asia/Seoul&amp;
+			characterEncoding=UTF-8&amp;
+			allowPublicKeyRetrieval=true&amp;
+			useUnicode=true&amp;
+			autoReconnect=true&amp;
+			maxReconnects=3" />
+		
 		<property name="username" value="c6d2507t2p2" />
-		<property name="password" value="1234" />  <!-- 여기에 MySQL 비밀번호 입력 -->
-
+		<property name="password" value="1234" />
 	</bean>
 
 	<!-- ============================================ -->
-	<!-- 2. MyBatis 설정 -->
+	<!-- 2. MyBatis 설정 (Spring 5.0.7 최적화) -->
 	<!-- ============================================ -->
 	<bean id="sqlSessionFactory"
 		class="org.mybatis.spring.SqlSessionFactoryBean">
 		<property name="dataSource" ref="dataSource" />
+		
+		<!-- ✅ Mapper XML 위치 -->
 		<property name="mapperLocations"
 			value="classpath:mappers/**/*.xml" />
 
-		<!-- ⭐ 이게 핵심! PortfolioVO를 찾을 수 있게 해줌 -->
-		<!-- ⭐ 도메인 패키지 타입 별칭 설정 -->
+		<!-- ✅ VO 클래스 타입 별칭 자동 등록 (핵심!) -->
 		<property name="typeAliasesPackage"
 			value="com.portwatch.domain" />
 
+		<!-- ✅ MyBatis Configuration 설정 -->
 		<property name="configuration">
 			<bean class="org.apache.ibatis.session.Configuration">
-
-				<!-- ⭐ snake_case → camelCase 자동 변환 -->
+				<!-- snake_case → camelCase 자동 변환 -->
 				<property name="mapUnderscoreToCamelCase" value="true" />
+				
+				<!-- NULL 처리 -->
 				<property name="jdbcTypeForNull" value="NULL" />
-
-				<!-- ⭐ 로그 레벨 설정 (디버깅 시 유용) -->
+				
+				<!-- 지연 로딩 설정 -->
+				<property name="lazyLoadingEnabled" value="false" />
+				<property name="aggressiveLazyLoading" value="false" />
+				
+				<!-- 캐시 설정 -->
+				<property name="cacheEnabled" value="true" />
+				
+				<!-- 로그 설정 (개발 시) -->
 				<property name="logPrefix" value="[MyBatis] " />
-
 			</bean>
 		</property>
 	</bean>
 
-	<bean class="org.mybatis.spring.SqlSessionTemplate">
+	<!-- ✅ SqlSession Template -->
+	<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
 		<constructor-arg ref="sqlSessionFactory" />
 	</bean>
 
 	<!-- ============================================ -->
 	<!-- 3. MyBatis Mapper 스캔 -->
 	<!-- ============================================ -->
+	<!-- ✅ 방법 1: mybatis-spring 네임스페이스 사용 (권장) -->
 	<mybatis-spring:scan
 		base-package="com.portwatch.persistence" />
 
 	<!-- ============================================ -->
-	<!-- 4. 트랜잭션 관리 -->
+	<!-- 4. Component 스캔 -->
+	<!-- ============================================ -->
+	<!-- ✅ Service 레이어 스캔 -->
+	<context:component-scan
+		base-package="com.portwatch.service" />
+	
+	<!-- ✅ Scheduler 스캔 -->
+	<context:component-scan
+		base-package="com.portwatch.scheduler" />
+	
+	<!-- ✅ Util 스캔 -->
+	<context:component-scan
+		base-package="com.portwatch.util" />
+
+	<!-- ============================================ -->
+	<!-- 5. 트랜잭션 관리 -->
 	<!-- ============================================ -->
 	<bean id="transactionManager"
 		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
 		<property name="dataSource" ref="dataSource" />
 	</bean>
 
+	<!-- ✅ @Transactional 어노테이션 활성화 -->
 	<tx:annotation-driven
 		transaction-manager="transactionManager" />
 
 	<!-- ============================================ -->
-	<!-- 5. Service 스캔 -->
+	<!-- 6. 스케줄러 설정 (자동 업데이트) -->
 	<!-- ============================================ -->
-	<context:component-scan
-		base-package="com.portwatch.service" />
-
-	<!-- ============================================ -->
-	<!-- 6. 스케줄러 설정 (매일 자동 업데이트) -->
-	<!-- ============================================ -->
-	<!-- 스케줄러 활성화 -->
-	<task:annotation-driven />
+	<!-- ✅ @Scheduled 어노테이션 활성화 -->
+	<task:annotation-driven 
+		scheduler="taskScheduler" 
+		executor="taskExecutor"/>
 	
-	<!-- 스케줄러 패키지 스캔 -->
-	<context:component-scan
-		base-package="com.portwatch.scheduler" />
-
-	<!-- 스케줄링 활성화 -->
-	<task:annotation-driven />
+	<!-- ✅ 스케줄러 설정 -->
+	<task:scheduler id="taskScheduler" pool-size="10"/>
+	<task:executor id="taskExecutor" pool-size="10" queue-capacity="100"/>
 
 	<!-- ============================================ -->
 	<!-- 7. Properties 파일 로드 -->
 	<!-- ============================================ -->
-	<!-- application.properties 파일에서 설정 값 읽기 -->
 	<context:property-placeholder
-		location="classpath:application.properties" ignore-unresolvable="true"
+		location="classpath:application.properties" 
+		ignore-unresolvable="true"
 		ignore-resource-not-found="true" />
-		
-
 
 </beans>

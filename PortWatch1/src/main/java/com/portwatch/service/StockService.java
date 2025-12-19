@@ -2,22 +2,19 @@ package com.portwatch.service;
 
 import com.portwatch.domain.StockVO;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 종목 서비스 인터페이스
+ * 
+ * @author PortWatch
+ * @version 7.0 - 나라별/시장별 구분 기능
  */
 public interface StockService {
     
     /**
-     * 모든 종목 목록 조회 (Map 형태)
+     * 전체 종목 조회
      */
-    List<Map<String, Object>> getAllStocks() throws Exception;
-    
-    /**
-     * 모든 종목 목록 조회 (VO 형태) - 추가
-     */
-    List<StockVO> getAllStocksList() throws Exception;
+    List<StockVO> getAllStocks() throws Exception;
     
     /**
      * 종목 코드로 조회
@@ -27,32 +24,51 @@ public interface StockService {
     /**
      * 종목 ID로 조회
      */
-    StockVO getStockById(Integer stockId) throws Exception;
+    StockVO getStockById(int stockId) throws Exception;
     
     /**
-     * 종목 검색 (키워드 + 시장 타입)
+     * 종목 검색
      */
-    List<StockVO> searchStocks(String keyword, String marketType) throws Exception;
+    List<StockVO> searchStocks(String keyword) throws Exception;
     
     /**
-     * 자동완성 (키워드만)
+     * 시장별 종목 조회 (KOSPI, KOSDAQ, NASDAQ, NYSE, AMEX)
      */
-    List<StockVO> getAutocomplete(String keyword) throws Exception;
+    List<StockVO> getStocksByMarketType(String marketType) throws Exception;
     
     /**
-     * 시장별 종목 목록 (KOSPI/KOSDAQ)
+     * 나라별 종목 조회 (KR, US)
      */
-    List<StockVO> getStocksByMarket(String market) throws Exception;
+    List<StockVO> getStocksByCountry(String country) throws Exception;
     
     /**
-     * 거래량 상위 종목
+     * 업종별 종목 조회
      */
-    List<StockVO> getTopVolume(int limit) throws Exception;
+    List<StockVO> getStocksByIndustry(String industry) throws Exception;
     
     /**
-     * 상승률 상위 종목
+     * 전체 업종 목록
      */
-    List<StockVO> getTopGainers(int limit) throws Exception;
-}
+    List<String> getAllIndustries() throws Exception;
+    
+    /**
+     * 종목 추가
+     */
+    void addStock(StockVO stock) throws Exception;
+    
+    /**
+     * 종목 수정
+     */
+    void updateStock(StockVO stock) throws Exception;
+    
+    /**
+     * 종목 삭제
+     */
+    void deleteStock(int stockId) throws Exception;
+    /**
+     * 수정코드 202512191230
+     */
+    List<StockVO> getStocksOrderByVolume(int limit) throws Exception;
+    List<StockVO> getStocksOrderByChangeRate(int limit) throws Exception;
 
-    
+}

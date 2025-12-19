@@ -76,8 +76,7 @@
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.33</version>
-        </dependency>
- 
+        </dependency> 
         
            <!-- HikariCP (선택사항 - 성능 향상) -->
         <dependency>
@@ -155,8 +154,7 @@
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
             <version>1.15.3</version>
-        </dependency>          
-    
+        </dependency>    
 
 		<!-- JSON 파싱 (Alpha Vantage API) -->
         <dependency>
@@ -225,14 +223,7 @@
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
-    </dependencies>
-    
-    <!-- Apache Commons (유틸리티, 선택사항) -->
-	<dependency>
-	    <groupId>org.apache.commons</groupId>
-	    <artifactId>commons-lang3</artifactId>
-	    <version>3.12.0</version>
-	</dependency>
+    </dependencies>     
 
     <build>
         <plugins>

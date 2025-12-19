@@ -6,12 +6,19 @@
 <jsp:include page="../common/header.jsp" />
 
 <style>
+    .stock-list-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    /* 헤더 */
     .page-header {
         background: white;
-        border-radius: 16px;
+        border-radius: 20px;
         padding: 2rem;
         margin-bottom: 2rem;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     }
     
     .page-title {
@@ -20,49 +27,46 @@
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        margin: 0;
+        margin: 0 0 1rem 0;
     }
     
-    /* 필터 섹션 */
+    /* ✅ 필터 탭 */
     .filter-section {
         background: white;
-        border-radius: 16px;
+        border-radius: 15px;
         padding: 1.5rem;
         margin-bottom: 2rem;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     }
     
-    .filter-title {
-        font-size: 1.1rem;
+    .filter-label {
+        font-size: 0.9rem;
         font-weight: 600;
-        color: #1f2937;
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
     }
     
-    .filter-buttons {
+    .filter-tabs {
         display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
         flex-wrap: wrap;
-        gap: 0.75rem;
     }
     
     .filter-btn {
-        padding: 0.6rem 1.2rem;
+        padding: 10px 20px;
         border: 2px solid #e5e7eb;
         background: white;
+        color: #6b7280;
         border-radius: 10px;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.3s;
-        font-size: 0.95rem;
     }
     
     .filter-btn:hover {
         border-color: #667eea;
         color: #667eea;
-        transform: translateY(-2px);
     }
     
     .filter-btn.active {
@@ -71,93 +75,27 @@
         border-color: transparent;
     }
     
-    .filter-group {
-        margin-bottom: 1.5rem;
-    }
-    
-    .filter-group:last-child {
-        margin-bottom: 0;
-    }
-    
-    .filter-subtitle {
-        font-size: 0.9rem;
-        color: #6b7280;
-        margin-bottom: 0.75rem;
-        font-weight: 500;
-    }
-    
-    /* 통계 카드 */
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-        margin-bottom: 2rem;
-    }
-    
-    .stat-card {
-        background: white;
-        border-radius: 12px;
-        padding: 1.25rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        transition: all 0.3s;
-    }
-    
-    .stat-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-    
-    .stat-label {
-        font-size: 0.85rem;
-        color: #6b7280;
-        margin-bottom: 0.5rem;
-    }
-    
-    .stat-value {
-        font-size: 1.5rem;
-        font-weight: 700;
+    .stock-count {
+        font-size: 1rem;
         color: #1f2937;
-    }
-    
-    .stat-icon {
-        float: right;
-        font-size: 2rem;
-        opacity: 0.2;
-        color: #667eea;
-    }
-    
-    /* 종목 테이블 */
-    .stock-table-container {
-        background: white;
-        border-radius: 16px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-    }
-    
-    .table-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-    }
-    
-    .table-title {
-        font-size: 1.25rem;
+        margin-top: 10px;
         font-weight: 600;
-        color: #1f2937;
     }
     
-    .search-box {
+    /* 검색 바 */
+    .search-bar {
         display: flex;
-        gap: 0.5rem;
+        gap: 10px;
+        margin-top: 15px;
     }
     
     .search-input {
-        padding: 0.6rem 1rem;
+        flex: 1;
+        padding: 12px 20px;
         border: 2px solid #e5e7eb;
         border-radius: 10px;
-        width: 300px;
-        font-size: 0.95rem;
+        font-size: 1rem;
+        transition: all 0.3s;
     }
     
     .search-input:focus {
@@ -165,49 +103,53 @@
         border-color: #667eea;
     }
     
-    .btn-search {
-        padding: 0.6rem 1.5rem;
+    .search-btn {
+        padding: 12px 30px;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border: none;
         border-radius: 10px;
         font-weight: 600;
         cursor: pointer;
+        transition: all 0.3s;
     }
     
+    .search-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    /* 종목 테이블 */
     .stock-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     }
     
-    .stock-table thead {
-        background: #f9fafb;
+    .stock-table table {
+        width: 100%;
+        border-collapse: collapse;
     }
     
     .stock-table th {
+        background: #f9fafb;
         padding: 1rem;
         text-align: left;
         font-weight: 600;
-        color: #6b7280;
-        font-size: 0.875rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
+        color: #374151;
         border-bottom: 2px solid #e5e7eb;
     }
     
     .stock-table td {
         padding: 1rem;
         border-bottom: 1px solid #f3f4f6;
+        color: #1f2937;
     }
     
-    .stock-table tbody tr {
-        transition: all 0.2s;
-        cursor: pointer;
-    }
-    
-    .stock-table tbody tr:hover {
+    .stock-table tr:hover {
         background: #f9fafb;
+        cursor: pointer;
     }
     
     .stock-name {
@@ -216,335 +158,373 @@
     }
     
     .stock-code {
-        font-size: 0.875rem;
         color: #6b7280;
-        display: block;
-        margin-top: 0.25rem;
+        font-size: 0.9rem;
     }
     
-    .badge {
+    .market-badge {
         display: inline-block;
-        padding: 0.25rem 0.75rem;
-        border-radius: 0.375rem;
-        font-size: 0.75rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
         font-weight: 600;
     }
     
-    .badge-kospi {
-        background: #dbeafe;
-        color: #1e40af;
+    .badge-kospi { background: #dbeafe; color: #1e40af; }
+    .badge-kosdaq { background: #f3e8ff; color: #6b21a8; }
+    .badge-nasdaq { background: #d1fae5; color: #065f46; }
+    .badge-nyse { background: #fef3c7; color: #92400e; }
+    .badge-amex { background: #fce7f3; color: #9f1239; }
+    
+    .country-flag {
+        font-size: 1.3rem;
     }
     
-    .badge-kosdaq {
-        background: #f3e8ff;
-        color: #6b21a8;
-    }
-    
-    .badge-nasdaq {
-        background: #d1fae5;
-        color: #065f46;
-    }
-    
-    .badge-nyse {
-        background: #fef3c7;
-        color: #92400e;
-    }
-    
-    .badge-kr {
-        background: #dbeafe;
-        color: #1e40af;
-    }
-    
-    .badge-us {
-        background: #fecaca;
-        color: #991b1b;
-    }
-    
-    .price-up {
-        color: #dc2626;
+    .price {
         font-weight: 600;
+        font-size: 1.1rem;
     }
     
-    .price-down {
-        color: #2563eb;
+    .price-up { color: #dc2626; }
+    .price-down { color: #2563eb; }
+    
+    .action-btn {
+        padding: 8px 16px;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 8px;
         font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
     }
     
+    .action-btn:hover {
+        background: #5568d3;
+        transform: translateY(-2px);
+    }
+    
+    /* 빈 상태 */
     .empty-state {
         text-align: center;
-        padding: 4rem 2rem;
+        padding: 60px 20px;
         color: #6b7280;
     }
     
     .empty-state i {
         font-size: 4rem;
-        opacity: 0.3;
+        color: #d1d5db;
         margin-bottom: 1rem;
     }
 </style>
 
-<!-- Page Header -->
-<div class="page-header">
-    <h1 class="page-title">
-        <i class="bi bi-graph-up-arrow me-2"></i>종목 검색
-    </h1>
-    <p class="mt-2 text-muted">한국/미국 주식 시장의 종목을 검색하고 분석하세요</p>
-</div>
-
-<!-- 필터 섹션 -->
-<div class="filter-section">
-    <div class="filter-group">
-        <div class="filter-title">
-            <i class="bi bi-funnel"></i> 국가별 필터
+<div class="stock-list-container">
+    
+    <!-- 헤더 -->
+    <div class="page-header">
+        <h1 class="page-title">📊 종목 목록</h1>
+        <p style="color: #6b7280; margin: 0;">
+            실시간 주식 정보 및 시장 동향
+        </p>
+    </div>
+    
+    <!-- ✅ 필터 섹션 -->
+    <div class="filter-section">
+        
+        <!-- 국가별 필터 -->
+        <div class="filter-label">🌏 국가별</div>
+        <div class="filter-tabs">
+            <button class="filter-btn active" onclick="filterByCountry('all')">
+                🌐 전체
+            </button>
+            <button class="filter-btn" onclick="filterByCountry('KR')">
+                🇰🇷 한국
+            </button>
+            <button class="filter-btn" onclick="filterByCountry('US')">
+                🇺🇸 미국
+            </button>
         </div>
-        <div class="filter-buttons">
-            <button class="filter-btn active" data-filter="country" data-value="ALL" onclick="filterByCountry('ALL', this)">
-                <i class="bi bi-globe me-1"></i> 전체
+        
+        <!-- 시장별 필터 -->
+        <div class="filter-label" style="margin-top: 1rem;">📈 시장별</div>
+        <div class="filter-tabs">
+            <button class="filter-btn" onclick="filterByMarket('KOSPI')">
+                📊 KOSPI
             </button>
-            <button class="filter-btn" data-filter="country" data-value="KR" onclick="filterByCountry('KR', this)">
-                <i class="bi bi-flag me-1"></i> 한국
+            <button class="filter-btn" onclick="filterByMarket('KOSDAQ')">
+                📈 KOSDAQ
             </button>
-            <button class="filter-btn" data-filter="country" data-value="US" onclick="filterByCountry('US', this)">
-                <i class="bi bi-flag-fill me-1"></i> 미국
+            <button class="filter-btn" onclick="filterByMarket('NASDAQ')">
+                🚀 NASDAQ
             </button>
+            <button class="filter-btn" onclick="filterByMarket('NYSE')">
+                🏛️ NYSE
+            </button>
+            <button class="filter-btn" onclick="filterByMarket('AMEX')">
+                💎 AMEX
+            </button>
+        </div>
+        
+        <!-- 검색 바 -->
+        <div class="search-bar">
+            <input type="text" 
+                   id="searchInput" 
+                   class="search-input" 
+                   placeholder="종목명 또는 종목코드로 검색..."
+                   onkeypress="if(event.key === 'Enter') searchStocks()">
+            <button class="search-btn" onclick="searchStocks()">
+                🔍 검색
+            </button>
+        </div>
+        
+        <div class="stock-count" id="stockCount">
+            전체 종목을 불러오는 중...
         </div>
     </div>
     
-    <div class="filter-group">
-        <div class="filter-title">
-            <i class="bi bi-building"></i> 시장별 필터
-        </div>
-        <div class="filter-buttons">
-            <button class="filter-btn active" data-filter="market" data-value="ALL" onclick="filterByMarket('ALL', this)">
-                전체
-            </button>
-            <button class="filter-btn" data-filter="market" data-value="KOSPI" onclick="filterByMarket('KOSPI', this)">
-                KOSPI
-            </button>
-            <button class="filter-btn" data-filter="market" data-value="KOSDAQ" onclick="filterByMarket('KOSDAQ', this)">
-                KOSDAQ
-            </button>
-            <button class="filter-btn" data-filter="market" data-value="NASDAQ" onclick="filterByMarket('NASDAQ', this)">
-                NASDAQ
-            </button>
-            <button class="filter-btn" data-filter="market" data-value="NYSE" onclick="filterByMarket('NYSE', this)">
-                NYSE
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- 통계 카드 -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <i class="bi bi-graph-up stat-icon"></i>
-        <div class="stat-label">총 종목 수</div>
-        <div class="stat-value" id="totalCount">${fn:length(stockList)}</div>
-    </div>
-    <div class="stat-card">
-        <i class="bi bi-flag stat-icon"></i>
-        <div class="stat-label">한국 종목</div>
-        <div class="stat-value" id="krCount">-</div>
-    </div>
-    <div class="stat-card">
-        <i class="bi bi-flag-fill stat-icon"></i>
-        <div class="stat-label">미국 종목</div>
-        <div class="stat-value" id="usCount">-</div>
-    </div>
-    <div class="stat-card">
-        <i class="bi bi-eye stat-icon"></i>
-        <div class="stat-label">현재 표시</div>
-        <div class="stat-value" id="visibleCount">${fn:length(stockList)}</div>
-    </div>
-</div>
-
-<!-- 종목 테이블 -->
-<div class="stock-table-container">
-    <div class="table-header">
-        <h5 class="table-title">
-            <i class="bi bi-table me-2"></i>종목 목록
-        </h5>
-        <div class="search-box">
-            <input type="text" class="search-input" id="searchInput" 
-                   placeholder="종목명 또는 종목코드로 검색..." 
-                   onkeyup="searchStock(event)">
-            <button class="btn-search" onclick="searchStock()">
-                <i class="bi bi-search me-1"></i>검색
-            </button>
-        </div>
-    </div>
-    
-    <div class="table-responsive">
-        <table class="stock-table">
+    <!-- 종목 테이블 -->
+    <div class="stock-table">
+        <table>
             <thead>
                 <tr>
-                    <th>종목명</th>
-                    <th>시장</th>
                     <th>국가</th>
-                    <th>산업</th>
+                    <th>종목명</th>
+                    <th>종목코드</th>
+                    <th>시장</th>
+                    <th>업종</th>
                     <th>현재가</th>
                     <th>등락률</th>
+                    <th>액션</th>
                 </tr>
             </thead>
             <tbody id="stockTableBody">
-                <c:forEach items="${stockList}" var="stock">
-                    <tr class="stock-row" 
-                        data-country="${stock.country}" 
-                        data-market="${stock.marketType}"
-                        data-name="${fn:toLowerCase(stock.stockName)}"
-                        data-code="${fn:toLowerCase(stock.stockCode)}"
-                        onclick="location.href='${pageContext.request.contextPath}/stock/detail/${stock.stockCode}'">
-                        <td>
-                            <span class="stock-name">${stock.stockName}</span>
-                            <span class="stock-code">${stock.stockCode}</span>
-                        </td>
-                        <td>
-                            <span class="badge badge-${fn:toLowerCase(stock.marketType)}">
-                                ${stock.marketType}
-                            </span>
-                        </td>
-                        <td>
-                            <span class="badge badge-${fn:toLowerCase(stock.country)}">
-                                ${stock.country == 'KR' ? '한국' : '미국'}
-                            </span>
-                        </td>
-                        <td>${stock.industry}</td>
-                        <td>
-                            <fmt:formatNumber value="${stock.currentPrice}" pattern="#,##0" />원
-                        </td>
-                        <td>
-                            <c:choose>
-                                <c:when test="${stock.changeRate >= 0}">
-                                    <span class="price-up">
-                                        <i class="bi bi-arrow-up"></i>
-                                        <fmt:formatNumber value="${stock.changeRate}" pattern="+#,##0.00" />%
-                                    </span>
-                                </c:when>
-                                <c:otherwise>
-                                    <span class="price-down">
-                                        <i class="bi bi-arrow-down"></i>
-                                        <fmt:formatNumber value="${stock.changeRate}" pattern="#,##0.00" />%
-                                    </span>
-                                </c:otherwise>
-                            </c:choose>
-                        </td>
-                    </tr>
-                </c:forEach>
+                <tr>
+                    <td colspan="8" style="text-align: center; padding: 3rem;">
+                        <div class="loading">종목을 불러오는 중...</div>
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>
     
-    <div id="emptyState" class="empty-state" style="display: none;">
-        <i class="bi bi-inbox"></i>
-        <h4>검색 결과가 없습니다</h4>
-        <p>다른 검색어나 필터를 시도해보세요</p>
-    </div>
 </div>
 
 <script>
-    let currentCountryFilter = 'ALL';
-    let currentMarketFilter = 'ALL';
-    let currentSearchText = '';
+    // ✅ 전역 변수
+    let allStocks = [];
+    let currentFilter = { type: 'country', value: 'all' };
     
-    // 페이지 로드 시 통계 업데이트
-    window.addEventListener('load', () => {
-        updateStats();
-    });
-    
-    // 국가별 필터
-    function filterByCountry(country, btn) {
-        currentCountryFilter = country;
-        
-        // 버튼 활성화 상태 변경
-        document.querySelectorAll('[data-filter="country"]').forEach(b => {
-            b.classList.remove('active');
-        });
-        btn.classList.add('active');
-        
-        applyFilters();
+    // ✅ 종목 로드
+    async function loadStocks() {
+        try {
+            console.log('종목 로드 시작...');
+            
+            const response = await fetch('/portwatch/stock/api/list');
+            const data = await response.json();
+            
+            if (data.success && data.stockList) {
+                allStocks = data.stockList;
+                console.log('종목 로드 완료:', allStocks.length + '개');
+                displayStocks(allStocks);
+            } else {
+                showEmptyState('종목 정보를 불러올 수 없습니다.');
+            }
+            
+        } catch (error) {
+            console.error('종목 로드 실패:', error);
+            showEmptyState('종목 정보를 불러오는 중 오류가 발생했습니다.');
+        }
     }
     
-    // 시장별 필터
-    function filterByMarket(market, btn) {
-        currentMarketFilter = market;
+    // ✅ 종목 표시
+    function displayStocks(stocks) {
+        const tbody = document.getElementById('stockTableBody');
+        const countElement = document.getElementById('stockCount');
         
-        // 버튼 활성화 상태 변경
-        document.querySelectorAll('[data-filter="market"]').forEach(b => {
-            b.classList.remove('active');
-        });
-        btn.classList.add('active');
-        
-        applyFilters();
-    }
-    
-    // 검색
-    function searchStock(event) {
-        if (event && event.key !== 'Enter') {
+        if (!stocks || stocks.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8">
+                        <div class="empty-state">
+                            <i class="bi bi-inbox"></i>
+                            <h3>종목이 없습니다</h3>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            countElement.textContent = '0개의 종목';
             return;
         }
         
-        currentSearchText = document.getElementById('searchInput').value.toLowerCase().trim();
-        applyFilters();
+        tbody.innerHTML = '';
+        countElement.textContent = `총 ${stocks.length}개의 종목`;
+        
+        stocks.forEach(stock => {
+            const row = createStockRow(stock);
+            tbody.appendChild(row);
+        });
     }
     
-    // 필터 적용
-    function applyFilters() {
-        const rows = document.querySelectorAll('.stock-row');
-        let visibleCount = 0;
+    // ✅ 종목 행 생성
+    function createStockRow(stock) {
+        const tr = document.createElement('tr');
+        tr.onclick = () => location.href = '/portwatch/stock/detail/' + stock.stockCode;
         
-        rows.forEach(row => {
-            const country = row.dataset.country;
-            const market = row.dataset.market;
-            const name = row.dataset.name;
-            const code = row.dataset.code;
-            
-            let showCountry = (currentCountryFilter === 'ALL' || country === currentCountryFilter);
-            let showMarket = (currentMarketFilter === 'ALL' || market === currentMarketFilter);
-            let showSearch = (currentSearchText === '' || name.includes(currentSearchText) || code.includes(currentSearchText));
-            
-            if (showCountry && showMarket && showSearch) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
-            }
-        });
+        // 국가 판단
+        const isKorean = stock.marketType === 'KOSPI' || stock.marketType === 'KOSDAQ';
+        const countryFlag = isKorean ? '🇰🇷' : '🇺🇸';
         
-        // 결과 없음 표시
-        const emptyState = document.getElementById('emptyState');
-        const tableBody = document.getElementById('stockTableBody');
+        // 가격 포맷
+        const price = stock.currentPrice || (isKorean ? 50000 : 100.00);
+        const priceText = isKorean 
+            ? price.toLocaleString() + '원' 
+            : '$' + price.toFixed(2);
         
-        if (visibleCount === 0) {
-            emptyState.style.display = 'block';
-            tableBody.style.display = 'none';
-        } else {
-            emptyState.style.display = 'none';
-            tableBody.style.display = '';
+        tr.innerHTML = `
+            <td>
+                <span class="country-flag">${countryFlag}</span>
+            </td>
+            <td>
+                <div class="stock-name">${stock.stockName}</div>
+            </td>
+            <td>
+                <div class="stock-code">${stock.stockCode}</div>
+            </td>
+            <td>
+                <span class="market-badge badge-${stock.marketType.toLowerCase()}">
+                    ${stock.marketType}
+                </span>
+            </td>
+            <td>${stock.industry || '-'}</td>
+            <td>
+                <span class="price">${priceText}</span>
+            </td>
+            <td>
+                <span class="price-up">+2.5%</span>
+            </td>
+            <td>
+                <button class="action-btn" onclick="event.stopPropagation(); addToWatchlist('${stock.stockCode}')">
+                    ⭐ 관심종목
+                </button>
+            </td>
+        `;
+        
+        return tr;
+    }
+    
+    // ✅ 국가별 필터
+    function filterByCountry(country) {
+        currentFilter = { type: 'country', value: country };
+        updateFilterButtons('country', country);
+        
+        let filtered = allStocks;
+        
+        if (country !== 'all') {
+            filtered = allStocks.filter(stock => {
+                if (country === 'KR') {
+                    return stock.marketType === 'KOSPI' || stock.marketType === 'KOSDAQ';
+                } else if (country === 'US') {
+                    return stock.marketType === 'NASDAQ' || stock.marketType === 'NYSE' || stock.marketType === 'AMEX';
+                }
+                return false;
+            });
         }
         
-        // 통계 업데이트
-        document.getElementById('visibleCount').textContent = visibleCount;
+        console.log('국가별 필터:', country, filtered.length + '개');
+        displayStocks(filtered);
     }
     
-    // 통계 업데이트
-    function updateStats() {
-        const rows = document.querySelectorAll('.stock-row');
-        let krCount = 0;
-        let usCount = 0;
+    // ✅ 시장별 필터
+    function filterByMarket(market) {
+        currentFilter = { type: 'market', value: market };
+        updateFilterButtons('market', market);
         
-        rows.forEach(row => {
-            if (row.dataset.country === 'KR') {
-                krCount++;
-            } else if (row.dataset.country === 'US') {
-                usCount++;
-            }
+        const filtered = allStocks.filter(stock => stock.marketType === market);
+        
+        console.log('시장별 필터:', market, filtered.length + '개');
+        displayStocks(filtered);
+    }
+    
+    // ✅ 필터 버튼 상태 업데이트
+    function updateFilterButtons(type, value) {
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.remove('active');
         });
         
-        document.getElementById('krCount').textContent = krCount;
-        document.getElementById('usCount').textContent = usCount;
-        document.getElementById('totalCount').textContent = rows.length;
-        document.getElementById('visibleCount').textContent = rows.length;
+        event.target.classList.add('active');
     }
+    
+    // ✅ 검색
+    async function searchStocks() {
+        const keyword = document.getElementById('searchInput').value.trim();
+        
+        if (!keyword) {
+            displayStocks(allStocks);
+            return;
+        }
+        
+        try {
+            const response = await fetch('/portwatch/stock/api/search?keyword=' + encodeURIComponent(keyword));
+            const data = await response.json();
+            
+            if (data.success && data.stockList) {
+                console.log('검색 결과:', data.stockList.length + '개');
+                displayStocks(data.stockList);
+            } else {
+                showEmptyState('검색 결과가 없습니다.');
+            }
+            
+        } catch (error) {
+            console.error('검색 실패:', error);
+            showEmptyState('검색 중 오류가 발생했습니다.');
+        }
+    }
+    
+    // ✅ 관심종목 추가
+    async function addToWatchlist(stockCode) {
+        try {
+            const response = await fetch('/portwatch/watchlist/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ stockCode: stockCode })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                alert('관심종목에 추가되었습니다.');
+            } else {
+                alert(data.message || '추가 중 오류가 발생했습니다.');
+            }
+            
+        } catch (error) {
+            console.error('관심종목 추가 실패:', error);
+            alert('관심종목 추가 중 오류가 발생했습니다.');
+        }
+    }
+    
+    // ✅ 빈 상태 표시
+    function showEmptyState(message) {
+        const tbody = document.getElementById('stockTableBody');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8">
+                    <div class="empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <h3>${message}</h3>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+    
+    // ✅ 페이지 로드 시 종목 로드
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('페이지 로드 완료');
+        loadStocks();
+    });
 </script>
 
 <jsp:include page="../common/footer.jsp" />

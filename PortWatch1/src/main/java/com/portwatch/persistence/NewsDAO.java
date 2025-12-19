@@ -5,7 +5,7 @@ import org.apache.ibatis.annotations.Param;
 import com.portwatch.domain.NewsVO;
 
 /**
- * 뉴스 DAO 인터페이스
+ * 뉴스 DAO 인터페이스 (persistence 패키지)
  * 
  * @author PortWatch
  * @version 1.0

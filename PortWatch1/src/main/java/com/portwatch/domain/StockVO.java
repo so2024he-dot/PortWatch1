@@ -4,34 +4,44 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 /**
- * 종목 VO
- * 현재 MySQL DDL에 완벽히 맞춤
+ * 종목 정보 VO (Value Object)
+ * 
+ * @author PortWatch
+ * @version 2.0 - 국가별 구분 및 현재가 추가
  */
 public class StockVO {
     
-    // 기본 정보
-    private Integer stockId;
-    private String stockCode;
-    private String stockName;
-    private String marketType;    // KOSPI, KOSDAQ
-    private String industry;      // 업종
-    private Timestamp updatedAt;
+    private Integer stockId;           // 종목 ID
+    private String stockCode;          // 종목 코드
+    private String stockName;          // 종목명
+    private String marketType;         // 시장 구분 (KOSPI, KOSDAQ, NASDAQ, NYSE)
+    private String industry;           // 업종
     
-    // 주가 정보 (STOCK_PRICE 테이블 JOIN)
-    private BigDecimal currentPrice;      // 현재가
-    private BigDecimal openPrice;         // 시가
-    private BigDecimal highPrice;         // 고가
-    private BigDecimal lowPrice;          // 저가
-    private BigDecimal closePrice;        // 종가
-    private BigDecimal priceChange;       // 가격 변동
-    private BigDecimal priceChangeRate;   // 변동률 (%)
-    private Long volume;                  // 거래량
-    private Long tradingValue;            // 거래대금
+    // 추가 필드 (v2.0)
+    private String country;            // 국가 코드 (KR, US, JP)
+    private BigDecimal currentPrice;   // 현재가 (크롤링된 가격)
+    private BigDecimal priceChange;    // 가격 변동폭
+    private BigDecimal priceChangeRate; // 변동률 (%)
     
-    // 기본 생성자
-    public StockVO() {}
+    private Timestamp updatedAt;       // 수정일시
     
+    // ================================================
+    // Constructors
+    // ================================================
+    
+    public StockVO() {
+    }
+    
+    public StockVO(String stockCode, String stockName, String marketType) {
+        this.stockCode = stockCode;
+        this.stockName = stockName;
+        this.marketType = marketType;
+    }
+    
+    // ================================================
     // Getters and Setters
+    // ================================================
+    
     public Integer getStockId() {
         return stockId;
     }
@@ -72,12 +82,12 @@ public class StockVO {
         this.industry = industry;
     }
     
-    public Timestamp getUpdatedAt() {
-        return updatedAt;
+    public String getCountry() {
+        return country;
     }
     
-    public void setUpdatedAt(Timestamp updatedAt) {
-        this.updatedAt = updatedAt;
+    public void setCountry(String country) {
+        this.country = country;
     }
     
     public BigDecimal getCurrentPrice() {
@@ -88,36 +98,13 @@ public class StockVO {
         this.currentPrice = currentPrice;
     }
     
-    public BigDecimal getOpenPrice() {
-        return openPrice;
+    // double 타입으로도 받을 수 있도록 편의 메서드 추가
+    public double getCurrentPriceAsDouble() {
+        return currentPrice != null ? currentPrice.doubleValue() : 0.0;
     }
     
-    public void setOpenPrice(BigDecimal openPrice) {
-        this.openPrice = openPrice;
-    }
-    
-    public BigDecimal getHighPrice() {
-        return highPrice;
-    }
-    
-    public void setHighPrice(BigDecimal highPrice) {
-        this.highPrice = highPrice;
-    }
-    
-    public BigDecimal getLowPrice() {
-        return lowPrice;
-    }
-    
-    public void setLowPrice(BigDecimal lowPrice) {
-        this.lowPrice = lowPrice;
-    }
-    
-    public BigDecimal getClosePrice() {
-        return closePrice;
-    }
-    
-    public void setClosePrice(BigDecimal closePrice) {
-        this.closePrice = closePrice;
+    public void setCurrentPrice(double currentPrice) {
+        this.currentPrice = BigDecimal.valueOf(currentPrice);
     }
     
     public BigDecimal getPriceChange() {
@@ -136,21 +123,47 @@ public class StockVO {
         this.priceChangeRate = priceChangeRate;
     }
     
-    public Long getVolume() {
-        return volume;
+    public Timestamp getUpdatedAt() {
+        return updatedAt;
     }
     
-    public void setVolume(Long volume) {
-        this.volume = volume;
+    public void setUpdatedAt(Timestamp updatedAt) {
+        this.updatedAt = updatedAt;
     }
     
-    public Long getTradingValue() {
-        return tradingValue;
+    // ================================================
+    // Utility Methods
+    // ================================================
+    
+    /**
+     * 한국 주식 여부 확인
+     */
+    public boolean isKoreanStock() {
+        return "KR".equals(country) || 
+               "KOSPI".equals(marketType) || 
+               "KOSDAQ".equals(marketType);
     }
     
-    public void setTradingValue(Long tradingValue) {
-        this.tradingValue = tradingValue;
+    /**
+     * 미국 주식 여부 확인
+     */
+    public boolean isUSStock() {
+        return "US".equals(country) || 
+               "NASDAQ".equals(marketType) || 
+               "NYSE".equals(marketType) ||
+               "AMEX".equals(marketType);
     }
+    
+    /**
+     * 분할 매수 가능 여부 (미국 주식만 가능)
+     */
+    public boolean isFractionalShareAllowed() {
+        return isUSStock();
+    }
+    
+    // ================================================
+    // toString
+    // ================================================
     
     @Override
     public String toString() {
@@ -160,10 +173,11 @@ public class StockVO {
                 ", stockName='" + stockName + '\'' +
                 ", marketType='" + marketType + '\'' +
                 ", industry='" + industry + '\'' +
+                ", country='" + country + '\'' +
                 ", currentPrice=" + currentPrice +
                 ", priceChange=" + priceChange +
                 ", priceChangeRate=" + priceChangeRate +
-                ", volume=" + volume +
+                ", updatedAt=" + updatedAt +
                 '}';
     }
 }

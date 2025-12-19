@@ -4,10 +4,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.portwatch.domain.StockVO;
 import com.portwatch.service.StockService;
 
+/**
+ * ✅ 수정사항: MarketApiController.java
+ * 
+ * 1. topVolume 메서드 (45-49번) - getStocksOrderByVolume 호출
+ * 2. topGainers 메서드 (52-57번) - getStocksOrderByChangeRate 호출
+ * 
+ * 원인: StockService 인터페이스에 정의된 메서드명과 일치하지 않았음
+ */
 @RestController
 @RequestMapping("/api/market")
 public class MarketApiController {
@@ -38,31 +48,28 @@ public class MarketApiController {
         return result;
     }
     
+    /**
+     * ✅ 수정: 거래량 상위 종목 조회
+     * - getStocksOrderByVolume 메서드 호출
+     */
     @GetMapping("/top-volume")
-    public Map<String, Object> getTopVolume(@RequestParam(defaultValue = "5") int limit) {
-        Map<String, Object> result = new HashMap<>();
-        try {
-            List<StockVO> stocks = stockService.getTopVolume(limit);
-            result.put("success", true);
-            result.put("data", stocks);
-        } catch (Exception e) {
-            result.put("success", false);
-            result.put("message", e.getMessage());
-        }
-        return result;
+    public ResponseEntity<List<StockVO>> topVolume(
+            @RequestParam(defaultValue = "10") int limit) throws Exception {
+        
+        List<StockVO> stocks = stockService.getStocksOrderByVolume(limit);
+        return new ResponseEntity<>(stocks, HttpStatus.OK);
     }
-    
+
+    /**
+     * ✅ 수정: 상승률 상위 종목 조회
+     * - getStocksOrderByChangeRate 메서드 호출
+     */
     @GetMapping("/top-gainers")
-    public Map<String, Object> getTopGainers(@RequestParam(defaultValue = "5") int limit) {
-        Map<String, Object> result = new HashMap<>();
-        try {
-            List<StockVO> stocks = stockService.getTopGainers(limit);
-            result.put("success", true);
-            result.put("data", stocks);
-        } catch (Exception e) {
-            result.put("success", false);
-            result.put("message", e.getMessage());
-        }
-        return result;
+    public ResponseEntity<List<StockVO>> topGainers(
+            @RequestParam(defaultValue = "10") int limit) throws Exception {
+        
+        List<StockVO> stocks = stockService.getStocksOrderByChangeRate(limit);
+        return new ResponseEntity<>(stocks, HttpStatus.OK);
     }
+
 }

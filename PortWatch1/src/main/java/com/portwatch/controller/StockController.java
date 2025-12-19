@@ -1,19 +1,22 @@
 package com.portwatch.controller;
 
-import javax.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import com.portwatch.domain.StockVO;
-import com.portwatch.domain.NewsVO;
 import com.portwatch.service.StockService;
-import com.portwatch.service.NewsService;
-import com.portwatch.service.ExchangeRateService;
-
-import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+/**
+ * 종목 컨트롤러
+ * 
+ * @author PortWatch
+ * @version 7.0 - 종목 구분 기능 추가 (전체/시장별/나라별)
+ */
 @Controller
 @RequestMapping("/stock")
 public class StockController {
@@ -21,124 +24,199 @@ public class StockController {
     @Autowired
     private StockService stockService;
     
-    @Autowired
-    private NewsService newsService;
-    
-    @Autowired
-    private ExchangeRateService exchangeRateService;
-    
-    
-        
     /**
      * 종목 목록 페이지
      */
     @GetMapping("/list")
     public String stockList(
-            @RequestParam(defaultValue = "ALL") String market,
-            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(required = false) String filter,
+            @RequestParam(required = false) String value,
             Model model) {
         
         try {
             List<StockVO> stockList;
             
-            if (!keyword.isEmpty()) {
-                // 검색 모드
-                if (market.equals("ALL")) {
-                    stockList = stockService.searchStocks(keyword, null);
-                } else {
-                    stockList = stockService.searchStocks(keyword, market);
-                }
-            } else if (market.equals("ALL")) {
-                // 전체 종목
-                stockList = stockService.getAllStocksList();
+            // ✅ 필터링 적용
+            if ("market".equals(filter) && value != null) {
+                // 시장별 필터 (KOSPI, KOSDAQ, NASDAQ, NYSE)
+                stockList = stockService.getStocksByMarketType(value);
+                model.addAttribute("filterType", "시장별");
+                model.addAttribute("filterValue", value);
+                
+            } else if ("country".equals(filter) && value != null) {
+                // 나라별 필터 (KR, US)
+                stockList = stockService.getStocksByCountry(value);
+                model.addAttribute("filterType", "국가별");
+                model.addAttribute("filterValue", value.equals("KR") ? "한국" : "미국");
+                
+            } else if ("industry".equals(filter) && value != null) {
+                // 업종별 필터
+                stockList = stockService.getStocksByIndustry(value);
+                model.addAttribute("filterType", "업종별");
+                model.addAttribute("filterValue", value);
+                
             } else {
-                // 시장별 종목 (KOSPI/KOSDAQ)
-                stockList = stockService.getStocksByMarket(market);
+                // 전체 종목
+                stockList = stockService.getAllStocks();
+                model.addAttribute("filterType", "전체");
             }
             
             model.addAttribute("stockList", stockList);
-            model.addAttribute("market", market);
-            model.addAttribute("keyword", keyword);
-            model.addAttribute("stockCount", stockList.size());
-            
-            return "stock/list";
+            model.addAttribute("totalCount", stockList.size());
             
         } catch (Exception e) {
+            model.addAttribute("errorMessage", "종목 조회 중 오류가 발생했습니다: " + e.getMessage());
             e.printStackTrace();
-            model.addAttribute("error", "종목 목록을 불러오는 중 오류가 발생했습니다.");
-            model.addAttribute("market", market);
-            model.addAttribute("keyword", keyword);
-            return "stock/list";
+        }
+        
+        return "stock/list";
+    }
+    
+    /**
+     * 종목 목록 조회 (AJAX) - 필터링 지원
+     */
+    @GetMapping("/api/list")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getStockListApi(
+            @RequestParam(required = false) String filter,
+            @RequestParam(required = false) String value) {
+        
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            List<StockVO> stockList;
+            
+            if ("market".equals(filter) && value != null) {
+                stockList = stockService.getStocksByMarketType(value);
+            } else if ("country".equals(filter) && value != null) {
+                stockList = stockService.getStocksByCountry(value);
+            } else if ("industry".equals(filter) && value != null) {
+                stockList = stockService.getStocksByIndustry(value);
+            } else {
+                stockList = stockService.getAllStocks();
+            }
+            
+            response.put("success", true);
+            response.put("stockList", stockList);
+            response.put("totalCount", stockList.size());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(response);
         }
     }
     
     /**
-     * 종목 검색 페이지
+     * 시장별 종목 수 조회 (AJAX)
      */
-    @GetMapping("/search")
-    public String searchPage() {
-        return "stock/search";
+    @GetMapping("/api/market-summary")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getMarketSummary() {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            Map<String, Integer> summary = new HashMap<>();
+            
+            // 한국 시장
+            summary.put("KOSPI", stockService.getStocksByMarketType("KOSPI").size());
+            summary.put("KOSDAQ", stockService.getStocksByMarketType("KOSDAQ").size());
+            
+            // 미국 시장
+            summary.put("NASDAQ", stockService.getStocksByMarketType("NASDAQ").size());
+            summary.put("NYSE", stockService.getStocksByMarketType("NYSE").size());
+            
+            // 국가별
+            summary.put("KR", stockService.getStocksByCountry("KR").size());
+            summary.put("US", stockService.getStocksByCountry("US").size());
+            
+            response.put("success", true);
+            response.put("summary", summary);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(response);
+        }
     }
     
     /**
-     * 종목 상세 페이지
+     * 업종 목록 조회 (AJAX)
+     */
+    @GetMapping("/api/industries")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getIndustries() {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            List<String> industries = stockService.getAllIndustries();
+            
+            response.put("success", true);
+            response.put("industries", industries);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+    
+    /**
+     * 종목 상세 정보 조회
      */
     @GetMapping("/detail/{stockCode}")
-    public String detailPage(@PathVariable String stockCode, Model model) {
+    public String stockDetail(@PathVariable String stockCode, Model model) {
         try {
             StockVO stock = stockService.getStockByCode(stockCode);
             
             if (stock == null) {
-                model.addAttribute("error", "종목을 찾을 수 없습니다.");
-                return "redirect:/stock/list";
+                model.addAttribute("errorMessage", "종목을 찾을 수 없습니다.");
+                return "error/404";
             }
             
-            // 종목 정보
             model.addAttribute("stock", stock);
-            model.addAttribute("stockCode", stockCode);
-            
-            // 🔧 미국 주식인 경우 환율 정보 추가
-            String marketType = stock.getMarketType();
-            boolean isUSStock = (marketType != null && 
-                    (marketType.equals("NASDAQ") || 
-                     marketType.equals("NYSE") || 
-                     marketType.equals("AMEX")));
-            
-            if (isUSStock) {
-                try {
-                    BigDecimal exchangeRate = exchangeRateService.getUSDToKRW();
-                    model.addAttribute("exchangeRate", exchangeRate);
-                    model.addAttribute("isUSStock", true);
-                    
-                    // 현재가가 있으면 한화로 변환
-                    if (stock.getCurrentPrice() != null) {
-                        BigDecimal krwPrice = exchangeRateService.convertUSDToKRW(stock.getCurrentPrice());
-                        model.addAttribute("currentPriceKRW", krwPrice);
-                    }
-                    
-                } catch (Exception e) {
-                    System.err.println("환율 정보 조회 실패: " + e.getMessage());
-                    // 환율 조회 실패해도 페이지는 정상 표시
-                }
-            } else {
-                model.addAttribute("isUSStock", false);
-            }
-            
-            // 종목 관련 뉴스 가져오기
-            try {
-                List<NewsVO> newsList = newsService.getNewsByStockCode(stockCode, 5);
-                model.addAttribute("newsList", newsList);
-            } catch (Exception e) {
-                System.err.println("뉴스 로드 실패: " + e.getMessage());
-                model.addAttribute("newsList", null);
-            }
-            
-            return "stock/detail";
             
         } catch (Exception e) {
+            model.addAttribute("errorMessage", "종목 조회 중 오류가 발생했습니다: " + e.getMessage());
             e.printStackTrace();
-            model.addAttribute("error", "종목 정보를 불러오는 중 오류가 발생했습니다.");
-            return "redirect:/stock/list";
+        }
+        
+        return "stock/detail";
+    }
+    
+    /**
+     * 종목 검색 (AJAX)
+     */
+    @GetMapping("/api/search")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> searchStocks(
+            @RequestParam String keyword) {
+        
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            List<StockVO> stockList = stockService.searchStocks(keyword);
+            
+            response.put("success", true);
+            response.put("stockList", stockList);
+            response.put("totalCount", stockList.size());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(response);
         }
     }
 }

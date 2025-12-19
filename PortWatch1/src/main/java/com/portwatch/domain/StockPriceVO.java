@@ -141,11 +141,7 @@ public class StockPriceVO {
                 '}';
     }
 
-	public void setCurrentPrice(BigDecimal currentPrice) {
-		// TODO Auto-generated method stub
-		
-	}
-
+	
 	public void setPriceChange(BigDecimal priceChange) {
 		// TODO Auto-generated method stub
 		
@@ -155,4 +151,22 @@ public class StockPriceVO {
 		// TODO Auto-generated method stub
 		
 	}
+
+	public void setCurrentPrice11(BigDecimal currentPrice) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void setCurrentPrice(BigDecimal currentPrice) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void setCurrentPrice(Double currentPrice) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	
+	
 }

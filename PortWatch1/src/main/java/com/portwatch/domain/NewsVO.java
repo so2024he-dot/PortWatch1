@@ -1,5 +1,6 @@
 package com.portwatch.domain;
 
+import java.sql.Timestamp;
 import java.util.Date;
 
 /**
@@ -140,4 +141,19 @@ public class NewsVO {
         return "NewsVO [newsId=" + newsId + ", stockCode=" + stockCode + ", stockName=" + stockName 
                 + ", title=" + title + ", source=" + source + ", publishedDate=" + publishedDate + "]";
     }
+
+	public void setStockId(Integer stockId) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void setCountry(String string) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void setPublishedAt(Timestamp timestamp) {
+		// TODO Auto-generated method stub
+		
+	}
 }

@@ -1,60 +1,81 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:mvc="http://www.springframework.org/schema/mvc"
-       xmlns:context="http://www.springframework.org/schema/context"
-       xsi:schemaLocation="
-           http://www.springframework.org/schema/beans 
-           http://www.springframework.org/schema/beans/spring-beans.xsd
-           http://www.springframework.org/schema/mvc 
-           http://www.springframework.org/schema/mvc/spring-mvc.xsd
-           http://www.springframework.org/schema/context 
-           http://www.springframework.org/schema/context/spring-context.xsd">
+<beans:beans xmlns="http://www.springframework.org/schema/mvc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/mvc 
+		http://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context 
+		http://www.springframework.org/schema/context/spring-context.xsd">
 
-    <!-- ============================================ -->
-    <!-- Component Scan: Controller 패키지 스캔 -->
-    <!-- ============================================ -->
-    <context:component-scan base-package="com.portwatch.controller" />
-    
-    <!-- ============================================ -->
-    <!-- Annotation Driven: Validator 활성화 -->
-    <!-- ============================================ -->
-    <mvc:annotation-driven validator="validator" />
-    
-    <!-- ============================================ -->
-    <!-- Validator 빈 등록 -->
-    <!-- ============================================ -->
-    <bean id="validator" 
-          class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean">
-        <property name="validationMessageSource" ref="messageSource"/>
-    </bean>
-    
-    <!-- ============================================ -->
-    <!-- MessageSource: Validation 메시지 설정 -->
-    <!-- ============================================ -->
-    <bean id="messageSource" 
-          class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
-        <property name="basenames">
-            <list>
-                <value>classpath:messages/validation</value>
-                <value>classpath:messages/messages</value>
-            </list>
-        </property>
-        <property name="defaultEncoding" value="UTF-8"/>
-        <property name="cacheSeconds" value="60"/>
-    </bean>
-    
-    <!-- ============================================ -->
-    <!-- ViewResolver: JSP 경로 설정 -->
-    <!-- ============================================ -->
-    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
-        <property name="prefix" value="/WEB-INF/views/" />
-        <property name="suffix" value=".jsp" />
-    </bean>
-    
-    <!-- ============================================ -->
-    <!-- Static Resources: CSS, JS, Images -->
-    <!-- ============================================ -->
-    <mvc:resources mapping="/resources/**" location="/resources/" />
-    
-</beans>
+	<!-- ============================================ -->
+	<!-- 1. Annotation-driven MVC 활성화 -->
+	<!-- ============================================ -->
+	<annotation-driven />
+
+	<!-- ============================================ -->
+	<!-- 2. 정적 리소스 매핑 -->
+	<!-- ============================================ -->
+	<!-- /resources/** 요청은 /resources/ 폴더에서 처리 -->
+	<resources mapping="/resources/**" location="/resources/" />
+	
+	<!-- CSS, JS, 이미지 등 -->
+	<resources mapping="/css/**" location="/resources/css/" />
+	<resources mapping="/js/**" location="/resources/js/" />
+	<resources mapping="/images/**" location="/resources/images/" />
+
+	<!-- ============================================ -->
+	<!-- 3. ViewResolver 설정 (JSP) -->
+	<!-- ============================================ -->
+	<beans:bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<beans:property name="prefix" value="/WEB-INF/views/" />
+		<beans:property name="suffix" value=".jsp" />
+		<beans:property name="order" value="1" />
+	</beans:bean>
+
+	<!-- ============================================ -->
+	<!-- 4. Controller 스캔 -->
+	<!-- ============================================ -->
+	<!-- @Controller 어노테이션이 붙은 클래스를 자동 스캔 -->
+	<context:component-scan base-package="com.portwatch.controller" />
+
+	<!-- ============================================ -->
+	<!-- 5. JSON 변환 설정 (REST API용) -->
+	<!-- ============================================ -->
+	<beans:bean id="jsonMessageConverter"
+		class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+		<beans:property name="supportedMediaTypes">
+			<beans:list>
+				<beans:value>application/json;charset=UTF-8</beans:value>
+			</beans:list>
+		</beans:property>
+	</beans:bean>
+
+	<!-- ============================================ -->
+	<!-- 6. Multipart Resolver (파일 업로드용) -->
+	<!-- ============================================ -->
+	<beans:bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<beans:property name="maxUploadSize" value="10485760" /> <!-- 10MB -->
+		<beans:property name="defaultEncoding" value="UTF-8" />
+	</beans:bean>
+
+	<!-- ============================================ -->
+	<!-- 7. Interceptor 설정 (로그인 체크 등) -->
+	<!-- ============================================ -->
+	<!-- 필요 시 활성화
+	<interceptors>
+		<interceptor>
+			<mapping path="/**" />
+			<exclude-mapping path="/member/login" />
+			<exclude-mapping path="/member/join" />
+			<exclude-mapping path="/resources/**" />
+			<beans:bean class="com.portwatch.interceptor.LoginInterceptor" />
+		</interceptor>
+	</interceptors>
+	-->
+
+</beans:beans>

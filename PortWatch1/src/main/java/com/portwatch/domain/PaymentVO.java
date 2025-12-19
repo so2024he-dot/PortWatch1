@@ -14,14 +14,14 @@ public class PaymentVO {
     
     // 결제 정보
     private Long paymentId;
-    private Integer memberId;
+    private String memberId;
     private Long portfolioId;
     
     // 구매 정보
     private Integer stockId;
     private String stockCode;
     private String stockName;
-    private BigDecimal quantity;          // 구매 수량
+    private Double quantity;          // 구매 수량
     private BigDecimal purchasePrice;     // 구매 단가
     private BigDecimal totalAmount;       // 총 구매 금액
     
@@ -63,11 +63,11 @@ public class PaymentVO {
         this.paymentId = paymentId;
     }
     
-    public Integer getMemberId() {
+    public String getMemberId() {
         return memberId;
     }
     
-    public void setMemberId(Integer memberId) {
+    public void setMemberId(String memberId) {
         this.memberId = memberId;
     }
     
@@ -103,11 +103,11 @@ public class PaymentVO {
         this.stockName = stockName;
     }
     
-    public BigDecimal getQuantity() {
+    public Double getQuantity() {
         return quantity;
     }
     
-    public void setQuantity(BigDecimal quantity) {
+    public void setQuantity(Double quantity) {
         this.quantity = quantity;
     }
     
