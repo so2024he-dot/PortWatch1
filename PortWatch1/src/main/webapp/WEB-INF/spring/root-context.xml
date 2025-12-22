@@ -28,7 +28,12 @@
             - allowPublicKeyRetrieval=true: MySQL 8.0 인증 방식 지원
             - useUnicode=true&characterEncoding=UTF-8: 한글 인코딩
         -->
-        <property name="jdbcUrl" value="jdbc:mysql://localhost:3306/portwatch?useSSL=false&amp;serverTimezone=Asia/Seoul&amp;allowPublicKeyRetrieval=true&amp;useUnicode=true&amp;characterEncoding=UTF-8"/>
+        <property name="jdbcUrl" value="jdbc:mysql://localhost:3306/c6d2507t2p2?
+        useSSL=false&amp;
+        serverTimezone=Asia/Seoul&amp;
+        allowPublicKeyRetrieval=true&amp;
+        useUnicode=true&amp;
+        characterEncoding=UTF-8"/>
         
         <!-- ✅ 수정: root 계정 사용 (본인의 MySQL root 비밀번호로 변경하세요!) -->
         <property name="username" value="c6d2507t2p2"/>
