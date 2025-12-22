@@ -142,18 +142,5 @@ public class NewsVO {
                 + ", title=" + title + ", source=" + source + ", publishedDate=" + publishedDate + "]";
     }
 
-	public void setStockId(Integer stockId) {
-		// TODO Auto-generated method stub
-		
-	}
 
-	public void setCountry(String string) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void setPublishedAt(Timestamp timestamp) {
-		// TODO Auto-generated method stub
-		
-	}
 }

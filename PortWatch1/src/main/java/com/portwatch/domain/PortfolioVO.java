@@ -161,50 +161,11 @@ public class PortfolioVO {
                 + "%]";
     }
 
-	public void setStockId(Integer stockId) {
-		// TODO Auto-generated method stub
+	public String getPortfolioId() {
 		
-	}
-
-	public void setAvgPurchasePrice(BigDecimal purchasePrice) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void setPurchaseDate(Timestamp timestamp) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void setMemberId1(String memberId2) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public Object getStockId() {
-		// TODO Auto-generated method stub
-		return null;
+		return memberId;
 	}
 
 	
-
-	
-	public Enum<HttpStatus> getAvgPurchasePrice() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
-	public void setCurrentPrice(BigDecimal currentPrice2) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public Long getPortfolioId() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-
 	
 }

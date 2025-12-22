@@ -33,9 +33,9 @@ public class PortfolioDAOImpl implements PortfolioDAO {
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         System.out.println("💾 DAO: 포트폴리오 추가");
         System.out.println("  - memberId: " + portfolio.getMemberId());
-        System.out.println("  - stockId: " + portfolio.getStockId());
+        System.out.println("  - stockId: " + portfolio.getStockCode());
         System.out.println("  - quantity: " + portfolio.getQuantity());
-        System.out.println("  - avgPurchasePrice: " + portfolio.getAvgPurchasePrice());
+        System.out.println("  - avgPurchasePrice: " + portfolio.getAvgPrice());
         
         sqlSession.insert(NAMESPACE + ".insertPortfolio", portfolio);
         
@@ -100,7 +100,7 @@ public class PortfolioDAOImpl implements PortfolioDAO {
         System.out.println("🔄 DAO: 포트폴리오 수정");
         System.out.println("  - portfolioId: " + portfolio.getPortfolioId());
         System.out.println("  - quantity: " + portfolio.getQuantity());
-        System.out.println("  - avgPurchasePrice: " + ((PortfolioVO) portfolio).getAvgPurchasePrice());
+        System.out.println("  - avgPurchasePrice: " + ((PortfolioVO) portfolio).getAvgPrice());
         
         sqlSession.update(NAMESPACE + ".updatePortfolio", portfolio);
         
@@ -201,6 +201,27 @@ public class PortfolioDAOImpl implements PortfolioDAO {
 		
 	}
 
+	/*
+	 * @Override public List<PortfolioVO> selectPortfolioByMemberId(String memberId)
+	 * { // TODO Auto-generated method stub return null; }
+	 * 
+	 * @Override public PortfolioVO selectPortfolioByMemberAndStock(String memberId,
+	 * String stockCode) { // TODO Auto-generated method stub return null; }
+	 * 
+	 * @Override public int deletePortfolio(String memberId, String stockCode) { //
+	 * TODO Auto-generated method stub return 0; }
+	 * 
+	 * @Override public int deleteAllPortfolio(String memberId) { // TODO
+	 * Auto-generated method stub return 0; }
+	 * 
+	 * @Override public int countPortfolio(String memberId) { // TODO Auto-generated
+	 * method stub return 0; }
+	 * 
+	 * @Override public void deletePortfolio(Long portfolioId) { // TODO
+	 * Auto-generated method stub
+	 * 
+	 * }
+	 */
 	
 	
 }

@@ -30,7 +30,7 @@ import com.portwatch.service.StockService;
  * 결제 컨트롤러
  * 
  * @author PortWatch
- * @version 1.0
+ * @version 1.0 - 한글 인코딩 수정
  */
 @Controller
 @RequestMapping("/payment")

@@ -77,27 +77,33 @@ public interface PortfolioService {
      * @return 성공 여부
      */
     boolean deletePortfolio(String memberId, String stockCode);
+
+
     
     /**
      * 포트폴리오 전체 삭제 (회원의 모든 포트폴리오)
      * @param memberId 회원 ID
      * @return 성공 여부
      */
-    boolean deleteAllPortfolio(String memberId);
-
-	Map<String, Object> getPortfolioSummary(String memberId);
-
-	List<PortfolioVO> getPortfolioList(Integer memberId);
-
-	Map<String, Object> getPortfolioSummary(Integer memberId);
-
-	boolean addStockToPortfolio(PortfolioItemVO item);
-
-	void updatePortfolio(PortfolioVO portfolio);
-
-	void deleteAllPortfolio(Long portfolioId);
-
-	boolean checkDuplicate(Integer memberId, Integer stockId);
-
-	void deletePortfolio(Long portfolioId);
+	
+	  boolean deleteAllPortfolio(String memberId);
+	  
+	  Map<String, Object> getPortfolioSummary(String memberId);
+	  
+	  List<PortfolioVO> getPortfolioList(Integer memberId);
+	  
+	  Map<String, Object> getPortfolioSummary(Integer memberId);
+	  
+	  boolean addStockToPortfolio(PortfolioItemVO item);
+	  
+	  void updatePortfolio(PortfolioVO portfolio);
+	  
+	  void deleteAllPortfolio(Long portfolioId);
+	  
+	  boolean checkDuplicate(String memberId, Integer stockId);
+	  
+	  void deletePortfolio(Long portfolioId);
+	  
+	  List<PortfolioVO> getPortfolioList(String memberId);
+	 
 }

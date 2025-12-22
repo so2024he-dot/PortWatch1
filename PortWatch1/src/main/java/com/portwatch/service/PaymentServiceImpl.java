@@ -179,6 +179,13 @@ public class PaymentServiceImpl implements PaymentService {
         
         return "MOCK_TRANSACTION_ID_" + System.currentTimeMillis();
     }
-    
+
+	/*
+	 * @Override public List<PaymentVO> getPaymentHistory(String memberId) { // TODO
+	 * Auto-generated method stub return null; }
+	 * 
+	 * @Override public Map<String, Object> getPaymentSummary(String memberId) { //
+	 * TODO Auto-generated method stub return null; }
+	 */
     
 }

@@ -61,5 +61,11 @@ public interface PaymentService {
      * @param memberId 회원 ID
      * @return 결제 요약 정보
      */
-    Map<String, Object> getPaymentSummary(Integer memberId) throws Exception;
+	/*
+	 * Map<String, Object> getPaymentSummary(Integer memberId) throws Exception;
+	 * 
+	 * List<PaymentVO> getPaymentHistory(String memberId);
+	 * 
+	 * Map<String, Object> getPaymentSummary(String memberId);
+	 */
 }

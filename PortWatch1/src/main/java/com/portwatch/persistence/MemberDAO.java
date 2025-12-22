@@ -48,7 +48,7 @@ public interface MemberDAO {
      */
     public void deleteMember(int memberId) throws Exception;
 
-	public MemberVO selectMemberById(String memberId);
+	/* public MemberVO selectMemberById(String memberId); */
     
     
 }

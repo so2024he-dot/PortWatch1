@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+    PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+    
+    <!-- ========================================
+         MyBatis 전역 설정
+         ======================================== -->
+    <settings>
+        <!-- 캐멀 케이스 자동 매핑 (예: member_id → memberId) -->
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+        
+        <!-- NULL 값 허용 (JDBC 타입 지정 없이) -->
+        <setting name="jdbcTypeForNull" value="NULL"/>
+        
+        <!-- 로그 구현체 지정 (SLF4J 사용) -->
+        <setting name="logImpl" value="SLF4J"/>
+        
+        <!-- 지연 로딩 활성화 -->
+        <setting name="lazyLoadingEnabled" value="true"/>
+        
+        <!-- 공격적인 지연 로딩 비활성화 -->
+        <setting name="aggressiveLazyLoading" value="false"/>
+        
+        <!-- 캐시 활성화 -->
+        <setting name="cacheEnabled" value="true"/>
+        
+        <!-- 자동 생성 키 사용 -->
+        <setting name="useGeneratedKeys" value="true"/>
+    </settings>
+    
+    <!-- ========================================
+         Type Aliases는 root-context.xml에서 설정
+         ======================================== -->
+    
+</configuration>

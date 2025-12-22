@@ -52,7 +52,7 @@ public interface WatchlistDAO {
      * 
      * @return 존재하면 1 이상, 없으면 0
      */
-    int checkExists(@Param("memberId") Integer memberId, 
+    int checkExists(@Param("memberId") String memberId, 
                     @Param("stockId") Integer stockId);
     
     // ========================================
@@ -62,14 +62,16 @@ public interface WatchlistDAO {
     /**
      * 회원의 관심종목 + 현재가 목록 조회
      */
-    List<WatchlistWithPriceVO> selectWatchlistWithPrices(Integer memberId);
+    List<WatchlistWithPriceVO> selectWatchlistWithPrices(String memberId);
     
     /**
      * 특정 관심종목 + 현재가 조회
      */
     WatchlistWithPriceVO selectWatchlistWithPriceById(Integer watchlistId);
 
-	List<WatchlistWithPriceVO> selectWatchlistWithPrices(String memberId);
-
-	int checkExists(String memberId, Integer stockId);
+	/*
+	 * List<WatchlistWithPriceVO> selectWatchlistWithPrices(String memberId);
+	 * 
+	 * int checkExists(String memberId, Integer stockId);
+	 */
 }

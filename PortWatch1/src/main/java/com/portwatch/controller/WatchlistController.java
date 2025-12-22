@@ -1,4 +1,4 @@
-package com.portwatch.controller;
+    package com.portwatch.controller;
 
 import com.portwatch.domain.MemberVO;
 import com.portwatch.domain.StockVO;
@@ -19,7 +19,8 @@ import java.util.List;
 /**
  * 관심종목 컨트롤러
  * 
- * ✅ memberId 기반 (세션 필드명 주의!)
+ * @author PortWatch
+ * @version 2.0 - 세션 필드명 통일 (loginMember)
  */
 @Controller
 @RequestMapping("/watchlist")
@@ -43,14 +44,14 @@ public class WatchlistController {
         logger.info("📋 관심종목 목록 조회 요청");
         
         // 세션에서 회원 정보 가져오기
-        MemberVO member = (MemberVO) session.getAttribute("member");
+        MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
         
-        if (member == null) {
+        if (loginMember == null) {
             logger.warn("⚠️ 로그인하지 않은 사용자");
             return "redirect:/member/login";
         }
         
-        String memberId = member.getMemberId();
+        String memberId = loginMember.getMemberId();
         
         try {
             // ✅ 관심종목 + 현재가 정보 조회
@@ -101,13 +102,13 @@ public class WatchlistController {
         logger.info("➕ 관심종목 추가 요청: stockId={}, stockCode={}", stockId, stockCode);
         
         // 세션에서 회원 정보 가져오기
-        MemberVO member = (MemberVO) session.getAttribute("member");
+        MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
         
-        if (member == null) {
+        if (loginMember == null) {
             return "{\"success\": false, \"message\": \"로그인이 필요합니다\"}";
         }
         
-        String memberId = member.getMemberId();
+        String memberId = loginMember.getMemberId();
         
         try {
             // stockCode로 요청한 경우 stockId 찾기
@@ -157,13 +158,13 @@ public class WatchlistController {
         logger.info("🗑️ 관심종목 삭제 요청: watchlistId={}", watchlistId);
         
         // 세션에서 회원 정보 가져오기
-        MemberVO member = (MemberVO) session.getAttribute("member");
+        MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
         
-        if (member == null) {
+        if (loginMember == null) {
             return "{\"success\": false, \"message\": \"로그인이 필요합니다\"}";
         }
         
-        Integer memberId = member.getMemberId();
+        String memberId = loginMember.getMemberId();
         
         try {
             // 본인 소유 확인
@@ -184,3 +185,5 @@ public class WatchlistController {
         }
     }
 }
+
+    

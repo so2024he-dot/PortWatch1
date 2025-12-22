@@ -6,8 +6,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+
+import com.portwatch.domain.MemberVO;
 import com.portwatch.domain.PortfolioVO;
 import com.portwatch.service.PortfolioService;
+
 import javax.servlet.http.HttpSession;
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -18,7 +21,7 @@ import java.util.Map;
  * 포트폴리오 컨트롤러
  * 
  * @author PortWatch
- * @version 6.0 - 완벽한 중복 체크 및 검증
+ * @version 7.0 - 세션 필드명 통일 (loginMember) + 한글 인코딩 수정
  */
 @Controller
 @RequestMapping("/portfolio")
@@ -32,13 +35,16 @@ public class PortfolioController {
      */
     @GetMapping("/")
     public String portfolioMain(HttpSession session, Model model) {
-        Integer memberId = (Integer) session.getAttribute("memberId");
+        // 세션에서 회원 정보 가져오기
+        MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
         
-        if (memberId == null) {
+        if (loginMember == null) {
             return "redirect:/member/login";
         }
         
         try {
+            String memberId = loginMember.getMemberId();
+            
             List<PortfolioVO> portfolioList = portfolioService.getPortfolioList(memberId);
             Map<String, Object> summary = portfolioService.getPortfolioSummary(memberId);
             
@@ -65,13 +71,16 @@ public class PortfolioController {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            String memberId = (String) session.getAttribute("memberId");
+            // 세션에서 회원 정보 가져오기
+            MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
             
-            if (memberId == null) {
+            if (loginMember == null) {
                 response.put("success", false);
                 response.put("message", "로그인이 필요합니다.");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
+            
+            String memberId = loginMember.getMemberId();
             
             // ✅ 회원 ID 설정
             portfolio.setMemberId(memberId);
@@ -123,14 +132,16 @@ public class PortfolioController {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            String memberId = (String) session.getAttribute("memberId");
+            // 세션에서 회원 정보 가져오기
+            MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
             
-            if (memberId == null) {
+            if (loginMember == null) {
                 response.put("success", false);
                 response.put("message", "로그인이 필요합니다.");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
             
+            String memberId = loginMember.getMemberId();
             portfolio.setMemberId(memberId);
             
             portfolioService.updatePortfolio(portfolio);
@@ -160,18 +171,25 @@ public class PortfolioController {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            Integer memberId = (Integer) session.getAttribute("memberId");
+            // 세션에서 회원 정보 가져오기
+            MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
             
-            if (memberId == null) {
+            if (loginMember == null) {
                 response.put("success", false);
                 response.put("message", "로그인이 필요합니다.");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
             
-            portfolioService.deletePortfolio(portfolioId);
-            
-            response.put("success", true);
-            response.put("message", "포트폴리오에서 삭제되었습니다.");
+            // 주의: portfolioId로 삭제하는 메서드가 UnsupportedOperationException을 던질 수 있음
+            try {
+                portfolioService.deletePortfolio(portfolioId);
+                response.put("success", true);
+                response.put("message", "포트폴리오에서 삭제되었습니다.");
+            } catch (UnsupportedOperationException e) {
+                response.put("success", false);
+                response.put("message", e.getMessage());
+                return ResponseEntity.badRequest().body(response);
+            }
             
             return ResponseEntity.ok(response);
             
@@ -192,13 +210,16 @@ public class PortfolioController {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            Integer memberId = (Integer) session.getAttribute("memberId");
+            // 세션에서 회원 정보 가져오기
+            MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
             
-            if (memberId == null) {
+            if (loginMember == null) {
                 response.put("success", false);
                 response.put("message", "로그인이 필요합니다.");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
+            
+            String memberId = loginMember.getMemberId();
             
             List<PortfolioVO> portfolioList = portfolioService.getPortfolioList(memberId);
             Map<String, Object> summary = portfolioService.getPortfolioSummary(memberId);
@@ -229,14 +250,16 @@ public class PortfolioController {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            Integer memberId = (Integer) session.getAttribute("memberId");
+            // 세션에서 회원 정보 가져오기
+            MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
             
-            if (memberId == null) {
+            if (loginMember == null) {
                 response.put("success", false);
                 response.put("message", "로그인이 필요합니다.");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
             
+            String memberId = loginMember.getMemberId();
             boolean exists = portfolioService.checkDuplicate(memberId, stockId);
             
             response.put("success", true);
