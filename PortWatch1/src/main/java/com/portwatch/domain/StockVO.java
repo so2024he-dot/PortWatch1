@@ -4,44 +4,33 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 /**
- * 종목 정보 VO (Value Object)
+ * 주식 종목 VO
  * 
+ * ✅ industry 필드 추가 (업종 정보)
  * @author PortWatch
- * @version 2.0 - 국가별 구분 및 현재가 추가
+ * @version 3.0 - Spring 5.0.7 + MySQL 8.0.33 호환
  */
 public class StockVO {
     
     private Integer stockId;           // 종목 ID
-    private String stockCode;          // 종목 코드
+    private String stockCode;          // 종목 코드 (005930, AAPL 등)
     private String stockName;          // 종목명
-    private String marketType;         // 시장 구분 (KOSPI, KOSDAQ, NASDAQ, NYSE)
-    private String industry;           // 업종
+    private String country;            // 국가 (KR, US)
+    private String marketType;         // 시장 (KOSPI, KOSDAQ, NASDAQ, NYSE)
+    private BigDecimal currentPrice;   // 현재가
+    private BigDecimal changeAmount;   // 전일 대비 변동액
+    private BigDecimal changeRate;     // 전일 대비 변동률 (%)
+    private Long tradingVolume;        // 거래량
+    private BigDecimal marketCap;      // 시가총액
+    private String sector;             // 섹터 (기술, 금융, 헬스케어 등)
+    private String industry;           // ✅ 업종 (반도체, 자동차, 소프트웨어 등)
+    private Timestamp updatedAt;       // 업데이트 시간
     
-    // 추가 필드 (v2.0)
-    private String country;            // 국가 코드 (KR, US, JP)
-    private BigDecimal currentPrice;   // 현재가 (크롤링된 가격)
-    private BigDecimal priceChange;    // 가격 변동폭
-    private BigDecimal priceChangeRate; // 변동률 (%)
-    
-    private Timestamp updatedAt;       // 수정일시
-    
-    // ================================================
-    // Constructors
-    // ================================================
-    
+    // 기본 생성자
     public StockVO() {
     }
     
-    public StockVO(String stockCode, String stockName, String marketType) {
-        this.stockCode = stockCode;
-        this.stockName = stockName;
-        this.marketType = marketType;
-    }
-    
-    // ================================================
     // Getters and Setters
-    // ================================================
-    
     public Integer getStockId() {
         return stockId;
     }
@@ -66,28 +55,20 @@ public class StockVO {
         this.stockName = stockName;
     }
     
-    public String getMarketType() {
-        return marketType;
-    }
-    
-    public void setMarketType(String marketType) {
-        this.marketType = marketType;
-    }
-    
-    public String getIndustry() {
-        return industry;
-    }
-    
-    public void setIndustry(String industry) {
-        this.industry = industry;
-    }
-    
     public String getCountry() {
         return country;
     }
     
     public void setCountry(String country) {
         this.country = country;
+    }
+    
+    public String getMarketType() {
+        return marketType;
+    }
+    
+    public void setMarketType(String marketType) {
+        this.marketType = marketType;
     }
     
     public BigDecimal getCurrentPrice() {
@@ -98,29 +79,58 @@ public class StockVO {
         this.currentPrice = currentPrice;
     }
     
-    // double 타입으로도 받을 수 있도록 편의 메서드 추가
-    public double getCurrentPriceAsDouble() {
-        return currentPrice != null ? currentPrice.doubleValue() : 0.0;
+    public BigDecimal getChangeAmount() {
+        return changeAmount;
     }
     
-    public void setCurrentPrice(double currentPrice) {
-        this.currentPrice = BigDecimal.valueOf(currentPrice);
+    public void setChangeAmount(BigDecimal changeAmount) {
+        this.changeAmount = changeAmount;
     }
     
-    public BigDecimal getPriceChange() {
-        return priceChange;
+    public BigDecimal getChangeRate() {
+        return changeRate;
     }
     
-    public void setPriceChange(BigDecimal priceChange) {
-        this.priceChange = priceChange;
+    public void setChangeRate(BigDecimal changeRate) {
+        this.changeRate = changeRate;
     }
     
-    public BigDecimal getPriceChangeRate() {
-        return priceChangeRate;
+    public Long getTradingVolume() {
+        return tradingVolume;
     }
     
-    public void setPriceChangeRate(BigDecimal priceChangeRate) {
-        this.priceChangeRate = priceChangeRate;
+    public void setTradingVolume(Long tradingVolume) {
+        this.tradingVolume = tradingVolume;
+    }
+    
+    public BigDecimal getMarketCap() {
+        return marketCap;
+    }
+    
+    public void setMarketCap(BigDecimal marketCap) {
+        this.marketCap = marketCap;
+    }
+    
+    public String getSector() {
+        return sector;
+    }
+    
+    public void setSector(String sector) {
+        this.sector = sector;
+    }
+    
+    /**
+     * ✅ 업종 getter (StockFilterController 호환)
+     */
+    public String getIndustry() {
+        return industry;
+    }
+    
+    /**
+     * ✅ 업종 setter
+     */
+    public void setIndustry(String industry) {
+        this.industry = industry;
     }
     
     public Timestamp getUpdatedAt() {
@@ -131,53 +141,27 @@ public class StockVO {
         this.updatedAt = updatedAt;
     }
     
-    // ================================================
-    // Utility Methods
-    // ================================================
-    
-    /**
-     * 한국 주식 여부 확인
-     */
-    public boolean isKoreanStock() {
-        return "KR".equals(country) || 
-               "KOSPI".equals(marketType) || 
-               "KOSDAQ".equals(marketType);
-    }
-    
-    /**
-     * 미국 주식 여부 확인
-     */
-    public boolean isUSStock() {
-        return "US".equals(country) || 
-               "NASDAQ".equals(marketType) || 
-               "NYSE".equals(marketType) ||
-               "AMEX".equals(marketType);
-    }
-    
-    /**
-     * 분할 매수 가능 여부 (미국 주식만 가능)
-     */
-    public boolean isFractionalShareAllowed() {
-        return isUSStock();
-    }
-    
-    // ================================================
-    // toString
-    // ================================================
-    
     @Override
     public String toString() {
         return "StockVO{" +
                 "stockId=" + stockId +
                 ", stockCode='" + stockCode + '\'' +
                 ", stockName='" + stockName + '\'' +
+                ", country='" + country + '\'' +
                 ", marketType='" + marketType + '\'' +
                 ", industry='" + industry + '\'' +
-                ", country='" + country + '\'' +
                 ", currentPrice=" + currentPrice +
-                ", priceChange=" + priceChange +
-                ", priceChangeRate=" + priceChangeRate +
-                ", updatedAt=" + updatedAt +
+                ", changeRate=" + changeRate +
                 '}';
     }
+
+	public BigDecimal getPriceChange() {
+		
+		return this.getPriceChange();
+	}
+
+	public BigDecimal getPriceChangeRate() {
+		
+		return this.getPriceChangeRate();
+	}
 }

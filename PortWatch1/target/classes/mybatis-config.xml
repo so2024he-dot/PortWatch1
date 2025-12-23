@@ -32,7 +32,15 @@
     </settings>
     
     <!-- ========================================
-         Type Aliases는 root-context.xml에서 설정
+         ✅ 중요: <mappers> 섹션 제거!
+         
+         이유:
+         - root-context.xml의 mapperLocations가 이미 모든 Mapper를 로드합니다
+         - 여기서 직접 등록하면 typeAliases보다 먼저 로드되어 에러 발생!
+         
+         root-context.xml 설정:
+         <property name="mapperLocations" value="classpath:mappers/*.xml"/>
+         <property name="typeAliasesPackage" value="com.portwatch.domain"/>
          ======================================== -->
     
 </configuration>

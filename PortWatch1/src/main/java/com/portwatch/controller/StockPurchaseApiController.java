@@ -1,5 +1,6 @@
 package com.portwatch.controller;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,15 +11,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.portwatch.domain.MemberVO;
 import com.portwatch.service.StockPurchaseValidationService;
 import com.portwatch.service.PortfolioService;
-import com.portwatch.domain.PortfolioItemVO;
 
 /**
- * 주식 매입 API 컨트롤러
+ * ✅ 주식 매입 API 컨트롤러 (에러 수정 완료)
+ * 
+ * 수정 사항:
+ * - validatePurchase 파라미터 타입 통일 (BigDecimal)
+ * - PortfolioItemVO 대신 PortfolioService 직접 사용
  * 
  * @author PortWatch
- * @version 1.1 (PortfolioItemVO 사용)
+ * @version 1.2 - 에러 수정 완료
  */
 @RestController
 @RequestMapping("/api/purchase")
@@ -31,13 +36,7 @@ public class StockPurchaseApiController {
     private PortfolioService portfolioService;
     
     /**
-     * 주식 매입 검증 API
-     * 
-     * @param stockCode 종목 코드
-     * @param quantity 수량
-     * @param price 가격
-     * @param session 세션
-     * @return 검증 결과
+     * ✅ 주식 매입 검증 API (BigDecimal 타입 사용)
      */
     @PostMapping("/validate")
     public ResponseEntity<Map<String, Object>> validatePurchase(
@@ -47,19 +46,24 @@ public class StockPurchaseApiController {
             HttpSession session) {
         
         try {
-            // 세션에서 회원 ID 가져오기
-            String memberId = (String) session.getAttribute("memberId");
+            // 세션에서 회원 정보 가져오기
+            MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
             
-            if (memberId == null) {
+            if (loginMember == null) {
                 Map<String, Object> result = new HashMap<>();
                 result.put("valid", false);
                 result.put("message", "로그인이 필요합니다.");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(result);
             }
             
-            // 검증 수행
+            String memberId = loginMember.getMemberId();
+            
+            // ✅ 수정: BigDecimal로 변환하여 검증 수행
             Map<String, Object> validationResult = validationService.validatePurchase(
-                memberId, stockCode, quantity, price
+                memberId, 
+                stockCode, 
+                new BigDecimal(String.valueOf(quantity)),
+                new BigDecimal(String.valueOf(price))
             );
             
             return ResponseEntity.ok(validationResult);
@@ -74,18 +78,10 @@ public class StockPurchaseApiController {
     }
     
     /**
-     * 주식 매입 실행 API
-     * 
-     * @param portfolioId 포트폴리오 ID
-     * @param stockCode 종목 코드
-     * @param quantity 수량
-     * @param price 매입 가격
-     * @param session 세션
-     * @return 매입 결과
+     * ✅ 주식 매입 실행 API (포트폴리오에 직접 추가)
      */
     @PostMapping("/execute")
     public ResponseEntity<Map<String, Object>> executePurchase(
-            @RequestParam("portfolioId") Long portfolioId,
             @RequestParam("stockCode") String stockCode,
             @RequestParam("quantity") double quantity,
             @RequestParam("price") double price,
@@ -94,18 +90,23 @@ public class StockPurchaseApiController {
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // 세션에서 회원 ID 가져오기
-            String memberId = (String) session.getAttribute("memberId");
+            // 세션에서 회원 정보 가져오기
+            MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
             
-            if (memberId == null) {
+            if (loginMember == null) {
                 result.put("success", false);
                 result.put("message", "로그인이 필요합니다.");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(result);
             }
             
+            String memberId = loginMember.getMemberId();
+            
             // 1. 최종 검증
             Map<String, Object> validationResult = validationService.validatePurchase(
-                memberId, stockCode, quantity, price
+                memberId, 
+                stockCode, 
+                new BigDecimal(String.valueOf(quantity)),
+                new BigDecimal(String.valueOf(price))
             );
             
             if (!(boolean) validationResult.get("valid")) {
@@ -114,20 +115,15 @@ public class StockPurchaseApiController {
                 return ResponseEntity.ok(result);
             }
             
-            // 2. 포트폴리오에 주식 추가 (PortfolioItemVO 사용)
-            PortfolioItemVO item = PortfolioItemVO.builder()
-                    .portfolioId(portfolioId)
-                    .stockCode(stockCode)
-                    .quantity(quantity)
-                    .purchasePrice(price)
-                    .build();
-            
-            boolean added = portfolioService.addStockToPortfolio(item);
+            // 2. 포트폴리오에 주식 추가
+            boolean added = portfolioService.addStockToPortfolio(memberId, stockCode, quantity, price);
             
             if (added) {
                 result.put("success", true);
                 result.put("message", "주식 매입이 완료되었습니다.");
-                result.put("item", item);
+                result.put("stockCode", stockCode);
+                result.put("quantity", quantity);
+                result.put("price", price);
                 result.put("totalAmount", validationResult.get("totalAmount"));
                 result.put("commission", validationResult.get("commission"));
                 
@@ -150,12 +146,7 @@ public class StockPurchaseApiController {
     }
     
     /**
-     * 빠른 검증 API (로그인 불필요)
-     * 
-     * @param stockCode 종목 코드
-     * @param quantity 수량
-     * @param price 가격
-     * @return 검증 결과
+     * ✅ 빠른 검증 API (로그인 불필요)
      */
     @GetMapping("/quick-validate")
     public ResponseEntity<Map<String, Object>> quickValidate(
@@ -180,18 +171,15 @@ public class StockPurchaseApiController {
     
     /**
      * 매입 가능 금액 조회 API
-     * 
-     * @param session 세션
-     * @return 매입 가능 금액 정보
      */
     @GetMapping("/available-budget")
     public ResponseEntity<Map<String, Object>> getAvailableBudget(HttpSession session) {
         Map<String, Object> result = new HashMap<>();
         
         try {
-            String memberId = (String) session.getAttribute("memberId");
+            MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
             
-            if (memberId == null) {
+            if (loginMember == null) {
                 result.put("success", false);
                 result.put("message", "로그인이 필요합니다.");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(result);

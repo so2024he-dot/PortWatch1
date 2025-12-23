@@ -54,6 +54,12 @@ public interface PaymentService {
      * @return 결제 내역 리스트
      */
     List<PaymentVO> getPaymentHistory(Integer memberId) throws Exception;
+
+	Map<String, Object> getPaymentSummary(Integer memberId) throws Exception;
+
+	List<PaymentVO> getPaymentHistory(String memberId) throws Exception;
+
+	Map<String, Object> getPaymentSummary(String memberId) throws Exception;
     
     /**
      * 회원의 결제 요약 정보 조회

@@ -16,8 +16,8 @@ public class MemberServiceImpl implements MemberService {
     
     @Override
     public void signup(MemberVO member) throws Exception {
-        String encodedPassword = passwordEncoder.encode(member.getMemberPass());
-        member.setMemberPass(encodedPassword);
+        String encodedPassword = passwordEncoder.encode(member.getMemberId());
+        member.setMemberId(encodedPassword);
         memberDAO.insertMember(member);
     }
     
@@ -25,7 +25,7 @@ public class MemberServiceImpl implements MemberService {
     public MemberVO login(String email, String password) throws Exception {
         MemberVO member = memberDAO.selectMemberByEmail(email);
         
-        if (member != null && passwordEncoder.matches(password, member.getMemberPass())) {
+        if (member != null && passwordEncoder.matches(password, member.getMemberId())) {
             return member;
         }
         
@@ -52,27 +52,33 @@ public class MemberServiceImpl implements MemberService {
     public void changePassword(int memberId, String currentPassword, String newPassword) throws Exception {
         MemberVO member = memberDAO.selectMemberById(memberId);
         
-        if (member != null && passwordEncoder.matches(currentPassword, member.getMemberPass())) {
+        if (member != null && passwordEncoder.matches(currentPassword, member.getMemberId())) {
             String encodedPassword = passwordEncoder.encode(newPassword);
             memberDAO.updatePassword(memberId, encodedPassword);
         } else {
             throw new Exception("현재 비밀번호가 일치하지 않습니다.");
         }
     }
+
+	@Override
+	public void deleteMember(int memberId) throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public String generateVerificationCode() throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean verifyCode(String email, String code) throws Exception {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+
     
-    @Override
-    public void deleteMember(int memberId) throws Exception {
-        memberDAO.deleteMember(memberId);
-    }
-    
-    @Override
-    public String generateVerificationCode() throws Exception {
-        return String.format("%06d", (int)(Math.random() * 1000000));
-    }
-    
-    @Override
-    public boolean verifyCode(String email, String code) throws Exception {
-        // TODO: 실제 인증 로직 (세션 또는 Redis 사용)
-        return true;
-    }
+ 
 }

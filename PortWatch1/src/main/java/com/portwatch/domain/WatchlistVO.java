@@ -3,31 +3,34 @@ package com.portwatch.domain;
 import java.sql.Timestamp;
 
 /**
- * 관심종목 VO
+ * ✅ 관심종목 VO
  * 
- * DB 테이블: WATCHLIST
- * - watchlist_id (PK)
- * - member_id (FK -> MEMBER)
- * - stock_id (FK -> STOCK)
- * - added_at (등록일시)
+ * @author PortWatch
+ * @version 1.0
  */
 public class WatchlistVO {
     
-    private Integer watchlistId;  // 관심종목 ID (PK)
-    private Integer memberId;     // 회원 ID (FK)
-    private Integer stockId;      // 종목 ID (FK)
-    private Timestamp addedAt;    // 등록일시
+    // ========================================
+    // 기본 필드 (DB 컬럼)
+    // ========================================
     
-    // Constructors
-    public WatchlistVO() {
-    }
+    private Integer watchlistId;      // 관심종목 ID
+    private String memberId;          // 회원 ID (String 타입!)
+    private Integer stockId;          // 종목 ID
+    private Timestamp createdAt;      // 생성일시
     
-    public WatchlistVO(Integer memberId, Integer stockId) {
-        this.memberId = memberId;
-        this.stockId = stockId;
-    }
+    // ========================================
+    // 추가 필드 (조인 시 사용)
+    // ========================================
     
-    // Getters and Setters
+    private String stockCode;         // 종목 코드 (stock 테이블에서)
+    private String stockName;         // 종목명 (stock 테이블에서)
+    private Double currentPrice;      // 현재가 (stock 테이블에서)
+    
+    // ========================================
+    // Getter & Setter
+    // ========================================
+    
     public Integer getWatchlistId() {
         return watchlistId;
     }
@@ -36,11 +39,11 @@ public class WatchlistVO {
         this.watchlistId = watchlistId;
     }
     
-    public Integer getMemberId() {
+    public String getMemberId() {
         return memberId;
     }
     
-    public void setMemberId(Integer memberId) {
+    public void setMemberId(String memberId) {
         this.memberId = memberId;
     }
     
@@ -52,26 +55,46 @@ public class WatchlistVO {
         this.stockId = stockId;
     }
     
-    public Timestamp getAddedAt() {
-        return addedAt;
+    public Timestamp getCreatedAt() {
+        return createdAt;
     }
     
-    public void setAddedAt(Timestamp addedAt) {
-        this.addedAt = addedAt;
+    public void setCreatedAt(Timestamp createdAt) {
+        this.createdAt = createdAt;
     }
+    
+    public String getStockCode() {
+        return stockCode;
+    }
+    
+    public void setStockCode(String stockCode) {
+        this.stockCode = stockCode;
+    }
+    
+    public String getStockName() {
+        return stockName;
+    }
+    
+    public void setStockName(String stockName) {
+        this.stockName = stockName;
+    }
+    
+    public Double getCurrentPrice() {
+        return currentPrice;
+    }
+    
+    public void setCurrentPrice(Double currentPrice) {
+        this.currentPrice = currentPrice;
+    }
+    
+    // ========================================
+    // toString
+    // ========================================
     
     @Override
     public String toString() {
-        return "WatchlistVO{" +
-                "watchlistId=" + watchlistId +
-                ", memberId=" + memberId +
-                ", stockId=" + stockId +
-                ", addedAt=" + addedAt +
-                '}';
+        return "WatchlistVO [watchlistId=" + watchlistId + ", memberId=" + memberId + ", stockId=" + stockId
+                + ", stockCode=" + stockCode + ", stockName=" + stockName + ", currentPrice=" + currentPrice
+                + ", createdAt=" + createdAt + "]";
     }
-
-	public void setMemberId(String memberId2) {
-		this.setMemberId(memberId);
-		
-	}
 }

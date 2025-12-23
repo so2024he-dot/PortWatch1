@@ -5,7 +5,7 @@
 <mapper namespace="com.portwatch.persistence.StockDAO">
 
     <!-- ========================================
-         ResultMap 정의
+         ✅ ResultMap 정의 (중복 제거!)
          ======================================== -->
     
     <resultMap id="StockResultMap" type="StockVO">
@@ -29,6 +29,16 @@
     
     <!-- 종목 코드로 조회 (StockVO 전체 반환) -->
     <select id="selectStockByCode" parameterType="string" resultMap="StockResultMap">
+        SELECT 
+            stock_id, stock_code, stock_name, market_type,
+            country, industry, current_price, price_change,
+            price_change_rate, volume, created_at, updated_at
+        FROM stock 
+        WHERE stock_code = #{stockCode}
+    </select>
+    
+    <!-- 종목 코드로 조회 (별칭) -->
+    <select id="selectByCode" parameterType="string" resultMap="StockResultMap">
         SELECT 
             stock_id, stock_code, stock_name, market_type,
             country, industry, current_price, price_change,

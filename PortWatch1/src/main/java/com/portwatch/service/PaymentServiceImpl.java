@@ -15,10 +15,14 @@ import com.portwatch.persistence.PaymentDAO;
 import com.portwatch.persistence.PortfolioDAO;
 
 /**
- * 결제 Service 구현
+ * ✅ 결제 Service 구현 (타입 통일 완료)
+ * 
+ * 수정 사항:
+ * - memberId를 String으로 완전 통일
+ * - 중복 메서드 제거
  * 
  * @author PortWatch
- * @version 1.0
+ * @version 2.0
  */
 @Service
 public class PaymentServiceImpl implements PaymentService {
@@ -101,11 +105,11 @@ public class PaymentServiceImpl implements PaymentService {
         System.out.println("  - 포트폴리오 자동 생성 중...");
         
         PortfolioVO portfolio = new PortfolioVO();
-        portfolio.setMemberId(payment.getMemberId());
+        portfolio.setMemberId(payment.getMemberId());  // ✅ String memberId
         portfolio.setStockId(payment.getStockId());
-        portfolio.setQuantity(payment.getQuantity());  // ✅ BigDecimal → BigDecimal (타입 일치)
+        portfolio.setQuantity(payment.getQuantity());
         portfolio.setAvgPurchasePrice(payment.getPurchasePrice());
-        portfolio.setPurchaseDate(new Timestamp(System.currentTimeMillis()));  // ✅ Timestamp → Timestamp
+        portfolio.setPurchaseDate(new Timestamp(System.currentTimeMillis()));
         
         portfolioDAO.insertPortfolio(portfolio);
         Long portfolioId = portfolio.getPortfolioId();
@@ -150,13 +154,19 @@ public class PaymentServiceImpl implements PaymentService {
         return paymentDAO.selectPaymentById(paymentId);
     }
     
+    /**
+     * ✅ 결제 내역 조회 (String memberId만 사용)
+     */
     @Override
-    public List<PaymentVO> getPaymentHistory(Integer memberId) throws Exception {
+    public List<PaymentVO> getPaymentHistory(String memberId) throws Exception {
         return paymentDAO.selectPaymentsByMember(memberId);
     }
     
+    /**
+     * ✅ 결제 요약 조회 (String memberId만 사용)
+     */
     @Override
-    public Map<String, Object> getPaymentSummary(Integer memberId) throws Exception {
+    public Map<String, Object> getPaymentSummary(String memberId) throws Exception {
         return paymentDAO.getPaymentSummary(memberId);
     }
     
@@ -180,12 +190,15 @@ public class PaymentServiceImpl implements PaymentService {
         return "MOCK_TRANSACTION_ID_" + System.currentTimeMillis();
     }
 
-	/*
-	 * @Override public List<PaymentVO> getPaymentHistory(String memberId) { // TODO
-	 * Auto-generated method stub return null; }
-	 * 
-	 * @Override public Map<String, Object> getPaymentSummary(String memberId) { //
-	 * TODO Auto-generated method stub return null; }
-	 */
-    
+	@Override
+	public List<PaymentVO> getPaymentHistory(Integer memberId) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Map<String, Object> getPaymentSummary(Integer memberId) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

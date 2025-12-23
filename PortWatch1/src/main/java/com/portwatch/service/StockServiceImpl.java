@@ -1,26 +1,21 @@
 package com.portwatch.service;
 
+import com.portwatch.domain.StockVO;
+import com.portwatch.persistence.StockDAO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.portwatch.domain.StockVO;
-import com.portwatch.persistence.StockDAO;
+
+import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
- * ✅ 수정사항: StockServiceImpl.java
+ * ✅ 주식 종목 Service 완전 구현
  * 
- * 1. getStockById 메서드 (60-72번) - 실제로 ID로 필터링하도록 수정
- * 2. getStocksOrderByVolume 메서드 (202-205번) - DAO 호출 구현
- * 3. getStocksOrderByChangeRate 메서드 (208-211번) - DAO 호출 구현
- * 
- * 원인:
- * - getStockById가 selectAllStocks를 호출하지만 필터링하지 않음
- * - getStocksOrderByVolume/getStocksOrderByChangeRate가 구현되지 않음
+ * StockFilterController 완벽 호환
  * 
  * @author PortWatch
- * @version 8.0 - 메서드 구현 완료
+ * @version 3.0 - Spring 5.0.7 + MySQL 8.0.33 호환
  */
 @Service
 public class StockServiceImpl implements StockService {
@@ -28,240 +23,252 @@ public class StockServiceImpl implements StockService {
     @Autowired
     private StockDAO stockDAO;
     
+    // ========================================
+    // 기본 조회
+    // ========================================
+    
     @Override
-    public List<StockVO> getAllStocks() throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("📊 Service: 전체 종목 조회");
+    public StockVO getStockById(Integer stockId) throws Exception {
+        if (stockId == null || stockId <= 0) {
+            throw new IllegalArgumentException("종목 ID가 유효하지 않습니다.");
+        }
         
-        List<StockVO> stocks = stockDAO.selectAllStocks();
+        StockVO stock = stockDAO.selectById(stockId);
         
-        System.out.println("✅ Service: " + (stocks != null ? stocks.size() : 0) + "개 조회 완료!");
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        if (stock == null) {
+            System.out.println("⚠️ 종목을 찾을 수 없습니다: ID=" + stockId);
+        }
         
-        return stocks;
+        return stock;
     }
     
     @Override
     public StockVO getStockByCode(String stockCode) throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("📊 Service: 종목 코드로 조회");
-        System.out.println("  - 종목 코드: " + stockCode);
+        if (stockCode == null || stockCode.trim().isEmpty()) {
+            throw new IllegalArgumentException("종목 코드가 유효하지 않습니다.");
+        }
         
         StockVO stock = stockDAO.selectStockByCode(stockCode);
         
-        if (stock != null) {
-            System.out.println("✅ Service: 종목 조회 완료!");
-            System.out.println("  - 종목명: " + stock.getStockName());
-            System.out.println("  - 시장: " + stock.getMarketType());
-        } else {
-            System.out.println("❌ Service: 종목을 찾을 수 없습니다.");
+        if (stock == null) {
+            System.out.println("⚠️ 종목을 찾을 수 없습니다: CODE=" + stockCode);
         }
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         
         return stock;
+    }
+    
+    @Override
+    public List<StockVO> getAllStocks() throws Exception {
+        System.out.println("📊 전체 종목 조회");
+        
+        List<StockVO> stocks = stockDAO.selectAllStocks();
+        
+        System.out.println("✅ " + stocks.size() + "개 종목 조회 완료");
+        
+        return stocks;
+    }
+    
+    // ========================================
+    // 필터링 (StockFilterController 전용)
+    // ========================================
+    
+    /**
+     * ✅ 국가별 종목 조회
+     */
+    @Override
+    public List<StockVO> getStocksByCountry(String country) throws Exception {
+        if (country == null || country.trim().isEmpty()) {
+            throw new IllegalArgumentException("국가 코드가 유효하지 않습니다.");
+        }
+        
+        System.out.println("📊 국가별 종목 조회: " + country);
+        
+        List<StockVO> stocks = stockDAO.selectStocksByCountry(country);
+        
+        System.out.println("✅ " + stocks.size() + "개 종목 조회 완료");
+        
+        return stocks;
     }
     
     /**
-     * ✅ 수정: 종목 ID로 조회
-     * - 실제로 ID로 필터링하여 반환
+     * ✅ 시장별 종목 조회 (StockFilterController Line 106)
      */
     @Override
-    public StockVO getStockById(int stockId) throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("📊 Service: 종목 ID로 조회");
-        System.out.println("  - 종목 ID: " + stockId);
-        
-        // ✅ DAO에 selectById 메서드가 있으면 직접 호출
-        StockVO stock = null;
-        
-        try {
-            // 방법 1: DAO에 selectById가 있는 경우
-            stock = stockDAO.selectById(stockId);
-        } catch (Exception e) {
-            // 방법 2: selectById가 없으면 전체 조회 후 필터링
-            System.out.println("  ℹ️ selectById 메서드가 없어 전체 조회 후 필터링합니다.");
-            List<StockVO> allStocks = stockDAO.selectAllStocks();
-            
-            if (allStocks != null) {
-                stock = allStocks.stream()
-                    .filter(s -> s.getStockId() != null && s.getStockId() == stockId)
-                    .findFirst()
-                    .orElse(null);
-            }
-        }
-        
-        if (stock != null) {
-            System.out.println("✅ Service: 종목 조회 완료!");
-            System.out.println("  - 종목명: " + stock.getStockName());
-            System.out.println("  - 종목 코드: " + stock.getStockCode());
-        } else {
-            System.out.println("❌ Service: 종목을 찾을 수 없습니다. (ID: " + stockId + ")");
-        }
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        
-        return stock;
-    }
-    
-    @Override
-    public List<StockVO> searchStocks(String keyword) throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("📊 Service: 종목 검색");
-        System.out.println("  - 키워드: " + keyword);
-        
-        List<StockVO> stocks = stockDAO.searchStocks(keyword);
-        
-        System.out.println("✅ Service: " + (stocks != null ? stocks.size() : 0) + "개 검색 완료!");
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        
-        return stocks;
-    }
-    
-    @Override
     public List<StockVO> getStocksByMarketType(String marketType) throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("📊 Service: 시장별 종목 조회");
-        System.out.println("  - 시장: " + marketType);
+        if (marketType == null || marketType.trim().isEmpty()) {
+            throw new IllegalArgumentException("시장 타입이 유효하지 않습니다.");
+        }
         
-        List<StockVO> stocks = stockDAO.selectStocksByMarketType(marketType);
+        System.out.println("📊 시장별 종목 조회: " + marketType);
         
-        System.out.println("✅ Service: " + (stocks != null ? stocks.size() : 0) + "개 조회 완료!");
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        List<StockVO> stocks = stockDAO.selectStocksByMarket(marketType);
+        
+        System.out.println("✅ " + stocks.size() + "개 종목 조회 완료");
         
         return stocks;
     }
     
+    /**
+     * ✅ 시장별 종목 조회 (별칭)
+     */
     @Override
-    public List<StockVO> getStocksByCountry(String country) throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("📊 Service: 나라별 종목 조회");
-        System.out.println("  - 국가: " + country);
-        
-        List<StockVO> allStocks = stockDAO.selectAllStocks();
-        
-        // ✅ 나라별 필터링
-        List<StockVO> filtered = allStocks.stream()
-            .filter(stock -> {
-                String marketType = stock.getMarketType();
-                if (marketType == null) {
-                    return false;
-                }
-                
-                if ("KR".equalsIgnoreCase(country)) {
-                    return marketType.equals("KOSPI") || marketType.equals("KOSDAQ");
-                } else if ("US".equalsIgnoreCase(country)) {
-                    return marketType.equals("NASDAQ") || marketType.equals("NYSE") || marketType.equals("AMEX");
-                }
-                
-                return false;
-            })
-            .collect(Collectors.toList());
-        
-        System.out.println("✅ Service: " + filtered.size() + "개 조회 완료!");
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        
-        return filtered;
+    public List<StockVO> getStocksByMarket(String marketType) throws Exception {
+        return getStocksByMarketType(marketType);
     }
     
+    /**
+     * ✅ 업종별 종목 조회 (StockFilterController Line 135)
+     */
     @Override
     public List<StockVO> getStocksByIndustry(String industry) throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("📊 Service: 업종별 종목 조회");
-        System.out.println("  - 업종: " + industry);
+        if (industry == null || industry.trim().isEmpty()) {
+            throw new IllegalArgumentException("업종이 유효하지 않습니다.");
+        }
+        
+        System.out.println("📊 업종별 종목 조회: " + industry);
         
         List<StockVO> stocks = stockDAO.selectStocksByIndustry(industry);
         
-        System.out.println("✅ Service: " + (stocks != null ? stocks.size() : 0) + "개 조회 완료!");
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("✅ " + stocks.size() + "개 종목 조회 완료");
         
         return stocks;
     }
     
+    /**
+     * ✅ 전체 업종 목록 조회 (StockFilterController Line 189)
+     */
     @Override
     public List<String> getAllIndustries() throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("📊 Service: 전체 업종 목록 조회");
+        System.out.println("📊 전체 업종 목록 조회");
         
         List<String> industries = stockDAO.selectAllIndustries();
         
-        System.out.println("✅ Service: " + (industries != null ? industries.size() : 0) + "개 조회 완료!");
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("✅ " + industries.size() + "개 업종 조회 완료");
         
         return industries;
     }
     
+    /**
+     * ✅ 거래량 상위 종목 조회 (StockFilterController Line 215)
+     */
+    @Override
+    public List<StockVO> getStocksOrderByVolume(int limit) throws Exception {
+        if (limit <= 0) {
+            throw new IllegalArgumentException("조회 개수는 0보다 커야 합니다.");
+        }
+        
+        System.out.println("📊 거래량 상위 " + limit + "개 종목 조회");
+        
+        List<StockVO> stocks = stockDAO.selectStocksOrderByVolume(limit);
+        
+        System.out.println("✅ " + stocks.size() + "개 종목 조회 완료");
+        
+        return stocks;
+    }
+    
+    /**
+     * ✅ 등락률 상위 종목 조회 (StockFilterController Line 241)
+     */
+    @Override
+    public List<StockVO> getStocksOrderByChangeRate(int limit) throws Exception {
+        if (limit <= 0) {
+            throw new IllegalArgumentException("조회 개수는 0보다 커야 합니다.");
+        }
+        
+        System.out.println("📊 등락률 상위 " + limit + "개 종목 조회");
+        
+        List<StockVO> stocks = stockDAO.selectStocksOrderByChangeRate(limit);
+        
+        System.out.println("✅ " + stocks.size() + "개 종목 조회 완료");
+        
+        return stocks;
+    }
+    
+    // ========================================
+    // 검색
+    // ========================================
+    
+    @Override
+    public List<StockVO> searchStocks(String keyword) throws Exception {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            throw new IllegalArgumentException("검색 키워드가 유효하지 않습니다.");
+        }
+        
+        System.out.println("🔍 종목 검색: " + keyword);
+        
+        List<StockVO> stocks = stockDAO.searchStocks(keyword);
+        
+        System.out.println("✅ " + stocks.size() + "개 종목 검색 완료");
+        
+        return stocks;
+    }
+    
+    // ========================================
+    // 업데이트
+    // ========================================
+    
     @Override
     @Transactional
-    public void addStock(StockVO stock) throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("📊 Service: 종목 추가");
-        System.out.println("  - 종목 코드: " + stock.getStockCode());
-        System.out.println("  - 종목명: " + stock.getStockName());
+    public void updateCurrentPrice(String stockCode, BigDecimal currentPrice) throws Exception {
+        if (stockCode == null || stockCode.trim().isEmpty()) {
+            throw new IllegalArgumentException("종목 코드가 유효하지 않습니다.");
+        }
         
-        stockDAO.insertStock(stock);
+        if (currentPrice == null || currentPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("현재가가 유효하지 않습니다.");
+        }
         
-        System.out.println("✅ Service: 추가 완료!");
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        StockVO stock = stockDAO.selectStockByCode(stockCode);
+        if (stock == null) {
+            throw new Exception("종목을 찾을 수 없습니다: " + stockCode);
+        }
+        
+        stockDAO.updateCurrentPrice(stock.getStockId(), currentPrice);
+        
+        System.out.println("✅ 현재가 업데이트: " + stockCode + " → " + currentPrice);
     }
     
     @Override
     @Transactional
     public void updateStock(StockVO stock) throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("📊 Service: 종목 수정");
-        System.out.println("  - 종목 ID: " + stock.getStockId());
+        if (stock == null) {
+            throw new IllegalArgumentException("종목 정보가 null입니다.");
+        }
+        
+        if (stock.getStockId() == null || stock.getStockId() <= 0) {
+            throw new IllegalArgumentException("종목 ID가 유효하지 않습니다.");
+        }
         
         stockDAO.updateStock(stock);
         
-        System.out.println("✅ Service: 수정 완료!");
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("✅ 종목 정보 업데이트: " + stock.getStockCode());
     }
     
     @Override
     @Transactional
-    public void deleteStock(int stockId) throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("📊 Service: 종목 삭제");
-        System.out.println("  - 종목 ID: " + stockId);
+    public void insertStock(StockVO stock) throws Exception {
+        if (stock == null) {
+            throw new IllegalArgumentException("종목 정보가 null입니다.");
+        }
+        
+        if (stock.getStockCode() == null || stock.getStockCode().trim().isEmpty()) {
+            throw new IllegalArgumentException("종목 코드가 유효하지 않습니다.");
+        }
+        
+        stockDAO.insertStock(stock);
+        
+        System.out.println("✅ 종목 추가: " + stock.getStockCode());
+    }
+    
+    @Override
+    @Transactional
+    public void deleteStock(Integer stockId) throws Exception {
+        if (stockId == null || stockId <= 0) {
+            throw new IllegalArgumentException("종목 ID가 유효하지 않습니다.");
+        }
         
         stockDAO.deleteStock(stockId);
         
-        System.out.println("✅ Service: 삭제 완료!");
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    }
-
-    /**
-     * ✅ 수정: 거래량 상위 종목 조회
-     * - DAO의 selectTopVolume 메서드 호출
-     */
-    @Override
-    public List<StockVO> getStocksOrderByVolume(int limit) throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("📊 Service: 거래량 상위 종목 조회");
-        System.out.println("  - 조회 개수: " + limit);
-        
-        List<StockVO> stocks = stockDAO.selectTopVolume(limit);
-        
-        System.out.println("✅ Service: " + (stocks != null ? stocks.size() : 0) + "개 조회 완료!");
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        
-        return stocks;
-    }
-
-    /**
-     * ✅ 수정: 상승률 상위 종목 조회
-     * - DAO의 selectTopGainers 메서드 호출
-     */
-    @Override
-    public List<StockVO> getStocksOrderByChangeRate(int limit) throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("📊 Service: 상승률 상위 종목 조회");
-        System.out.println("  - 조회 개수: " + limit);
-        
-        List<StockVO> stocks = stockDAO.selectTopGainers(limit);
-        
-        System.out.println("✅ Service: " + (stocks != null ? stocks.size() : 0) + "개 조회 완료!");
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        
-        return stocks;
+        System.out.println("✅ 종목 삭제: ID=" + stockId);
     }
 }

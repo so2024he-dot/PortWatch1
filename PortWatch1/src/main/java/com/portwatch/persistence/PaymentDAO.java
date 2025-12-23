@@ -66,4 +66,8 @@ public interface PaymentDAO {
      * 최근 결제 내역 조회
      */
     List<PaymentVO> selectRecentPayments(@Param("limit") int limit) throws Exception;
+
+	List<PaymentVO> selectPaymentsByMember(String memberId);
+
+	Map<String, Object> getPaymentSummary(String memberId);
 }

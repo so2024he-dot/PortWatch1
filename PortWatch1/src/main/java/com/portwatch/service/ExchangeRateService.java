@@ -3,34 +3,35 @@ package com.portwatch.service;
 import java.math.BigDecimal;
 
 /**
- * 환율 정보 서비스
+ * 환율 Service 인터페이스
  * 
- * USD/KRW 환율 제공
+ * @author PortWatch
+ * @version 2.0 - Spring 5.0.7 + MySQL 8.0.33 호환
  */
 public interface ExchangeRateService {
     
     /**
-     * USD → KRW 환율 조회
+     * 환율 조회
      * 
-     * @return 환율 (예: 1300.50)
+     * @param from 변환 전 통화 (USD, EUR, JPY 등)
+     * @param to 변환 후 통화 (KRW 등)
+     * @return 환율
+     * @throws Exception
      */
-    BigDecimal getUSDToKRW() throws Exception;
+    BigDecimal getExchangeRate(String from, String to) throws Exception;
     
     /**
-     * 달러를 원화로 변환
+     * 금액 환산
      * 
-     * @param usdAmount 달러 금액
-     * @return 원화 금액
+     * @param amount 금액
+     * @param from 변환 전 통화
+     * @param to 변환 후 통화
+     * @return 환산 금액
+     * @throws Exception
      */
-    BigDecimal convertUSDToKRW(BigDecimal usdAmount) throws Exception;
-    
-    /**
-     * 원화를 달러로 변환
-     * 
-     * @param krwAmount 원화 금액
-     * @return 달러 금액
-     */
-    BigDecimal convertKRWToUSD(BigDecimal krwAmount) throws Exception;
+    BigDecimal convert(BigDecimal amount, String from, String to) throws Exception;
 
-	BigDecimal getExchangeRate(String currency, String string);
+	BigDecimal getUSDToKRW();
+
+	BigDecimal convertUSDToKRW(BigDecimal currentPrice);
 }

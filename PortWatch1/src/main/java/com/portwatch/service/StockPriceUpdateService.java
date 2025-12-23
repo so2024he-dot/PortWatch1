@@ -50,6 +50,8 @@ public interface StockPriceUpdateService {
 	void updateStockPrice(String stockCode);
 
 	void updateByMarketType(String marketType);
+
+
 }
 
     

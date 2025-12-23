@@ -2,48 +2,109 @@ package com.portwatch.domain;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.sql.Date;
 
 /**
- * 관심종목 + 현재가 통합 VO
+ * ✅ 관심종목 + 현재가 VO
  * 
- * ✅ memberId 기반
+ * WatchlistVO + 종목 가격 정보
+ * 
+ * @author PortWatch
+ * @version 1.0
  */
 public class WatchlistWithPriceVO {
     
-    // Watchlist 정보
-    private Integer watchlistId;
-    private Integer memberId;    // ✅ memberId 사용
-    private Integer stockId;
-    private Timestamp addedAt;
+    // ========================================
+    // 기본 필드 (watchlist 테이블)
+    // ========================================
     
-    // Stock 정보
-    private String stockCode;
-    private String stockName;
-    private String marketType;  // KRX, NASDAQ, NYSE, AMEX
-    private String industry;
+    private Integer watchlistId;      // 관심종목 ID
+    private String memberId;          // 회원 ID (String!)
+    private Integer stockId;          // 종목 ID
+    private Timestamp createdAt;      // 생성일시
     
-    // Stock Price 정보 (최신 주가)
-    private BigDecimal currentPrice;    // 현재가 (종가)
-    private BigDecimal openPrice;       // 시가
-    private BigDecimal highPrice;       // 고가
-    private BigDecimal lowPrice;        // 저가
-    private BigDecimal previousClose;   // 전일 종가
-    private BigDecimal priceChange;     // 가격 변동
-    private BigDecimal changePercent;   // 변동률 (%)
-    private Long volume;                // 거래량
-    private Date tradeDate;             // 거래일
+    // ========================================
+    // 종목 정보 필드 (stock 테이블 조인)
+    // ========================================
     
-    // 계산 필드
-    private String changeDirection;     // "UP", "DOWN", "FLAT"
-    private boolean isKoreanStock;      // 한국 주식 여부
-    private boolean isUSStock;          // 미국 주식 여부
+    private String stockCode;         // 종목 코드
+    private String stockName;         // 종목명
+    private String marketType;        // 시장 구분 (KOSPI/KOSDAQ/NASDAQ/NYSE)
+    private String country;           // 국가 (KR/US)
+    private String industry;          // 업종
     
-    // Constructors
-    public WatchlistWithPriceVO() {
+    // ========================================
+    // 가격 정보 필드
+    // ========================================
+    
+    private BigDecimal currentPrice;  // 현재가
+    private BigDecimal priceChange;   // 전일 대비
+    private BigDecimal priceChangeRate; // 등락률(%)
+    private Long volume;              // 거래량
+    
+    // ========================================
+    // 계산 메서드
+    // ========================================
+    
+    /**
+     * 한국 주식 여부
+     */
+    public boolean isKoreanStock() {
+        return "KR".equals(country);
     }
     
-    // Getters and Setters
+    /**
+     * 미국 주식 여부
+     */
+    public boolean isUSStock() {
+        return "US".equals(country);
+    }
+    
+    /**
+     * KOSPI 여부
+     */
+    public boolean isKOSPI() {
+        return "KOSPI".equals(marketType);
+    }
+    
+    /**
+     * KOSDAQ 여부
+     */
+    public boolean isKOSDAQ() {
+        return "KOSDAQ".equals(marketType);
+    }
+    
+    /**
+     * NASDAQ 여부
+     */
+    public boolean isNASDAQ() {
+        return "NASDAQ".equals(marketType);
+    }
+    
+    /**
+     * NYSE 여부
+     */
+    public boolean isNYSE() {
+        return "NYSE".equals(marketType);
+    }
+    
+    /**
+     * 상승 여부
+     */
+    public boolean isRising() {
+        return priceChange != null && priceChange.compareTo(BigDecimal.ZERO) > 0;
+    }
+    
+    /**
+     * 하락 여부
+     */
+    public boolean isFalling() {
+        return priceChange != null && priceChange.compareTo(BigDecimal.ZERO) < 0;
+    }
+    
+    // ========================================
+    // Getter & Setter
+    // ========================================
+    
     public Integer getWatchlistId() {
         return watchlistId;
     }
@@ -52,11 +113,11 @@ public class WatchlistWithPriceVO {
         this.watchlistId = watchlistId;
     }
     
-    public Integer getMemberId() {
+    public String getMemberId() {
         return memberId;
     }
     
-    public void setMemberId(Integer memberId) {
+    public void setMemberId(String memberId) {
         this.memberId = memberId;
     }
     
@@ -68,12 +129,12 @@ public class WatchlistWithPriceVO {
         this.stockId = stockId;
     }
     
-    public Timestamp getAddedAt() {
-        return addedAt;
+    public Timestamp getCreatedAt() {
+        return createdAt;
     }
     
-    public void setAddedAt(Timestamp addedAt) {
-        this.addedAt = addedAt;
+    public void setCreatedAt(Timestamp createdAt) {
+        this.createdAt = createdAt;
     }
     
     public String getStockCode() {
@@ -98,9 +159,14 @@ public class WatchlistWithPriceVO {
     
     public void setMarketType(String marketType) {
         this.marketType = marketType;
-        // 시장 타입에 따라 플래그 자동 설정
-        this.isKoreanStock = "KRX".equals(marketType) || "KOSPI".equals(marketType) || "KOSDAQ".equals(marketType);
-        this.isUSStock = "NASDAQ".equals(marketType) || "NYSE".equals(marketType) || "AMEX".equals(marketType);
+    }
+    
+    public String getCountry() {
+        return country;
+    }
+    
+    public void setCountry(String country) {
+        this.country = country;
     }
     
     public String getIndustry() {
@@ -119,63 +185,20 @@ public class WatchlistWithPriceVO {
         this.currentPrice = currentPrice;
     }
     
-    public BigDecimal getOpenPrice() {
-        return openPrice;
-    }
-    
-    public void setOpenPrice(BigDecimal openPrice) {
-        this.openPrice = openPrice;
-    }
-    
-    public BigDecimal getHighPrice() {
-        return highPrice;
-    }
-    
-    public void setHighPrice(BigDecimal highPrice) {
-        this.highPrice = highPrice;
-    }
-    
-    public BigDecimal getLowPrice() {
-        return lowPrice;
-    }
-    
-    public void setLowPrice(BigDecimal lowPrice) {
-        this.lowPrice = lowPrice;
-    }
-    
-    public BigDecimal getPreviousClose() {
-        return previousClose;
-    }
-    
-    public void setPreviousClose(BigDecimal previousClose) {
-        this.previousClose = previousClose;
-    }
-    
     public BigDecimal getPriceChange() {
         return priceChange;
     }
     
     public void setPriceChange(BigDecimal priceChange) {
         this.priceChange = priceChange;
-        // 가격 변동에 따라 방향 자동 설정
-        if (priceChange != null) {
-            int comparison = priceChange.compareTo(BigDecimal.ZERO);
-            if (comparison > 0) {
-                this.changeDirection = "UP";
-            } else if (comparison < 0) {
-                this.changeDirection = "DOWN";
-            } else {
-                this.changeDirection = "FLAT";
-            }
-        }
     }
     
-    public BigDecimal getChangePercent() {
-        return changePercent;
+    public BigDecimal getPriceChangeRate() {
+        return priceChangeRate;
     }
     
-    public void setChangePercent(BigDecimal changePercent) {
-        this.changePercent = changePercent;
+    public void setPriceChangeRate(BigDecimal priceChangeRate) {
+        this.priceChangeRate = priceChangeRate;
     }
     
     public Long getVolume() {
@@ -186,48 +209,14 @@ public class WatchlistWithPriceVO {
         this.volume = volume;
     }
     
-    public Date getTradeDate() {
-        return tradeDate;
-    }
-    
-    public void setTradeDate(Date tradeDate) {
-        this.tradeDate = tradeDate;
-    }
-    
-    public String getChangeDirection() {
-        return changeDirection;
-    }
-    
-    public void setChangeDirection(String changeDirection) {
-        this.changeDirection = changeDirection;
-    }
-    
-    public boolean isKoreanStock() {
-        return isKoreanStock;
-    }
-    
-    public void setKoreanStock(boolean koreanStock) {
-        isKoreanStock = koreanStock;
-    }
-    
-    public boolean isUSStock() {
-        return isUSStock;
-    }
-    
-    public void setUSStock(boolean USStock) {
-        isUSStock = USStock;
-    }
+    // ========================================
+    // toString
+    // ========================================
     
     @Override
     public String toString() {
-        return "WatchlistWithPriceVO{" +
-                "watchlistId=" + watchlistId +
-                ", memberId=" + memberId +
-                ", stockCode='" + stockCode + '\'' +
-                ", stockName='" + stockName + '\'' +
-                ", currentPrice=" + currentPrice +
-                ", priceChange=" + priceChange +
-                ", changePercent=" + changePercent +
-                '}';
+        return "WatchlistWithPriceVO [watchlistId=" + watchlistId + ", memberId=" + memberId + ", stockCode="
+                + stockCode + ", stockName=" + stockName + ", marketType=" + marketType + ", currentPrice="
+                + currentPrice + ", priceChange=" + priceChange + ", priceChangeRate=" + priceChangeRate + "]";
     }
 }

@@ -18,10 +18,10 @@ import com.portwatch.service.USStockPriceUpdateService;
 /**
  * 관리자용 주가 업데이트 API Controller
  * 
- * 수동 크롤링 및 테스트용 엔드포인트 제공
+ * ✅ 수정: line 137 메서드명 오타 수정 (s → updateByMarketType)
  * 
  * @author PortWatch
- * @version 3.0 (Spring 5.0.7 + MySQL 8.0)
+ * @version 3.1 - 에러 수정 완료
  */
 @RestController
 @RequestMapping("/api/admin")
@@ -37,10 +37,6 @@ public class AdminStockUpdateController {
     
     /**
      * 전체 주식 업데이트 (한국 + 미국)
-     * 
-     * GET /api/admin/update-all
-     * 
-     * 경고: 시간이 오래 걸릴 수 있습니다 (10분 이상)
      */
     @GetMapping("/update-all")
     public ResponseEntity<Map<String, Object>> updateAll() {
@@ -83,8 +79,6 @@ public class AdminStockUpdateController {
     
     /**
      * 한국 주식만 업데이트
-     * 
-     * GET /api/admin/update-korean
      */
     @GetMapping("/update-korean")
     public ResponseEntity<Map<String, Object>> updateKorean() {
@@ -121,10 +115,6 @@ public class AdminStockUpdateController {
     
     /**
      * 미국 주식만 업데이트
-     * 
-     * GET /api/admin/update-us
-     * 
-     * 경고: API 제한으로 인해 매우 느릴 수 있습니다
      */
     @GetMapping("/update-us")
     public ResponseEntity<Map<String, Object>> updateUS() {
@@ -161,15 +151,9 @@ public class AdminStockUpdateController {
     
     /**
      * 특정 종목만 업데이트
-     * 
-     * GET /api/admin/update-stock?stockCode=005930
-     * 
-     * @param stockCode 종목 코드 (예: 005930, AAPL)
      */
     @GetMapping("/update-stock")
-    public ResponseEntity<Map<String, Object>> updateStock(
-            @RequestParam String stockCode) {
-        
+    public ResponseEntity<Map<String, Object>> updateStock(@RequestParam String stockCode) {
         Map<String, Object> response = new HashMap<>();
         
         logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -208,16 +192,12 @@ public class AdminStockUpdateController {
     }
     
     /**
-     * 특정 시장만 업데이트 (KOSPI, KOSDAQ, NASDAQ, NYSE, AMEX)
+     * ✅ 수정: 특정 시장만 업데이트 (KOSPI, KOSDAQ, NASDAQ, NYSE, AMEX)
      * 
-     * GET /api/admin/update-market?marketType=KOSPI
-     * 
-     * @param marketType 시장 타입
+     * line 137 에러 수정: s(marketType) → updateByMarketType(marketType)
      */
     @GetMapping("/update-market")
-    public ResponseEntity<Map<String, Object>> updateMarket(
-            @RequestParam String marketType) {
-        
+    public ResponseEntity<Map<String, Object>> updateMarket(@RequestParam String marketType) {
         Map<String, Object> response = new HashMap<>();
         
         logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -234,6 +214,7 @@ public class AdminStockUpdateController {
             if (isUSMarket) {
                 usStockPriceUpdateService.updateByMarketType(marketType);
             } else {
+                // ✅ 수정: s() → updateByMarketType()
                 stockPriceUpdateService.updateByMarketType(marketType);
             }
             
@@ -262,8 +243,6 @@ public class AdminStockUpdateController {
     
     /**
      * 크롤링 시스템 상태 확인
-     * 
-     * GET /api/admin/update-status
      */
     @GetMapping("/update-status")
     public ResponseEntity<Map<String, Object>> getStatus() {

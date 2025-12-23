@@ -4,55 +4,39 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 /**
- * 결제 정보 VO
- * 포트폴리오 주식 구매 시 결제 정보 관리
+ * 결제 VO
  * 
+ * ✅ String memberId 사용
  * @author PortWatch
- * @version 1.0
+ * @version 2.0 - Spring 5.0.7 + MySQL 8.0.33 호환
  */
 public class PaymentVO {
     
-    // 결제 정보
-    private Long paymentId;
-    private String memberId;
-    private Long portfolioId;
-    
-    // 구매 정보
-    private Integer stockId;
-    private String stockCode;
-    private String stockName;
-    private Double quantity;          // 구매 수량
-    private BigDecimal purchasePrice;     // 구매 단가
-    private BigDecimal totalAmount;       // 총 구매 금액
-    
-    // 결제 수단 정보
-    private String paymentMethod;    // CARD, BANK_TRANSFER, TOSS, PAYPAL
-    private String cardNumber;       // 카드번호 (마스킹)
-    private String cardCompany;      // 카드사
-    private String bankName;         // 은행명
-    
-    // 결제 처리 정보
-    private String paymentStatus;    // PENDING, COMPLETED, FAILED, CANCELLED
-    private String transactionId;    // PG사 거래 ID
-    private String pgProvider;       // TOSS, INICIS, KCP, STRIPE, PAYPAL
-    
-    // 국가 및 통화 정보
-    private String country;          // KR, US, JP, etc.
-    private String currency;         // KRW, USD, JPY
-    private BigDecimal exchangeRate; // 환율 (외화 결제 시)
-    private BigDecimal localAmount;  // 현지 통화 금액
-    
-    // 시간 정보
-    private Timestamp createdAt;
-    private Timestamp paidAt;
-    private Timestamp cancelledAt;
-    
-    // 추가 정보
-    private String memo;             // 메모
-    private String receiptUrl;       // 영수증 URL
+    private Long paymentId;              // 결제 ID
+    private String memberId;             // 회원 ID (String)
+    private Integer stockId;             // 종목 ID
+    private String stockCode;            // 종목 코드
+    private String stockName;            // 종목명
+    private BigDecimal quantity;         // 수량
+    private BigDecimal purchasePrice;    // 매입 가격
+    private BigDecimal totalAmount;      // 총 결제 금액
+    private String paymentMethod;        // 결제 수단 (CARD, BANK_TRANSFER)
+    private String paymentStatus;        // 결제 상태 (PENDING, COMPLETED, CANCELLED)
+    private String cardNumber;           // 카드 번호 (마스킹)
+    private String cardCompany;          // 카드사
+    private String pgProvider;           // PG사 (TOSS, STRIPE, INICIS)
+    private String transactionId;        // 거래 ID (PG사 거래번호)
+    private Long portfolioId;            // 연결된 포트폴리오 ID
+    private String country;              // 국가 (KR, US)
+    private String currency;             // 통화 (KRW, USD)
+    private BigDecimal exchangeRate;     // 환율
+    private BigDecimal localAmount;      // 원화 환산 금액
+    private Timestamp createdAt;         // 생성일시
+    private Timestamp updatedAt;         // 수정일시
     
     // 기본 생성자
-    public PaymentVO() {}
+    public PaymentVO() {
+    }
     
     // Getters and Setters
     public Long getPaymentId() {
@@ -69,14 +53,6 @@ public class PaymentVO {
     
     public void setMemberId(String memberId) {
         this.memberId = memberId;
-    }
-    
-    public Long getPortfolioId() {
-        return portfolioId;
-    }
-    
-    public void setPortfolioId(Long portfolioId) {
-        this.portfolioId = portfolioId;
     }
     
     public Integer getStockId() {
@@ -103,11 +79,11 @@ public class PaymentVO {
         this.stockName = stockName;
     }
     
-    public Double getQuantity() {
+    public BigDecimal getQuantity() {
         return quantity;
     }
     
-    public void setQuantity(Double quantity) {
+    public void setQuantity(BigDecimal quantity) {
         this.quantity = quantity;
     }
     
@@ -135,6 +111,14 @@ public class PaymentVO {
         this.paymentMethod = paymentMethod;
     }
     
+    public String getPaymentStatus() {
+        return paymentStatus;
+    }
+    
+    public void setPaymentStatus(String paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+    
     public String getCardNumber() {
         return cardNumber;
     }
@@ -151,20 +135,12 @@ public class PaymentVO {
         this.cardCompany = cardCompany;
     }
     
-    public String getBankName() {
-        return bankName;
+    public String getPgProvider() {
+        return pgProvider;
     }
     
-    public void setBankName(String bankName) {
-        this.bankName = bankName;
-    }
-    
-    public String getPaymentStatus() {
-        return paymentStatus;
-    }
-    
-    public void setPaymentStatus(String paymentStatus) {
-        this.paymentStatus = paymentStatus;
+    public void setPgProvider(String pgProvider) {
+        this.pgProvider = pgProvider;
     }
     
     public String getTransactionId() {
@@ -175,12 +151,12 @@ public class PaymentVO {
         this.transactionId = transactionId;
     }
     
-    public String getPgProvider() {
-        return pgProvider;
+    public Long getPortfolioId() {
+        return portfolioId;
     }
     
-    public void setPgProvider(String pgProvider) {
-        this.pgProvider = pgProvider;
+    public void setPortfolioId(Long portfolioId) {
+        this.portfolioId = portfolioId;
     }
     
     public String getCountry() {
@@ -223,49 +199,24 @@ public class PaymentVO {
         this.createdAt = createdAt;
     }
     
-    public Timestamp getPaidAt() {
-        return paidAt;
+    public Timestamp getUpdatedAt() {
+        return updatedAt;
     }
     
-    public void setPaidAt(Timestamp paidAt) {
-        this.paidAt = paidAt;
-    }
-    
-    public Timestamp getCancelledAt() {
-        return cancelledAt;
-    }
-    
-    public void setCancelledAt(Timestamp cancelledAt) {
-        this.cancelledAt = cancelledAt;
-    }
-    
-    public String getMemo() {
-        return memo;
-    }
-    
-    public void setMemo(String memo) {
-        this.memo = memo;
-    }
-    
-    public String getReceiptUrl() {
-        return receiptUrl;
-    }
-    
-    public void setReceiptUrl(String receiptUrl) {
-        this.receiptUrl = receiptUrl;
+    public void setUpdatedAt(Timestamp updatedAt) {
+        this.updatedAt = updatedAt;
     }
     
     @Override
     public String toString() {
         return "PaymentVO{" +
                 "paymentId=" + paymentId +
-                ", memberId=" + memberId +
+                ", memberId='" + memberId + '\'' +
                 ", stockCode='" + stockCode + '\'' +
+                ", stockName='" + stockName + '\'' +
                 ", quantity=" + quantity +
                 ", totalAmount=" + totalAmount +
-                ", paymentMethod='" + paymentMethod + '\'' +
                 ", paymentStatus='" + paymentStatus + '\'' +
-                ", country='" + country + '\'' +
                 ", currency='" + currency + '\'' +
                 '}';
     }

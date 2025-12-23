@@ -1,4 +1,5 @@
 package com.portwatch.persistence;
+import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
 import org.apache.ibatis.annotations.Param;
@@ -10,6 +11,7 @@ import com.portwatch.domain.PortfolioVO;
  * @author PortWatch
  * @version 1.0
  */
+@Mapper
 public interface PortfolioDAO {
     
     /**
@@ -71,4 +73,6 @@ public interface PortfolioDAO {
     int countPortfolio(@Param("memberId") String memberId);
 
 	void deletePortfolio(Long portfolioId);
+
+	void deletePortfolioByMemberAndStock(String memberId, Integer stockId);
 }

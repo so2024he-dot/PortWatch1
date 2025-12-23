@@ -92,7 +92,7 @@ public class MemberController {
         System.out.println("이메일: " + memberVO.getMemberEmail());
         System.out.println("이름: " + memberVO.getMemberName());
         System.out.println("전화번호: " + memberVO.getMemberPhone());
-        System.out.println("비밀번호 있음: " + (memberVO.getMemberPass() != null && !memberVO.getMemberPass().isEmpty()));
+        System.out.println("비밀번호 있음: " + (memberVO.getMemberPass() != null && !((String) memberVO.getMemberPass()).isEmpty()));
         System.out.println("========================================");
         
         // Validation 오류 확인

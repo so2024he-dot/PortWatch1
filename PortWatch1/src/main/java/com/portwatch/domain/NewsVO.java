@@ -1,42 +1,28 @@
 package com.portwatch.domain;
 
 import java.sql.Timestamp;
-import java.util.Date;
 
 /**
- * 뉴스 도메인 객체
+ * 뉴스 VO
  * 
  * @author PortWatch
- * @version 1.0
+ * @version 2.0 - Spring 5.0.7 + MySQL 8.0.33 호환
  */
 public class NewsVO {
     
-    private Long newsId;              // 뉴스 ID (PK)
-    private String stockCode;         // 종목 코드
-    private String stockName;         // 종목명
-    private String title;             // 뉴스 제목
-    private String content;           // 뉴스 내용
-    private String summary;           // 뉴스 요약
-    private String link;              // 뉴스 원문 링크
-    private String source;            // 뉴스 출처 (네이버 금융, 다음 금융 등)
-    private String imageUrl;          // 이미지 URL
-    private Date publishedDate;       // 뉴스 발행일
-    private Date createdDate;         // 등록일
-    private String sentiment;         // 감성 분석 (긍정/부정/중립)
+    private Long newsId;            // 뉴스 ID
+    private Integer stockId;        // 종목 ID
+    private String stockCode;       // 종목 코드
+    private String stockName;       // 종목명
+    private String title;           // 뉴스 제목
+    private String link;            // 뉴스 링크
+    private String source;          // 출처 (네이버금융, Yahoo Finance 등)
+    private String country;         // 국가 (KR, US)
+    private Timestamp publishedAt;  // 게시일
+    private Timestamp createdAt;    // 생성일시
     
     // 기본 생성자
-    public NewsVO() {}
-    
-    // 전체 생성자
-    public NewsVO(String stockCode, String stockName, String title, String content, 
-                  String link, String source, Date publishedDate) {
-        this.stockCode = stockCode;
-        this.stockName = stockName;
-        this.title = title;
-        this.content = content;
-        this.link = link;
-        this.source = source;
-        this.publishedDate = publishedDate;
+    public NewsVO() {
     }
     
     // Getters and Setters
@@ -46,6 +32,14 @@ public class NewsVO {
     
     public void setNewsId(Long newsId) {
         this.newsId = newsId;
+    }
+    
+    public Integer getStockId() {
+        return stockId;
+    }
+    
+    public void setStockId(Integer stockId) {
+        this.stockId = stockId;
     }
     
     public String getStockCode() {
@@ -72,22 +66,6 @@ public class NewsVO {
         this.title = title;
     }
     
-    public String getContent() {
-        return content;
-    }
-    
-    public void setContent(String content) {
-        this.content = content;
-    }
-    
-    public String getSummary() {
-        return summary;
-    }
-    
-    public void setSummary(String summary) {
-        this.summary = summary;
-    }
-    
     public String getLink() {
         return link;
     }
@@ -104,43 +82,39 @@ public class NewsVO {
         this.source = source;
     }
     
-    public String getImageUrl() {
-        return imageUrl;
+    public String getCountry() {
+        return country;
     }
     
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+    public void setCountry(String country) {
+        this.country = country;
     }
     
-    public Date getPublishedDate() {
-        return publishedDate;
+    public Timestamp getPublishedAt() {
+        return publishedAt;
     }
     
-    public void setPublishedDate(Date publishedDate) {
-        this.publishedDate = publishedDate;
+    public void setPublishedAt(Timestamp publishedAt) {
+        this.publishedAt = publishedAt;
     }
     
-    public Date getCreatedDate() {
-        return createdDate;
+    public Timestamp getCreatedAt() {
+        return createdAt;
     }
     
-    public void setCreatedDate(Date createdDate) {
-        this.createdDate = createdDate;
-    }
-    
-    public String getSentiment() {
-        return sentiment;
-    }
-    
-    public void setSentiment(String sentiment) {
-        this.sentiment = sentiment;
+    public void setCreatedAt(Timestamp createdAt) {
+        this.createdAt = createdAt;
     }
     
     @Override
     public String toString() {
-        return "NewsVO [newsId=" + newsId + ", stockCode=" + stockCode + ", stockName=" + stockName 
-                + ", title=" + title + ", source=" + source + ", publishedDate=" + publishedDate + "]";
+        return "NewsVO{" +
+                "newsId=" + newsId +
+                ", stockCode='" + stockCode + '\'' +
+                ", stockName='" + stockName + '\'' +
+                ", title='" + title + '\'' +
+                ", source='" + source + '\'' +
+                ", country='" + country + '\'' +
+                '}';
     }
-
-
 }

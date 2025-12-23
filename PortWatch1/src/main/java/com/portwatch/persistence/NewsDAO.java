@@ -2,6 +2,7 @@ package com.portwatch.persistence;
 
 import java.util.List;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Mapper;
 import com.portwatch.domain.NewsVO;
 
 /**
@@ -10,6 +11,7 @@ import com.portwatch.domain.NewsVO;
  * @author PortWatch
  * @version 1.0
  */
+@Mapper
 public interface NewsDAO {
     
     /**

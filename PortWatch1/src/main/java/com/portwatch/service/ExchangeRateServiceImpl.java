@@ -1,231 +1,144 @@
 package com.portwatch.service;
 
-import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.stereotype.Service;
 
 /**
- * 환율 정보 서비스 구현체
- * 
- * 환율 정보 제공 방식:
- * 1. 고정 환율 사용 (빠르고 안정적)
- * 2. API 호출 (실시간, 하루 한 번 캐싱)
+ * 환율 Service 구현
  * 
  * @author PortWatch
- * @version 1.0
+ * @version 2.0 - Spring 5.0.7 + MySQL 8.0.33 호환
  */
 @Service
 public class ExchangeRateServiceImpl implements ExchangeRateService {
     
-    private static final Logger logger = LoggerFactory.getLogger(ExchangeRateServiceImpl.class);
+    // 임시 환율 저장소 (실제로는 외부 API 또는 DB에서 가져와야 함)
+    private final Map<String, BigDecimal> exchangeRates;
     
-    // ========================================
-    // 설정
-    // ========================================
-    
-    // 🔧 고정 환율 사용 여부 (true: 고정 환율, false: API 호출)
-    private static final boolean USE_FIXED_RATE = true;
-    
-    // 🔧 고정 환율 값 (2024년 12월 기준: 약 1,300원)
-    private static final BigDecimal FIXED_EXCHANGE_RATE = new BigDecimal("1310.00");
-    
-    // API 캐시
-    private BigDecimal cachedRate = null;
-    private long cacheTimestamp = 0;
-    private static final long CACHE_DURATION = 24 * 60 * 60 * 1000; // 24시간
-    
-    // ========================================
-    // 환율 조회
-    // ========================================
-    
-    @Override
-    public BigDecimal getUSDToKRW() throws Exception {
-        if (USE_FIXED_RATE) {
-            // 고정 환율 사용
-            logger.debug("💱 고정 환율 사용: 1 USD = {} KRW", FIXED_EXCHANGE_RATE);
-            return FIXED_EXCHANGE_RATE;
-        } else {
-            // API 호출 (캐시 사용)
-            return getExchangeRateFromAPI();
-        }
+    public ExchangeRateServiceImpl() {
+        // 기본 환율 설정 (2024년 12월 기준)
+        exchangeRates = new HashMap<>();
+        
+        // USD → KRW
+        exchangeRates.put("USD_KRW", new BigDecimal("1300.00"));
+        exchangeRates.put("KRW_USD", new BigDecimal("0.00077"));
+        
+        // EUR → KRW
+        exchangeRates.put("EUR_KRW", new BigDecimal("1420.00"));
+        exchangeRates.put("KRW_EUR", new BigDecimal("0.00070"));
+        
+        // JPY → KRW
+        exchangeRates.put("JPY_KRW", new BigDecimal("8.80"));
+        exchangeRates.put("KRW_JPY", new BigDecimal("0.11364"));
+        
+        // CNY → KRW
+        exchangeRates.put("CNY_KRW", new BigDecimal("180.00"));
+        exchangeRates.put("KRW_CNY", new BigDecimal("0.00556"));
     }
     
     /**
-     * 통화 코드로 환율 조회 (범용 메서드)
+     * 환율 조회
      * 
-     * @param fromCurrency 출발 통화 (예: USD, EUR, JPY)
-     * @param toCurrency 도착 통화 (예: KRW)
+     * @param from 변환 전 통화 (USD, EUR, JPY 등)
+     * @param to 변환 후 통화 (KRW 등)
      * @return 환율
+     * @throws Exception
      */
     @Override
-    public BigDecimal getExchangeRate(String fromCurrency, String toCurrency) {
-        try {
-            // 같은 통화면 1.0 반환
-            if (fromCurrency.equals(toCurrency)) {
-                return BigDecimal.ONE;
-            }
-            
-            // KRW → KRW
-            if ("KRW".equals(fromCurrency) && "KRW".equals(toCurrency)) {
-                return BigDecimal.ONE;
-            }
-            
-            // USD → KRW
-            if ("USD".equals(fromCurrency) && "KRW".equals(toCurrency)) {
-                return getUSDToKRW();
-            }
-            
-            // KRW → USD
-            if ("KRW".equals(fromCurrency) && "USD".equals(toCurrency)) {
-                BigDecimal usdToKrw = getUSDToKRW();
-                return BigDecimal.ONE.divide(usdToKrw, 6, RoundingMode.HALF_UP);
-            }
-            
-            // EUR → KRW (유로 고정 환율: 1 EUR = 1,430 KRW)
-            if ("EUR".equals(fromCurrency) && "KRW".equals(toCurrency)) {
-                return new BigDecimal("1430.00");
-            }
-            
-            // JPY → KRW (엔화 고정 환율: 100 JPY = 920 KRW)
-            if ("JPY".equals(fromCurrency) && "KRW".equals(toCurrency)) {
-                return new BigDecimal("9.20"); // 1 JPY = 9.20 KRW
-            }
-            
-            // 지원하지 않는 통화 조합
-            logger.warn("⚠️ 지원하지 않는 통화 조합: {} → {}", fromCurrency, toCurrency);
-            return BigDecimal.ONE;
-            
-        } catch (Exception e) {
-            logger.error("❌ 환율 조회 실패: {} → {}", fromCurrency, toCurrency, e);
+    public BigDecimal getExchangeRate(String from, String to) throws Exception {
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("💱 환율 조회");
+        System.out.println("  - From: " + from);
+        System.out.println("  - To: " + to);
+        
+        // 같은 통화면 1.0 반환
+        if (from.equals(to)) {
+            System.out.println("  - 환율: 1.0 (같은 통화)");
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             return BigDecimal.ONE;
         }
-    }
-    
-    @Override
-    public BigDecimal convertUSDToKRW(BigDecimal usdAmount) throws Exception {
-        if (usdAmount == null || usdAmount.compareTo(BigDecimal.ZERO) == 0) {
-            return BigDecimal.ZERO;
-        }
         
-        BigDecimal rate = getUSDToKRW();
-        BigDecimal krwAmount = usdAmount.multiply(rate);
+        String key = from + "_" + to;
+        BigDecimal rate = exchangeRates.get(key);
         
-        logger.debug("💱 환전: ${} × {} = ₩{}", 
-                usdAmount, rate, krwAmount.setScale(0, RoundingMode.HALF_UP));
-        
-        return krwAmount.setScale(0, RoundingMode.HALF_UP);
-    }
-    
-    @Override
-    public BigDecimal convertKRWToUSD(BigDecimal krwAmount) throws Exception {
-        if (krwAmount == null || krwAmount.compareTo(BigDecimal.ZERO) == 0) {
-            return BigDecimal.ZERO;
-        }
-        
-        BigDecimal rate = getUSDToKRW();
-        BigDecimal usdAmount = krwAmount.divide(rate, 2, RoundingMode.HALF_UP);
-        
-        logger.debug("💱 환전: ₩{} ÷ {} = ${}", krwAmount, rate, usdAmount);
-        
-        return usdAmount;
-    }
-    
-    // ========================================
-    // API 호출 (선택사항)
-    // ========================================
-    
-    /**
-     * 환율 API에서 실시간 환율 조회 (캐시 사용)
-     * 
-     * 무료 API: https://exchangerate-api.com
-     * 또는: https://api.exchangerate.host
-     */
-    private BigDecimal getExchangeRateFromAPI() throws Exception {
-        long currentTime = System.currentTimeMillis();
-        
-        // 캐시가 유효하면 캐시된 값 사용
-        if (cachedRate != null && (currentTime - cacheTimestamp) < CACHE_DURATION) {
-            logger.debug("💱 캐시된 환율 사용: 1 USD = {} KRW", cachedRate);
-            return cachedRate;
-        }
-        
-        // API 호출
-        logger.info("💱 환율 API 호출 중...");
-        
-        try {
-            // exchangerate-api.com (무료, 1,500 requests/month)
-            String apiUrl = "https://api.exchangerate-api.com/v4/latest/USD";
+        if (rate == null) {
+            // 역방향 환율이 있으면 계산
+            String reverseKey = to + "_" + from;
+            BigDecimal reverseRate = exchangeRates.get(reverseKey);
             
-            URL url = new URL(apiUrl);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
-            conn.setConnectTimeout(5000);
-            conn.setReadTimeout(5000);
-            
-            if (conn.getResponseCode() != 200) {
-                throw new Exception("환율 API 호출 실패: HTTP " + conn.getResponseCode());
+            if (reverseRate != null) {
+                rate = BigDecimal.ONE.divide(reverseRate, 6, RoundingMode.HALF_UP);
+                System.out.println("  - 환율: " + rate + " (역방향 계산)");
+            } else {
+                System.err.println("  ⚠️ 환율 정보 없음, 기본값 사용");
+                
+                // 기본값: USD 기준
+                if ("USD".equals(from) && "KRW".equals(to)) {
+                    rate = new BigDecimal("1300.00");
+                } else if ("KRW".equals(from) && "USD".equals(to)) {
+                    rate = new BigDecimal("0.00077");
+                } else {
+                    // 그 외에는 1.0
+                    rate = BigDecimal.ONE;
+                }
             }
-            
-            BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(conn.getInputStream(), "UTF-8"));
-            StringBuilder response = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                response.append(line);
-            }
-            reader.close();
-            conn.disconnect();
-            
-            // JSON 파싱
-            JSONObject json = new JSONObject(response.toString());
-            JSONObject rates = json.getJSONObject("rates");
-            double krwRate = rates.getDouble("KRW");
-            
-            cachedRate = new BigDecimal(String.valueOf(krwRate));
-            cacheTimestamp = currentTime;
-            
-            logger.info("✅ 환율 API 조회 성공: 1 USD = {} KRW", cachedRate);
-            
-            return cachedRate;
-            
-        } catch (Exception e) {
-            logger.error("❌ 환율 API 호출 실패: {}", e.getMessage());
-            
-            // API 실패 시 고정 환율 사용
-            logger.warn("⚠️ 고정 환율로 대체: 1 USD = {} KRW", FIXED_EXCHANGE_RATE);
-            return FIXED_EXCHANGE_RATE;
+        } else {
+            System.out.println("  - 환율: " + rate);
         }
+        
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        return rate;
     }
     
-    // ========================================
-    // 수동 환율 설정 (관리자용)
-    // ========================================
-    
     /**
-     * 환율 수동 설정
+     * 금액 환산
      * 
-     * @param rate 환율 (예: 1310.00)
+     * @param amount 금액
+     * @param from 변환 전 통화
+     * @param to 변환 후 통화
+     * @return 환산 금액
+     * @throws Exception
      */
-    public void setExchangeRate(BigDecimal rate) {
-        this.cachedRate = rate;
-        this.cacheTimestamp = System.currentTimeMillis();
-        logger.info("✅ 환율 수동 설정: 1 USD = {} KRW", rate);
+    @Override
+    public BigDecimal convert(BigDecimal amount, String from, String to) throws Exception {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("금액은 0보다 커야 합니다.");
+        }
+        
+        BigDecimal rate = getExchangeRate(from, to);
+        BigDecimal result = amount.multiply(rate).setScale(2, RoundingMode.HALF_UP);
+        
+        System.out.println("💱 환산 결과: " + amount + " " + from + " → " + result + " " + to);
+        
+        return result;
     }
     
     /**
-     * 캐시 초기화
+     * 환율 업데이트 (관리자용)
+     * 
+     * @param from 변환 전 통화
+     * @param to 변환 후 통화
+     * @param rate 환율
      */
-    public void clearCache() {
-        this.cachedRate = null;
-        this.cacheTimestamp = 0;
-        logger.info("🗑️ 환율 캐시 초기화");
+    public void updateExchangeRate(String from, String to, BigDecimal rate) {
+        String key = from + "_" + to;
+        exchangeRates.put(key, rate);
+        System.out.println("✅ 환율 업데이트: " + key + " = " + rate);
     }
+
+	@Override
+	public BigDecimal getUSDToKRW() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BigDecimal convertUSDToKRW(BigDecimal currentPrice) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

@@ -1,5 +1,6 @@
 package com.portwatch.controller;
 
+import com.portwatch.domain.MemberVO;
 import com.portwatch.domain.WatchlistWithPriceVO;
 import com.portwatch.persistence.WatchlistDAO;
 import org.slf4j.Logger;
@@ -17,9 +18,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 관심종목 REST API 컨트롤러
+ * ✅ 관심종목 REST API 컨트롤러 (완전 수정)
  * 
- * ✅ Integer memberId 사용 (타입 통일)
+ * 수정 사항:
+ * - MemberVO에서 String memberId 추출
+ * - 세션 속성명: "loginMember" 사용
+ * 
+ * @author PortWatch
+ * @version 3.0
  */
 @Controller
 @RequestMapping("/api/watchlist")
@@ -42,16 +48,18 @@ public class WatchlistApiController {
         
         Map<String, Object> response = new HashMap<String, Object>();
         
-        // ✅ Integer memberId 사용 (세션 속성명 주의!)
-        Integer memberId = (Integer) session.getAttribute("memberId");
-        // ⚠️ 만약 세션에 "userId"로 저장되어 있다면:
-        // Integer memberId = (Integer) session.getAttribute("userId");
+        // ✅ MemberVO에서 memberId 추출 (String)
+        MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
         
-        if (memberId == null) {
+        if (loginMember == null) {
+            logger.warn("⚠️ 로그인하지 않은 사용자");
             response.put("success", false);
             response.put("message", "로그인이 필요합니다");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
+        
+        String memberId = loginMember.getMemberId();  // ✅ String!
+        logger.info("   회원 ID: {}", memberId);
         
         try {
             List<WatchlistWithPriceVO> watchlist = watchlistDAO.selectWatchlistWithPrices(memberId);
@@ -91,15 +99,17 @@ public class WatchlistApiController {
         
         Map<String, Object> response = new HashMap<String, Object>();
         
-        // ✅ Integer memberId 사용
-        Integer memberId = (Integer) session.getAttribute("memberId");
-        // ⚠️ 또는: Integer memberId = (Integer) session.getAttribute("userId");
+        // ✅ MemberVO에서 memberId 추출 (String)
+        MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
         
-        if (memberId == null) {
+        if (loginMember == null) {
+            logger.warn("⚠️ 로그인하지 않은 사용자");
             response.put("success", false);
             response.put("message", "로그인이 필요합니다");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
+        
+        String memberId = loginMember.getMemberId();  // ✅ String!
         
         try {
             WatchlistWithPriceVO item = watchlistDAO.selectWatchlistWithPriceById(watchlistId);
@@ -110,7 +120,7 @@ public class WatchlistApiController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
             
-            // ✅ getMemberId() 사용
+            // ✅ String 비교
             if (!item.getMemberId().equals(memberId)) {
                 response.put("success", false);
                 response.put("message", "권한이 없습니다");
