@@ -86,7 +86,8 @@ public class NewsServiceImpl implements NewsService {
     }
     
     /**
-     * 뉴스 크롤링 및 저장
+     * 뉴스 크롤링 및 저장 함
+     * 
      */
     @Override
     @Transactional
