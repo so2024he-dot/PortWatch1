@@ -3,6 +3,9 @@ package com.portwatch.domain;
 import java.math.BigDecimal;
 import java.util.List;
 
+import lombok.Data;
+
+@Data
 /**
  * 대시보드 통계 VO
  * 여러 테이블의 통계 정보를 담는 집계용 VO

@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Timestamp;
 
+import lombok.Data;
+@Data
 /**
  * 주가 정보 VO (STOCK_PRICE 테이블)
  * 실시간 주가 업데이트용

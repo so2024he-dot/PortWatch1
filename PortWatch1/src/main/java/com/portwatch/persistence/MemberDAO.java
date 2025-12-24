@@ -1,54 +1,62 @@
 package com.portwatch.persistence;
 
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
 import com.portwatch.domain.MemberVO;
 
 /**
- * 회원 DAO 인터페이스
- * MyBatis가 자동으로 구현체를 생성
+ * ✅ 회원 DAO 인터페이스
+ * 
+ * @author PortWatch
+ * @version 3.0 - MySQL 8.0 호환
  */
-@Mapper  // ⭐ MyBatis Mapper 인터페이스임을 명시
 public interface MemberDAO {
     
     /**
-     * 회원 등록
+     * 회원가입
      */
-    public void insertMember(MemberVO member) throws Exception;
+    void insertMember(MemberVO member) throws Exception;
     
     /**
      * 이메일로 회원 조회
      */
-    public MemberVO selectMemberByEmail(String email) throws Exception;
+    MemberVO selectMemberByEmail(String memberEmail) throws Exception;
     
     /**
-     * 회원 ID로 조회
+     * ID로 회원 조회
      */
-    public MemberVO selectMemberById(int memberId) throws Exception;
+    MemberVO selectMemberById(String memberId) throws Exception;
     
     /**
-     * 이메일 중복 확인
+     * 회원 정보 업데이트
      */
-    public int checkEmailDuplicate(String email) throws Exception;
+    void updateMember(MemberVO member) throws Exception;
     
     /**
-     * 회원 정보 수정
+     * 회원 삭제 (물리 삭제)
      */
-    public void updateMember(MemberVO member) throws Exception;
+    void deleteMember(String memberId) throws Exception;
     
     /**
-     * 비밀번호 변경
-     * @Param 어노테이션으로 파라미터 명시
+     * 회원 상태 변경 (논리 삭제)
      */
-    public void updatePassword(@Param("memberId") int memberId, 
-                              @Param("newPassword") String newPassword) throws Exception;
+    void updateMemberStatus(String memberId, String status) throws Exception;
     
     /**
-     * 회원 탈퇴
+     * 이메일 중복 체크
      */
-    public void deleteMember(int memberId) throws Exception;
-
-	/* public MemberVO selectMemberById(String memberId); */
+    int checkDuplicateEmail(String memberEmail) throws Exception;
     
+    /**
+     * ID 중복 체크
+     */
+    int checkDuplicateId(String memberId) throws Exception;
     
+    /**
+     * 전체 회원 수
+     */
+    int getTotalMemberCount() throws Exception;
+    
+    /**
+     * 활성 회원 수
+     */
+    int getActiveMemberCount() throws Exception;
 }

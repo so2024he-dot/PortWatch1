@@ -2,19 +2,29 @@ package com.portwatch.domain;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import lombok.Data;
 
 /**
  * 주식 종목 VO
  * 
- * ✅ industry 필드 추가 (업종 정보)
+ * ✅ 수정사항:
+ * 1. 재귀 호출 제거 (getPriceChange, getPriceChangeRate)
+ * 2. @Data 어노테이션으로 getter/setter 자동 생성 (중복 제거)
+ * 3. 필드명 정리 및 일관성 유지
+ * 
  * @author PortWatch
  * @version 3.0 - Spring 5.0.7 + MySQL 8.0.33 호환
  */
+@Data
 public class StockVO {
     
-    private Integer stockId;           // 종목 ID
+    // ========================================
+    // ✅ 필드 정의
+    // ========================================
+    
+    private Integer stockId;           // 종목 ID (PRIMARY KEY, AUTO_INCREMENT)
     private String stockCode;          // 종목 코드 (005930, AAPL 등)
-    private String stockName;          // 종목명
+    private String stockName;          // 종목명 (삼성전자, Apple Inc. 등)
     private String country;            // 국가 (KR, US)
     private String marketType;         // 시장 (KOSPI, KOSDAQ, NASDAQ, NYSE)
     private BigDecimal currentPrice;   // 현재가
@@ -23,123 +33,89 @@ public class StockVO {
     private Long tradingVolume;        // 거래량
     private BigDecimal marketCap;      // 시가총액
     private String sector;             // 섹터 (기술, 금융, 헬스케어 등)
-    private String industry;           // ✅ 업종 (반도체, 자동차, 소프트웨어 등)
+    private String industry;           // 업종 (반도체, 자동차, 소프트웨어 등)
     private Timestamp updatedAt;       // 업데이트 시간
     
-    // 기본 생성자
+    // ========================================
+    // ✅ 생성자
+    // ========================================
+    
+    /** 기본 생성자 */
     public StockVO() {
     }
     
-    // Getters and Setters
-    public Integer getStockId() {
-        return stockId;
-    }
-    
-    public void setStockId(Integer stockId) {
-        this.stockId = stockId;
-    }
-    
-    public String getStockCode() {
-        return stockCode;
-    }
-    
-    public void setStockCode(String stockCode) {
+    /**
+     * 주요 정보 생성자
+     * @param stockCode 종목 코드
+     * @param stockName 종목명
+     * @param country 국가
+     * @param marketType 시장 유형
+     */
+    public StockVO(String stockCode, String stockName, String country, String marketType) {
         this.stockCode = stockCode;
-    }
-    
-    public String getStockName() {
-        return stockName;
-    }
-    
-    public void setStockName(String stockName) {
         this.stockName = stockName;
-    }
-    
-    public String getCountry() {
-        return country;
-    }
-    
-    public void setCountry(String country) {
         this.country = country;
-    }
-    
-    public String getMarketType() {
-        return marketType;
-    }
-    
-    public void setMarketType(String marketType) {
         this.marketType = marketType;
     }
     
-    public BigDecimal getCurrentPrice() {
-        return currentPrice;
-    }
+    // ========================================
+    // ✅ 편의 메서드 (재귀 호출 제거!)
+    // ========================================
     
-    public void setCurrentPrice(BigDecimal currentPrice) {
-        this.currentPrice = currentPrice;
-    }
-    
-    public BigDecimal getChangeAmount() {
-        return changeAmount;
-    }
-    
-    public void setChangeAmount(BigDecimal changeAmount) {
-        this.changeAmount = changeAmount;
-    }
-    
-    public BigDecimal getChangeRate() {
-        return changeRate;
-    }
-    
-    public void setChangeRate(BigDecimal changeRate) {
-        this.changeRate = changeRate;
-    }
-    
-    public Long getTradingVolume() {
-        return tradingVolume;
-    }
-    
-    public void setTradingVolume(Long tradingVolume) {
-        this.tradingVolume = tradingVolume;
-    }
-    
-    public BigDecimal getMarketCap() {
-        return marketCap;
-    }
-    
-    public void setMarketCap(BigDecimal marketCap) {
-        this.marketCap = marketCap;
-    }
-    
-    public String getSector() {
-        return sector;
-    }
-    
-    public void setSector(String sector) {
-        this.sector = sector;
+    /**
+     * 전일 대비 변동액 반환
+     * @return changeAmount
+     */
+    public BigDecimal getPriceChange() {
+        return this.changeAmount;  // ✅ 수정: 필드를 직접 반환
     }
     
     /**
-     * ✅ 업종 getter (StockFilterController 호환)
+     * 전일 대비 변동률 반환
+     * @return changeRate
      */
-    public String getIndustry() {
-        return industry;
+    public BigDecimal getPriceChangeRate() {
+        return this.changeRate;  // ✅ 수정: 필드를 직접 반환
     }
     
     /**
-     * ✅ 업종 setter
+     * 가격 상승 여부 확인
+     * @return 상승이면 true, 하락 또는 보합이면 false
      */
-    public void setIndustry(String industry) {
-        this.industry = industry;
+    public boolean isPriceUp() {
+        return changeAmount != null && changeAmount.compareTo(BigDecimal.ZERO) > 0;
     }
     
-    public Timestamp getUpdatedAt() {
-        return updatedAt;
+    /**
+     * 가격 하락 여부 확인
+     * @return 하락이면 true, 상승 또는 보합이면 false
+     */
+    public boolean isPriceDown() {
+        return changeAmount != null && changeAmount.compareTo(BigDecimal.ZERO) < 0;
     }
     
-    public void setUpdatedAt(Timestamp updatedAt) {
-        this.updatedAt = updatedAt;
+    /**
+     * 한국 주식 여부 확인
+     * @return 한국 주식이면 true
+     */
+    public boolean isKoreanStock() {
+        return "KR".equals(country);
     }
+    
+    /**
+     * 미국 주식 여부 확인
+     * @return 미국 주식이면 true
+     */
+    public boolean isUSStock() {
+        return "US".equals(country);
+    }
+    
+    // ========================================
+    // ✅ Lombok @Data가 자동 생성하는 메서드:
+    // - getter/setter (모든 필드)
+    // - toString()
+    // - equals() / hashCode()
+    // ========================================
     
     @Override
     public String toString() {
@@ -151,17 +127,9 @@ public class StockVO {
                 ", marketType='" + marketType + '\'' +
                 ", industry='" + industry + '\'' +
                 ", currentPrice=" + currentPrice +
+                ", changeAmount=" + changeAmount +
                 ", changeRate=" + changeRate +
+                ", updatedAt=" + updatedAt +
                 '}';
     }
-
-	public BigDecimal getPriceChange() {
-		
-		return this.getPriceChange();
-	}
-
-	public BigDecimal getPriceChangeRate() {
-		
-		return this.getPriceChangeRate();
-	}
 }

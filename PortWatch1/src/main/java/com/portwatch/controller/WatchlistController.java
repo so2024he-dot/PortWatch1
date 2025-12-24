@@ -1,4 +1,4 @@
-    package com.portwatch.controller;
+package com.portwatch.controller;
 
 import com.portwatch.domain.MemberVO;
 import com.portwatch.domain.StockVO;
@@ -185,5 +185,3 @@ public class WatchlistController {
         }
     }
 }
-
-    

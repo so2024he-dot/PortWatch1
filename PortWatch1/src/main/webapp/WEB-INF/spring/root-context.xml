@@ -28,7 +28,7 @@
             - allowPublicKeyRetrieval=true: MySQL 8.0 인증 방식 지원
             - useUnicode=true&characterEncoding=UTF-8: 한글 인코딩
         -->
-        <property name="jdbcUrl" value="jdbc:mysql://localhost:3306/c6d2507t2p2?
+        <property name="jdbcUrl" value="jdbc:mysql://itwillbs.com:3306/c6d2507t2p2?
         useSSL=false&amp;
         serverTimezone=Asia/Seoul&amp;
         allowPublicKeyRetrieval=true&amp;

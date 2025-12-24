@@ -3,6 +3,8 @@ package com.portwatch.domain;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 
+import lombok.Data;
+@Data
 /**
  * 결제 VO
  * 

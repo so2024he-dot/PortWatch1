@@ -2,6 +2,8 @@ package com.portwatch.domain;
 
 import java.math.BigDecimal;
 
+import lombok.Data;
+@Data
 /**
  * 포트폴리오 아이템 VO
  * 

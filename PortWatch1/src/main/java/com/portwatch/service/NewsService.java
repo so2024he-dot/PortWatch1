@@ -1,95 +1,59 @@
 package com.portwatch.service;
 
-import java.util.List;
 import com.portwatch.domain.NewsVO;
+import java.util.List;
+import java.util.Map;
 
 /**
- * 뉴스 서비스 인터페이스
+ * ✅ 뉴스 Service 인터페이스
  * 
  * @author PortWatch
- * @version 2.0 (API 메서드 추가)
+ * @version 3.0
  */
 public interface NewsService {
     
     /**
-     * 최근 뉴스 조회 (DB에서)
-     * @param limit 조회할 뉴스 개수
-     * @return 뉴스 리스트
+     * 최신 뉴스 조회
      */
-    List<NewsVO> getRecentNews(int limit);
+    List<NewsVO> getRecentNews(int limit) throws Exception;
+    
+    /**
+     * 종목별 뉴스 조회
+     */
+    List<NewsVO> getNewsByStockCode(String stockCode, int limit) throws Exception;
+    
+    /**
+     * 종목별 뉴스 조회 (별칭)
+     */
+    List<NewsVO> getNewsByStock(String stockCode, int limit) throws Exception;
+    
+    /**
+     * 국가별 뉴스 조회
+     */
+    List<NewsVO> getNewsByCountry(String country, int limit) throws Exception;
     
     /**
      * 뉴스 ID로 조회
-     * @param newsId 뉴스 ID
-     * @return 뉴스 객체
      */
-    NewsVO getNewsById(Long newsId);
+    NewsVO getNewsById(Long newsId) throws Exception;
     
     /**
-     * 종목별 뉴스 조회 (DB에서)
-     * @param stockCode 종목 코드
-     * @param limit 조회할 뉴스 개수
-     * @return 뉴스 리스트
+     * 네이버 금융 뉴스 크롤링
      */
-    List<NewsVO> getNewsByStockCode(String stockCode, int limit);
+    List<NewsVO> fetchNaverFinanceNews(int limit) throws Exception;
     
     /**
      * 뉴스 크롤링 및 저장
-     * @return 수집된 뉴스 개수
      */
-    int crawlAndSaveNews();
+    int crawlAndSaveNews() throws Exception;
     
     /**
-     * 특정 종목의 뉴스 크롤링 및 저장
-     * @param stockCode 종목 코드
-     * @param stockName 종목명
-     * @return 수집된 뉴스 개수
+     * 뉴스 통계 조회
      */
-    int crawlStockNews(String stockCode, String stockName);
+    Map<String, Object> getNewsStats() throws Exception;
     
     /**
-     * 뉴스 저장
-     * @param news 뉴스 객체
-     * @return 저장 성공 여부
+     * DB에 저장된 최신 뉴스 조회 (별칭)
      */
-    boolean saveNews(NewsVO news);
-    
-    /**
-     * 중복 뉴스 체크
-     * @param link 뉴스 링크
-     * @return 중복 여부
-     */
-    boolean isDuplicateNews(String link);
-    
-    /**
-     * 오래된 뉴스 삭제 (30일 이상)
-     * @return 삭제된 뉴스 개수
-     */
-    int deleteOldNews();
-    
-    // ========================================
-    // API용 추가 메서드
-    // ========================================
-    
-    /**
-     * 네이버 금융에서 실시간 뉴스 가져오기 (크롤링만, 저장 안 함)
-     * @param limit 조회할 뉴스 개수
-     * @return 뉴스 리스트
-     */
-    List<NewsVO> fetchNaverFinanceNews(int limit);
-    
-    /**
-     * 종목별 실시간 뉴스 조회 (크롤링 후 즉시 반환)
-     * @param stockCode 종목 코드
-     * @param limit 조회할 뉴스 개수
-     * @return 뉴스 리스트
-     */
-    List<NewsVO> getNewsByStock(String stockCode, int limit);
-    
-    /**
-     * DB에 저장된 최신 뉴스 조회 (getRecentNews와 동일)
-     * @param limit 조회할 뉴스 개수
-     * @return 뉴스 리스트
-     */
-    List<NewsVO> getLatestNews(int limit);
+    List<NewsVO> getLatestNews(int limit) throws Exception;
 }

@@ -3,29 +3,33 @@ package com.portwatch.domain;
 import java.sql.Timestamp;
 
 /**
- * 뉴스 VO
+ * ✅ 뉴스 VO (완전 구현)
+ * 
+ * NEWS 테이블과 1:1 매핑
  * 
  * @author PortWatch
- * @version 2.0 - Spring 5.0.7 + MySQL 8.0.33 호환
+ * @version 3.0 - MySQL 8.0 호환
  */
 public class NewsVO {
     
-    private Long newsId;            // 뉴스 ID
-    private Integer stockId;        // 종목 ID
-    private String stockCode;       // 종목 코드
-    private String stockName;       // 종목명
-    private String title;           // 뉴스 제목
-    private String link;            // 뉴스 링크
-    private String source;          // 출처 (네이버금융, Yahoo Finance 등)
-    private String country;         // 국가 (KR, US)
-    private Timestamp publishedAt;  // 게시일
-    private Timestamp createdAt;    // 생성일시
+    private Long newsId;              // news_id BIGINT
+    private Integer stockId;          // stock_id INT
+    private String stockCode;         // stock_code VARCHAR(20)
+    private String stockName;         // stock_name VARCHAR(100)
+    private String title;             // title VARCHAR(500)
+    private String link;              // link VARCHAR(1000)
+    private String content;           // content TEXT
+    private String source;            // source VARCHAR(100)
+    private String country;           // country VARCHAR(10)
+    private Timestamp publishedAt;    // published_at TIMESTAMP
+    private Timestamp createdAt;      // created_at TIMESTAMP
+    private Timestamp updatedAt;      // updated_at TIMESTAMP
     
     // 기본 생성자
     public NewsVO() {
     }
     
-    // Getters and Setters
+    // Getter & Setter
     public Long getNewsId() {
         return newsId;
     }
@@ -74,6 +78,14 @@ public class NewsVO {
         this.link = link;
     }
     
+    public String getContent() {
+        return content;
+    }
+    
+    public void setContent(String content) {
+        this.content = content;
+    }
+    
     public String getSource() {
         return source;
     }
@@ -106,15 +118,18 @@ public class NewsVO {
         this.createdAt = createdAt;
     }
     
+    public Timestamp getUpdatedAt() {
+        return updatedAt;
+    }
+    
+    public void setUpdatedAt(Timestamp updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+    
     @Override
     public String toString() {
-        return "NewsVO{" +
-                "newsId=" + newsId +
-                ", stockCode='" + stockCode + '\'' +
-                ", stockName='" + stockName + '\'' +
-                ", title='" + title + '\'' +
-                ", source='" + source + '\'' +
-                ", country='" + country + '\'' +
-                '}';
+        return "NewsVO [newsId=" + newsId + ", stockCode=" + stockCode + ", stockName=" + stockName + 
+               ", title=" + title + ", source=" + source + ", country=" + country + 
+               ", publishedAt=" + publishedAt + "]";
     }
 }

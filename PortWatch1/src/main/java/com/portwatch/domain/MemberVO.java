@@ -3,43 +3,39 @@ package com.portwatch.domain;
 import java.sql.Timestamp;
 
 /**
- * 회원 VO (Value Object)
+ * ✅ 회원 VO (완전 구현)
  * 
- * ✅ String memberId 사용 (이메일 기반 로그인)
+ * MEMBER 테이블과 1:1 매핑
+ * 
  * @author PortWatch
- * @version 2.0 - Spring 5.0.7 + MySQL 8.0.33 호환
+ * @version 3.0 - MySQL 8.0 + Spring 5.0.7 완벽 호환
  */
 public class MemberVO {
     
-    private String memberId;        // 회원 ID (이메일)
-    private String password;        // 비밀번호
-    private String name;           // 회원 이름
-    private String phone;          // 전화번호
-    private String email;          // 이메일
-    private Timestamp createdAt;   // 가입일시
-    private Timestamp updatedAt;   // 수정일시
-    private String status;         // 회원 상태 (ACTIVE, INACTIVE, SUSPENDED)
-    private String role;           // 회원 권한 (USER, ADMIN)
+    // 기본 정보
+    private String memberId;          // member_id VARCHAR(50) PK
+    private String memberEmail;       // member_email VARCHAR(100) UNIQUE
+    private String memberPass;        // member_pass VARCHAR(200)
+    private String memberName;        // member_name VARCHAR(50)
+    private String memberPhone;       // member_phone VARCHAR(20)
+    
+    // 추가 정보
+    private String memberAddress;     // member_address VARCHAR(200)
+    private String memberGender;      // member_gender VARCHAR(10)
+    private Timestamp memberBirth;    // member_birth TIMESTAMP
+    
+    // 시스템 정보
+    private String memberRole;        // member_role VARCHAR(20) DEFAULT 'USER'
+    private String memberStatus;      // member_status VARCHAR(20) DEFAULT 'ACTIVE'
+    private Timestamp createdAt;      // created_at TIMESTAMP
+    private Timestamp updatedAt;      // updated_at TIMESTAMP
     
     // 기본 생성자
     public MemberVO() {
     }
     
-    // 전체 생성자
-    public MemberVO(String memberId, String password, String name, String phone, String email, 
-                   Timestamp createdAt, Timestamp updatedAt, String status, String role) {
-        this.memberId = memberId;
-        this.password = password;
-        this.name = name;
-        this.phone = phone;
-        this.email = email;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.status = status;
-        this.role = role;
-    }
+    // ===== Getter & Setter =====
     
-    // Getters and Setters
     public String getMemberId() {
         return memberId;
     }
@@ -48,36 +44,76 @@ public class MemberVO {
         this.memberId = memberId;
     }
     
-    public String getPassword() {
-        return password;
+    public String getMemberEmail() {
+        return memberEmail;
     }
     
-    public void setPassword(String password) {
-        this.password = password;
+    public void setMemberEmail(String memberEmail) {
+        this.memberEmail = memberEmail;
     }
     
-    public String getName() {
-        return name;
+    public String getMemberPass() {
+        return memberPass;
     }
     
-    public void setName(String name) {
-        this.name = name;
+    public void setMemberPass(String memberPass) {
+        this.memberPass = memberPass;
     }
     
-    public String getPhone() {
-        return phone;
+    public String getMemberName() {
+        return memberName;
     }
     
-    public void setPhone(String phone) {
-        this.phone = phone;
+    public void setMemberName(String memberName) {
+        this.memberName = memberName;
     }
     
-    public String getEmail() {
-        return email;
+    public String getMemberPhone() {
+        return memberPhone;
     }
     
-    public void setEmail(String email) {
-        this.email = email;
+    public void setMemberPhone(String memberPhone) {
+        this.memberPhone = memberPhone;
+    }
+    
+    public String getMemberAddress() {
+        return memberAddress;
+    }
+    
+    public void setMemberAddress(String memberAddress) {
+        this.memberAddress = memberAddress;
+    }
+    
+    public String getMemberGender() {
+        return memberGender;
+    }
+    
+    public void setMemberGender(String memberGender) {
+        this.memberGender = memberGender;
+    }
+    
+    public Timestamp getMemberBirth() {
+        return memberBirth;
+    }
+    
+    public void setMemberBirth(Timestamp memberBirth) {
+        this.memberBirth = memberBirth;
+    }
+    
+    public String getMemberRole() {
+        return memberRole;
+    }
+    
+    public void setMemberRole(String memberRole) {
+        this.memberRole = memberRole;
+    }
+    
+    public String getMemberStatus() {
+        return memberStatus;
+    }
+    
+    public void setMemberStatus(String memberStatus) {
+        this.memberStatus = memberStatus;
     }
     
     public Timestamp getCreatedAt() {
@@ -96,48 +132,10 @@ public class MemberVO {
         this.updatedAt = updatedAt;
     }
     
-    public String getStatus() {
-        return status;
+    @Override
+    public String toString() {
+        return "MemberVO [memberId=" + memberId + ", memberEmail=" + memberEmail + 
+               ", memberName=" + memberName + ", memberPhone=" + memberPhone + 
+               ", memberRole=" + memberRole + ", memberStatus=" + memberStatus + "]";
     }
-    
-    public void setStatus(String status) {
-        this.status = status;
-    }
-    
-    public String getRole() {
-        return role;
-    }
-    
-    public void setRole(String role) {
-        this.role = role;
-    }    
-   
-	public String getMemberEmail() {
-		
-		return getMemberEmail();
-	}
-
-	public String getMemberName() {
-		
-		return getMemberName();
-	}
-
-	public String getMemberPhone() {
-		
-		return getMemberPhone();
-	}
-
-	public Object getMemberPass() {
-		
-		return getMemberPass();
-	}
-
-	@Override
-	public String toString() {
-		return "MemberVO [memberId=" + memberId + ", password=" + password + ", name=" + name + ", phone=" + phone
-				+ ", email=" + email + ", createdAt=" + createdAt + ", updatedAt=" + updatedAt + ", status=" + status
-				+ ", role=" + role + "]";
-	}
-	
-	
 }

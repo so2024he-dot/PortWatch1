@@ -216,6 +216,13 @@
             <version>2.6</version>
         </dependency>
 
+		<!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.18.42</version>
+		</dependency>		
+			
 		<!-- Test -->
         <dependency>
             <groupId>junit</groupId>

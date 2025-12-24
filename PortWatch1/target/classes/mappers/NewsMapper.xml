@@ -1,150 +1,124 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
-    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<!-- persistence 패키지 버전 -->
 <mapper namespace="com.portwatch.persistence.NewsDAO">
     
-    <!-- Result Map -->
-    <resultMap id="newsResultMap" type="com.portwatch.domain.NewsVO">
+    <!-- ✅ Result Map 정의 -->
+    <resultMap id="NewsResultMap" type="com.portwatch.domain.NewsVO">
         <id property="newsId" column="news_id"/>
+        <result property="stockId" column="stock_id"/>
         <result property="stockCode" column="stock_code"/>
         <result property="stockName" column="stock_name"/>
         <result property="title" column="title"/>
-        <result property="content" column="content"/>
-        <result property="summary" column="summary"/>
         <result property="link" column="link"/>
+        <result property="content" column="content"/>
         <result property="source" column="source"/>
-        <result property="imageUrl" column="image_url"/>
-        <result property="publishedDate" column="published_date"/>
-        <result property="createdDate" column="created_date"/>
-        <result property="sentiment" column="sentiment"/>
+        <result property="country" column="country"/>
+        <result property="publishedAt" column="published_at"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
     </resultMap>
     
-    <!-- 최근 뉴스 조회 -->
-    <select id="selectRecentNews" resultMap="newsResultMap">
+    <!-- ✅ 최신 뉴스 조회 -->
+    <select id="selectLatestNews" resultMap="NewsResultMap">
         SELECT 
-            news_id,
-            stock_code,
-            stock_name,
-            title,
-            content,
-            summary,
-            link,
-            source,
-            image_url,
-            published_date,
-            created_date,
-            sentiment
-        FROM news
-        ORDER BY published_date DESC, created_date DESC
+            news_id, stock_id, stock_code, stock_name,
+            title, link, content, source, country,
+            published_at, created_at, updated_at
+        FROM NEWS
+        ORDER BY created_at DESC
         LIMIT #{limit}
     </select>
     
-    <!-- 뉴스 ID로 조회 -->
-    <select id="selectNewsById" resultMap="newsResultMap">
+    <!-- ✅ 종목별 뉴스 조회 -->
+    <select id="selectNewsByStockCode" resultMap="NewsResultMap">
         SELECT 
-            news_id,
-            stock_code,
-            stock_name,
-            title,
-            content,
-            summary,
-            link,
-            source,
-            image_url,
-            published_date,
-            created_date,
-            sentiment
-        FROM news
+            news_id, stock_id, stock_code, stock_name,
+            title, link, content, source, country,
+            published_at, created_at, updated_at
+        FROM NEWS
+        WHERE stock_code = #{stockCode}
+        ORDER BY created_at DESC
+        LIMIT #{limit}
+    </select>
+    
+    <!-- ✅ 국가별 뉴스 조회 -->
+    <select id="selectNewsByCountry" resultMap="NewsResultMap">
+        SELECT 
+            news_id, stock_id, stock_code, stock_name,
+            title, link, content, source, country,
+            published_at, created_at, updated_at
+        FROM NEWS
+        WHERE country = #{country}
+        ORDER BY created_at DESC
+        LIMIT #{limit}
+    </select>
+    
+    <!-- ✅ 뉴스 ID로 조회 -->
+    <select id="selectNewsById" resultMap="NewsResultMap">
+        SELECT 
+            news_id, stock_id, stock_code, stock_name,
+            title, link, content, source, country,
+            published_at, created_at, updated_at
+        FROM NEWS
         WHERE news_id = #{newsId}
     </select>
     
-    <!-- 종목별 뉴스 조회 -->
-    <select id="selectNewsByStockCode" resultMap="newsResultMap">
-        SELECT 
-            news_id,
-            stock_code,
-            stock_name,
-            title,
-            content,
-            summary,
-            link,
-            source,
-            image_url,
-            published_date,
-            created_date,
-            sentiment
-        FROM news
-        WHERE stock_code = #{stockCode}
-        ORDER BY published_date DESC, created_date DESC
-        LIMIT #{limit}
-    </select>
-    
-    <!-- 뉴스 등록 -->
-    <insert id="insertNews" parameterType="com.portwatch.domain.NewsVO" 
+    <!-- ✅ 뉴스 삽입 -->
+    <insert id="insertNews" parameterType="com.portwatch.domain.NewsVO"
             useGeneratedKeys="true" keyProperty="newsId">
-        INSERT INTO news (
-            stock_code,
-            stock_name,
-            title,
-            content,
-            summary,
-            link,
-            source,
-            image_url,
-            published_date,
-            created_date,
-            sentiment
+        INSERT INTO NEWS (
+            stock_id, stock_code, stock_name,
+            title, link, content, source, country,
+            published_at
         ) VALUES (
-            #{stockCode},
-            #{stockName},
-            #{title},
-            #{content},
-            #{summary},
-            #{link},
-            #{source},
-            #{imageUrl},
-            #{publishedDate},
-            NOW(),
-            #{sentiment}
+            #{stockId}, #{stockCode}, #{stockName},
+            #{title}, #{link}, #{content}, #{source}, #{country},
+            #{publishedAt}
         )
     </insert>
     
-    <!-- 중복 뉴스 체크 -->
-    <select id="checkDuplicateNews" resultType="int">
+    <!-- ✅ URL 중복 체크 -->
+    <select id="checkDuplicateUrl" resultType="int">
         SELECT COUNT(*)
-        FROM news
+        FROM NEWS
         WHERE link = #{link}
     </select>
     
-    <!-- 오래된 뉴스 삭제 -->
-    <delete id="deleteOldNews">
-        DELETE FROM news
-        WHERE created_date &lt; DATE_SUB(NOW(), INTERVAL #{days} DAY)
-    </delete>
-    
-    <!-- 뉴스 수정 -->
+    <!-- ✅ 뉴스 업데이트 -->
     <update id="updateNews" parameterType="com.portwatch.domain.NewsVO">
-        UPDATE news
+        UPDATE NEWS
         SET
+            stock_id = #{stockId},
             stock_code = #{stockCode},
             stock_name = #{stockName},
             title = #{title},
-            content = #{content},
-            summary = #{summary},
             link = #{link},
+            content = #{content},
             source = #{source},
-            image_url = #{imageUrl},
-            published_date = #{publishedDate},
-            sentiment = #{sentiment}
+            country = #{country},
+            published_at = #{publishedAt}
         WHERE news_id = #{newsId}
     </update>
     
-    <!-- 뉴스 삭제 -->
+    <!-- ✅ 뉴스 삭제 -->
     <delete id="deleteNews">
-        DELETE FROM news
+        DELETE FROM NEWS
         WHERE news_id = #{newsId}
     </delete>
+    
+    <!-- ✅ 전체 뉴스 개수 -->
+    <select id="getTotalNewsCount" resultType="int">
+        SELECT COUNT(*)
+        FROM NEWS
+    </select>
+    
+    <!-- ✅ 오늘 등록된 뉴스 개수 -->
+    <select id="getTodayNewsCount" resultType="int">
+        SELECT COUNT(*)
+        FROM NEWS
+        WHERE DATE(created_at) = CURDATE()
+    </select>
     
 </mapper>

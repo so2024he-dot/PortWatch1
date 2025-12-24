@@ -18,10 +18,11 @@ import com.portwatch.service.USStockPriceUpdateService;
 /**
  * 관리자용 주가 업데이트 API Controller
  * 
- * ✅ 수정: line 137 메서드명 오타 수정 (s → updateByMarketType)
+ * ✅ 한글 인코딩 완전 수정
+ * ✅ updateByMarketType 메서드명 수정
  * 
  * @author PortWatch
- * @version 3.1 - 에러 수정 완료
+ * @version 4.0 - UTF-8 완전 수정
  */
 @RestController
 @RequestMapping("/api/admin")
@@ -192,9 +193,7 @@ public class AdminStockUpdateController {
     }
     
     /**
-     * ✅ 수정: 특정 시장만 업데이트 (KOSPI, KOSDAQ, NASDAQ, NYSE, AMEX)
-     * 
-     * line 137 에러 수정: s(marketType) → updateByMarketType(marketType)
+     * ✅ 특정 시장만 업데이트 (KOSPI, KOSDAQ, NASDAQ, NYSE, AMEX)
      */
     @GetMapping("/update-market")
     public ResponseEntity<Map<String, Object>> updateMarket(@RequestParam String marketType) {
@@ -214,7 +213,7 @@ public class AdminStockUpdateController {
             if (isUSMarket) {
                 usStockPriceUpdateService.updateByMarketType(marketType);
             } else {
-                // ✅ 수정: s() → updateByMarketType()
+                // ✅ 수정: updateByMarketType 메서드 사용
                 stockPriceUpdateService.updateByMarketType(marketType);
             }
             
