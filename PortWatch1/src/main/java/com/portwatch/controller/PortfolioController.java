@@ -33,7 +33,7 @@ public class PortfolioController {
     /**
      * 포트폴리오 메인 페이지
      */
-    @GetMapping("/")
+    @GetMapping({"", "/"})
     public String portfolioMain(HttpSession session, Model model) {
         // 세션에서 회원 정보 가져오기
         MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");

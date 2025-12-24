@@ -2,6 +2,8 @@ package com.portwatch.domain;
 
 import java.sql.Timestamp;
 
+import lombok.Data;
+
 /**
  * ✅ 회원 VO (완전 구현)
  * 
@@ -10,6 +12,7 @@ import java.sql.Timestamp;
  * @author PortWatch
  * @version 3.0 - MySQL 8.0 + Spring 5.0.7 완벽 호환
  */
+@Data
 public class MemberVO {
     
     // 기본 정보

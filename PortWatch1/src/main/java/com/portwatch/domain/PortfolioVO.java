@@ -5,7 +5,7 @@ import java.sql.Date;
 import java.sql.Timestamp;
 
 import lombok.Data;
-@Data
+
 /**
  * 포트폴리오 VO
  * 
@@ -13,6 +13,7 @@ import lombok.Data;
  * @author PortWatch
  * @version 2.0 - Spring 5.0.7 + MySQL 8.0.33 호환
  */
+@Data
 public class PortfolioVO {
     
     private Long portfolioId;              // 포트폴리오 ID
@@ -22,7 +23,7 @@ public class PortfolioVO {
     private String stockName;              // 종목명
     private BigDecimal quantity;           // 보유 수량 (소수점 지원)
     private BigDecimal avgPurchasePrice;   // 평균 매입가 (avgPrice 별칭)
-    private Date purchaseDate;             // 매입일
+    private Timestamp purchaseDate;             // 매입일
     private Timestamp createdAt;           // 생성일시
     private Timestamp updatedAt;           // 수정일시
     
@@ -89,6 +90,9 @@ public class PortfolioVO {
         return avgPurchasePrice;
     }
     
+    public void setPurchaseDate() {
+    	this.setPurchaseDate();
+    }
     public void setAvgPurchasePrice(BigDecimal avgPurchasePrice) {
         this.avgPurchasePrice = avgPurchasePrice;
     }
@@ -102,11 +106,11 @@ public class PortfolioVO {
         this.avgPurchasePrice = avgPrice;
     }
     
-    public Date getPurchaseDate() {
+    public Timestamp getPurchaseDate() {
         return purchaseDate;
     }
     
-    public void setPurchaseDate(Date purchaseDate) {
+    public void setPurchaseDate(Timestamp purchaseDate) {
         this.purchaseDate = purchaseDate;
     }
     

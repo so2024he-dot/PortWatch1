@@ -3,13 +3,14 @@ package com.portwatch.domain;
 import java.sql.Timestamp;
 
 import lombok.Data;
-@Data
+
 /**
  * ✅ 관심종목 VO
  * 
  * @author PortWatch
  * @version 1.0
  */
+@Data
 public class WatchlistVO {
     
     // ========================================

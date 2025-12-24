@@ -39,7 +39,7 @@
     <!-- 1. 결제 정보 등록 -->
     <!-- ============================================ -->
     <insert id="insertPayment" parameterType="PaymentVO" useGeneratedKeys="true" keyProperty="paymentId">
-        INSERT INTO PAYMENT (
+        INSERT INTO payment (
             member_id,
             stock_id,
             stock_code,
@@ -84,7 +84,7 @@
     <!-- 2. 결제 ID로 조회 -->
     <!-- ============================================ -->
     <select id="selectPaymentById" parameterType="long" resultMap="PaymentResultMap">
-        SELECT * FROM PAYMENT
+        SELECT * FROM payment
         WHERE payment_id = #{paymentId}
     </select>
 
@@ -92,7 +92,7 @@
     <!-- 3. 회원의 결제 내역 조회 -->
     <!-- ============================================ -->
     <select id="selectPaymentsByMember" parameterType="int" resultMap="PaymentResultMap">
-        SELECT * FROM PAYMENT
+        SELECT * FROM payment
         WHERE member_id = #{memberId}
         ORDER BY created_at DESC
     </select>
@@ -101,7 +101,7 @@
     <!-- 4. 결제 상태 업데이트 -->
     <!-- ============================================ -->
     <update id="updatePaymentStatus">
-        UPDATE PAYMENT
+        UPDATE payment
         SET payment_status = #{status},
             transaction_id = #{transactionId},
             paid_at = CASE WHEN #{status} = 'COMPLETED' THEN NOW() ELSE paid_at END
@@ -112,7 +112,7 @@
     <!-- 5. 결제 완료 처리 -->
     <!-- ============================================ -->
     <update id="completePayment">
-        UPDATE PAYMENT
+        UPDATE payment
         SET payment_status = 'COMPLETED',
             portfolio_id = #{portfolioId},
             transaction_id = #{transactionId},
@@ -124,7 +124,7 @@
     <!-- 6. 결제 취소 -->
     <!-- ============================================ -->
     <update id="cancelPayment" parameterType="long">
-        UPDATE PAYMENT
+        UPDATE payment
         SET payment_status = 'CANCELLED',
             cancelled_at = NOW()
         WHERE payment_id = #{paymentId}
@@ -139,7 +139,7 @@
             SUM(CASE WHEN payment_status = 'COMPLETED' THEN 1 ELSE 0 END) as completedPayments,
             SUM(CASE WHEN payment_status = 'COMPLETED' THEN total_amount ELSE 0 END) as totalAmount,
             AVG(CASE WHEN payment_status = 'COMPLETED' THEN total_amount ELSE NULL END) as avgPayment
-        FROM PAYMENT
+        FROM payment
         WHERE member_id = #{memberId}
     </select>
 
@@ -153,7 +153,7 @@
             COUNT(*) as paymentCount,
             SUM(total_amount) as totalSales,
             AVG(total_amount) as avgPayment
-        FROM PAYMENT
+        FROM payment
         WHERE payment_status = 'COMPLETED'
         GROUP BY country, currency
         ORDER BY totalSales DESC
@@ -163,7 +163,7 @@
     <!-- 9. 최근 결제 내역 조회 -->
     <!-- ============================================ -->
     <select id="selectRecentPayments" resultMap="PaymentResultMap">
-        SELECT * FROM PAYMENT
+        SELECT * FROM payment
         WHERE payment_status = 'COMPLETED'
         ORDER BY paid_at DESC
         LIMIT #{limit}

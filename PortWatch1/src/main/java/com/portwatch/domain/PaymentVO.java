@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 import lombok.Data;
-@Data
+
 /**
  * 결제 VO
  * 
@@ -12,6 +12,7 @@ import lombok.Data;
  * @author PortWatch
  * @version 2.0 - Spring 5.0.7 + MySQL 8.0.33 호환
  */
+@Data
 public class PaymentVO {
     
     private Long paymentId;              // 결제 ID

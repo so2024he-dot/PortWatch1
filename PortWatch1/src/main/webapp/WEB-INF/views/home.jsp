@@ -41,11 +41,18 @@
             padding: 30px;
             margin: 20px 0;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            transition: transform 0.3s ease;
+            transition: all 0.3s ease;
+            cursor: pointer;
         }
         
         .feature-card:hover {
             transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+            background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+        }
+        
+        .feature-card:active {
+            transform: translateY(-5px);
         }
         
         .feature-icon {
@@ -97,66 +104,122 @@
     <!-- Features Section -->
     <div class="container mt-5">
         <div class="row">
+            <!-- ✅ 한국 + 미국 주식 카드 - 클릭 가능 -->
             <div class="col-md-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-globe-americas"></i>
+                <a href="${pageContext.request.contextPath}/stock/list" style="text-decoration: none; color: inherit;">
+                    <div class="feature-card" style="cursor: pointer;">
+                        <div class="feature-icon">
+                            <i class="fas fa-globe-americas"></i>
+                        </div>
+                        <h3>한국 + 미국 주식</h3>
+                        <p>KOSPI, KOSDAQ, NASDAQ, NYSE의 주식을 한 곳에서 관리하세요.</p>
+                        <small class="text-muted">클릭하여 종목 보기 →</small>
                     </div>
-                    <h3>한국 + 미국 주식</h3>
-                    <p>KOSPI, KOSDAQ, NASDAQ, NYSE의 주식을 한 곳에서 관리하세요.</p>
-                </div>
+                </a>
             </div>
             
+            <!-- ✅ 실시간 차트 카드 - 클릭 가능 -->
             <div class="col-md-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-chart-bar"></i>
+                <a href="${pageContext.request.contextPath}/stock/list?country=KR" style="text-decoration: none; color: inherit;">
+                    <div class="feature-card" style="cursor: pointer;">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <h3>실시간 차트</h3>
+                        <p>일봉, 주봉, 월봉 차트로 종목 흐름을 한눈에 파악하세요.</p>
+                        <small class="text-muted">클릭하여 차트 보기 →</small>
                     </div>
-                    <h3>실시간 차트</h3>
-                    <p>일봉, 주봉, 월봉 차트로 종목 흐름을 한눈에 파악하세요.</p>
-                </div>
+                </a>
             </div>
             
+            <!-- ✅ 자동 뉴스 수집 카드 - 클릭 가능 -->
             <div class="col-md-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-newspaper"></i>
+                <a href="${pageContext.request.contextPath}/news/list" style="text-decoration: none; color: inherit;">
+                    <div class="feature-card" style="cursor: pointer;">
+                        <div class="feature-icon">
+                            <i class="fas fa-newspaper"></i>
+                        </div>
+                        <h3>자동 뉴스 수집</h3>
+                        <p>관련 뉴스를 자동으로 수집하여 투자 결정을 도와드립니다.</p>
+                        <small class="text-muted">클릭하여 뉴스 보기 →</small>
                     </div>
-                    <h3>자동 뉴스 수집</h3>
-                    <p>관련 뉴스를 자동으로 수집하여 투자 결정을 도와드립니다.</p>
-                </div>
+                </a>
             </div>
         </div>
         
         <div class="row mt-4">
+            <!-- ✅ 스마트 필터링 카드 - 클릭 가능 -->
             <div class="col-md-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-filter"></i>
+                <a href="${pageContext.request.contextPath}/stock/list?country=US" style="text-decoration: none; color: inherit;">
+                    <div class="feature-card" style="cursor: pointer;">
+                        <div class="feature-icon">
+                            <i class="fas fa-filter"></i>
+                        </div>
+                        <h3>스마트 필터링</h3>
+                        <p>나라, 시장, 업종별로 원하는 종목을 빠르게 찾으세요.</p>
+                        <small class="text-muted">클릭하여 필터 사용 →</small>
                     </div>
-                    <h3>스마트 필터링</h3>
-                    <p>나라, 시장, 업종별로 원하는 종목을 빠르게 찾으세요.</p>
-                </div>
+                </a>
             </div>
             
+            <!-- ✅ 간편한 매매 카드 - 클릭 가능 -->
             <div class="col-md-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-shopping-cart"></i>
-                    </div>
-                    <h3>간편한 매매</h3>
-                    <p>실시간 검증과 함께 안전하게 주식을 매매하세요.</p>
-                </div>
+                <c:choose>
+                    <c:when test="${not empty sessionScope.memberId}">
+                        <a href="${pageContext.request.contextPath}/portfolio/list" style="text-decoration: none; color: inherit;">
+                            <div class="feature-card" style="cursor: pointer;">
+                                <div class="feature-icon">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </div>
+                                <h3>간편한 매매</h3>
+                                <p>실시간 검증과 함께 안전하게 주식을 매매하세요.</p>
+                                <small class="text-muted">클릭하여 매매하기 →</small>
+                            </div>
+                        </a>
+                    </c:when>
+                    <c:otherwise>
+                        <a href="${pageContext.request.contextPath}/member/login" style="text-decoration: none; color: inherit;">
+                            <div class="feature-card" style="cursor: pointer;">
+                                <div class="feature-icon">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </div>
+                                <h3>간편한 매매</h3>
+                                <p>실시간 검증과 함께 안전하게 주식을 매매하세요.</p>
+                                <small class="text-info">로그인이 필요합니다 →</small>
+                            </div>
+                        </a>
+                    </c:otherwise>
+                </c:choose>
             </div>
             
+            <!-- ✅ 포트폴리오 관리 카드 - 클릭 가능 -->
             <div class="col-md-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-wallet"></i>
-                    </div>
-                    <h3>포트폴리오 관리</h3>
-                    <p>수익률, 보유 종목, 거래 내역을 한눈에 확인하세요.</p>
-                </div>
+                <c:choose>
+                    <c:when test="${not empty sessionScope.memberId}">
+                        <a href="${pageContext.request.contextPath}/dashboard" style="text-decoration: none; color: inherit;">
+                            <div class="feature-card" style="cursor: pointer;">
+                                <div class="feature-icon">
+                                    <i class="fas fa-wallet"></i>
+                                </div>
+                                <h3>포트폴리오 관리</h3>
+                                <p>수익률, 보유 종목, 거래 내역을 한눈에 확인하세요.</p>
+                                <small class="text-muted">클릭하여 대시보드 보기 →</small>
+                            </div>
+                        </a>
+                    </c:when>
+                    <c:otherwise>
+                        <a href="${pageContext.request.contextPath}/member/login" style="text-decoration: none; color: inherit;">
+                            <div class="feature-card" style="cursor: pointer;">
+                                <div class="feature-icon">
+                                    <i class="fas fa-wallet"></i>
+                                </div>
+                                <h3>포트폴리오 관리</h3>
+                                <p>수익률, 보유 종목, 거래 내역을 한눈에 확인하세요.</p>
+                                <small class="text-info">로그인이 필요합니다 →</small>
+                            </div>
+                        </a>
+                    </c:otherwise>
+                </c:choose>
             </div>
         </div>
     </div>

@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 import lombok.Data;
-@Data
+
 /**
  * ✅ 관심종목 + 현재가 VO
  * 
@@ -13,6 +13,7 @@ import lombok.Data;
  * @author PortWatch
  * @version 1.0
  */
+@Data
 public class WatchlistWithPriceVO {
     
     // ========================================

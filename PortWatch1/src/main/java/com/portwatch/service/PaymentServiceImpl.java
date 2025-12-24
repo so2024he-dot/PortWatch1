@@ -196,4 +196,16 @@ public class PaymentServiceImpl implements PaymentService {
         
         return "MOCK_TRANSACTION_ID_" + System.currentTimeMillis();
     }
+
+	@Override
+	public List<PaymentVO> getPaymentHistory(Integer memberId) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Map<String, Object> getPaymentSummary(Integer memberId) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
