@@ -91,6 +91,24 @@ public class StockServiceImpl implements StockService {
     }
     
     /**
+     * ✅ 한국 주식 전체 조회 (편의 메서드)
+     */
+    @Override
+    public List<StockVO> getKoreanStocks() throws Exception {
+        System.out.println("🇰🇷 한국 주식 전체 조회");
+        return getStocksByCountry("KR");
+    }
+    
+    /**
+     * ✅ 미국 주식 전체 조회 (편의 메서드)
+     */
+    @Override
+    public List<StockVO> getUSStocks() throws Exception {
+        System.out.println("🇺🇸 미국 주식 전체 조회");
+        return getStocksByCountry("US");
+    }
+    
+    /**
      * ✅ 시장별 종목 조회 (StockFilterController Line 106)
      */
     @Override

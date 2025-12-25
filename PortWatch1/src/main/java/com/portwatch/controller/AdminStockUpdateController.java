@@ -154,7 +154,7 @@ public class AdminStockUpdateController {
      * 특정 종목만 업데이트
      */
     @GetMapping("/update-stock")
-    public ResponseEntity<Map<String, Object>> updateStock(@RequestParam String stockCode) {
+    public ResponseEntity<Map<String, Object>> updateStock(@RequestParam(name = "stockCode") String stockCode) {
         Map<String, Object> response = new HashMap<>();
         
         logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -196,7 +196,7 @@ public class AdminStockUpdateController {
      * ✅ 특정 시장만 업데이트 (KOSPI, KOSDAQ, NASDAQ, NYSE, AMEX)
      */
     @GetMapping("/update-market")
-    public ResponseEntity<Map<String, Object>> updateMarket(@RequestParam String marketType) {
+    public ResponseEntity<Map<String, Object>> updateMarket(@RequestParam(name = "marketType") String marketType) {
         Map<String, Object> response = new HashMap<>();
         
         logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");

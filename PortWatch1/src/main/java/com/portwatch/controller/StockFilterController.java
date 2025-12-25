@@ -154,7 +154,7 @@ public class StockFilterController {
      */
     @GetMapping("/search")
     public ResponseEntity<Map<String, Object>> searchStocks(
-            @RequestParam String keyword) {
+            @RequestParam(name = "keyword") String keyword) {
         
         Map<String, Object> response = new HashMap<>();
         

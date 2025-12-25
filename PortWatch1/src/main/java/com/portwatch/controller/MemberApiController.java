@@ -14,7 +14,7 @@ public class MemberApiController {
     private MemberService memberService;
     
     @GetMapping("/check-email")
-    public Map<String, Object> checkEmail(@RequestParam String email) {
+    public Map<String, Object> checkEmail(@RequestParam(name = "email") String email) {
         Map<String, Object> result = new HashMap<>();
         try {
             boolean available = memberService.checkEmailAvailable(email);
@@ -28,7 +28,7 @@ public class MemberApiController {
     }
     
     @PostMapping("/send-verification")
-    public Map<String, Object> sendVerification(@RequestParam String email) {
+    public Map<String, Object> sendVerification(@RequestParam(name = "email") String email) {
         Map<String, Object> result = new HashMap<>();
         try {
             String code = memberService.generateVerificationCode();
@@ -44,7 +44,7 @@ public class MemberApiController {
     
     @PostMapping("/verify-code")
     public Map<String, Object> verifyCode(@RequestParam String email, 
-                                          @RequestParam String code) {
+                                          @RequestParam(name = "code") String code) {
         Map<String, Object> result = new HashMap<>();
         try {
             boolean verified = memberService.verifyCode(email, code);

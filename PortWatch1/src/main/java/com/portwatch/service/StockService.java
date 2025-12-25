@@ -44,6 +44,20 @@ public interface StockService {
     List<StockVO> getStocksByCountry(String country) throws Exception;
     
     /**
+     * ✅ 한국 주식 전체 조회 (편의 메서드)
+     * 
+     * @return 한국 주식 목록
+     */
+    List<StockVO> getKoreanStocks() throws Exception;
+    
+    /**
+     * ✅ 미국 주식 전체 조회 (편의 메서드)
+     * 
+     * @return 미국 주식 목록
+     */
+    List<StockVO> getUSStocks() throws Exception;
+    
+    /**
      * ✅ 시장별 종목 목록 조회 (StockFilterController Line 106)
      * 
      * @param marketType 시장 타입 (KOSPI, KOSDAQ, NASDAQ, NYSE)

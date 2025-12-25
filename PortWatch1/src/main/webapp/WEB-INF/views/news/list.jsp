@@ -289,7 +289,7 @@
             }
             
             grid.innerHTML = '';
-            countElement.textContent = `총 ${newsList.length}개의 뉴스`;
+            countElement.textContent = '총 ' + newsList.length + '개의 뉴스';
             
             newsList.forEach((news, index) => {
                 const card = createNewsCard(news, index);

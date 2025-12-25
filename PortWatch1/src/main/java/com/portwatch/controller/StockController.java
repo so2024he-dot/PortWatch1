@@ -39,8 +39,8 @@ public class StockController {
      */
     @GetMapping("/list")
     public String stockList(
-            @RequestParam(required = false) String country,
-            @RequestParam(required = false) String marketType,
+            @RequestParam(name = "country", required = false) String country,
+            @RequestParam(name = "marketType", required = false) String marketType,
             Model model) {
         
         try {
@@ -119,7 +119,7 @@ public class StockController {
     @GetMapping("/search")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> searchStock(
-            @RequestParam String keyword) {
+            @RequestParam(name = "keyword") String keyword) {
         
         Map<String, Object> response = new HashMap<>();
         
@@ -144,7 +144,7 @@ public class StockController {
      */
     @GetMapping("/purchase")
     public String purchasePage(
-            @RequestParam(required = false) Integer stockId,
+            @RequestParam(name = "stockId", required = false) Integer stockId,
             HttpSession session,
             Model model) {
         
