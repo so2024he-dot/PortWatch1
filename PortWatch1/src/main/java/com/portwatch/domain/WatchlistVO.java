@@ -3,41 +3,47 @@ package com.portwatch.domain;
 import java.sql.Timestamp;
 
 import lombok.Data;
-@Data
+
 /**
- * ✅ 관심종목 VO
+ * ✅ 관심종목 VO (완전 구현)
  * 
- * @author PortWatch
+ * WATCHLIST 테이블과 1:1 매핑
+ * 
+ * @author PortWatch Team
  * @version 1.0
  */
+@Data
 public class WatchlistVO {
     
-    // ========================================
-    // 기본 필드 (DB 컬럼)
-    // ========================================
+    // 기본 필드 (WATCHLIST 테이블)
+    private Long watchlistId;         // watchlist_id BIGINT AUTO_INCREMENT PK
+    private String memberId;          // member_id VARCHAR(50) FK
+    private String stockCode;         // stock_code VARCHAR(20) FK
+    private Timestamp createdAt;      // created_at TIMESTAMP
     
-    private Integer watchlistId;      // 관심종목 ID
-    private String memberId;          // 회원 ID (String 타입!)
-    private Integer stockId;          // 종목 ID
-    private Timestamp createdAt;      // 생성일시
+    // 조인 시 사용할 추가 필드 (STOCK 테이블)
+    private String stockName;         // stock_name (조인)
+    private Double currentPrice;      // current_price (조인)
+    private String marketType;        // market_type (조인)
+    private String country;           // country (조인)
     
-    // ========================================
-    // 추가 필드 (조인 시 사용)
-    // ========================================
+    // 기본 생성자
+    public WatchlistVO() {
+    }
     
-    private String stockCode;         // 종목 코드 (stock 테이블에서)
-    private String stockName;         // 종목명 (stock 테이블에서)
-    private Double currentPrice;      // 현재가 (stock 테이블에서)
+    // 생성자 (필수 필드)
+    public WatchlistVO(String memberId, String stockCode) {
+        this.memberId = memberId;
+        this.stockCode = stockCode;
+    }
     
-    // ========================================
-    // Getter & Setter
-    // ========================================
+    // ===== Getter & Setter =====
     
-    public Integer getWatchlistId() {
+    public Long getWatchlistId() {
         return watchlistId;
     }
     
-    public void setWatchlistId(Integer watchlistId) {
+    public void setWatchlistId(Long watchlistId) {
         this.watchlistId = watchlistId;
     }
     
@@ -49,12 +55,12 @@ public class WatchlistVO {
         this.memberId = memberId;
     }
     
-    public Integer getStockId() {
-        return stockId;
+    public String getStockCode() {
+        return stockCode;
     }
     
-    public void setStockId(Integer stockId) {
-        this.stockId = stockId;
+    public void setStockCode(String stockCode) {
+        this.stockCode = stockCode;
     }
     
     public Timestamp getCreatedAt() {
@@ -65,13 +71,7 @@ public class WatchlistVO {
         this.createdAt = createdAt;
     }
     
-    public String getStockCode() {
-        return stockCode;
-    }
-    
-    public void setStockCode(String stockCode) {
-        this.stockCode = stockCode;
-    }
+    // 조인 필드 Getter & Setter
     
     public String getStockName() {
         return stockName;
@@ -89,14 +89,31 @@ public class WatchlistVO {
         this.currentPrice = currentPrice;
     }
     
-    // ========================================
-    // toString
-    // ========================================
+    public String getMarketType() {
+        return marketType;
+    }
+    
+    public void setMarketType(String marketType) {
+        this.marketType = marketType;
+    }
+    
+    public String getCountry() {
+        return country;
+    }
+    
+    public void setCountry(String country) {
+        this.country = country;
+    }
     
     @Override
     public String toString() {
-        return "WatchlistVO [watchlistId=" + watchlistId + ", memberId=" + memberId + ", stockId=" + stockId
-                + ", stockCode=" + stockCode + ", stockName=" + stockName + ", currentPrice=" + currentPrice
-                + ", createdAt=" + createdAt + "]";
+        return "WatchlistVO [watchlistId=" + watchlistId + 
+               ", memberId=" + memberId + 
+               ", stockCode=" + stockCode + 
+               ", stockName=" + stockName + 
+               ", currentPrice=" + currentPrice + 
+               ", marketType=" + marketType + 
+               ", country=" + country + 
+               ", createdAt=" + createdAt + "]";
     }
 }

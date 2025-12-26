@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import com.portwatch.domain.MemberVO;
 import com.portwatch.domain.PortfolioVO;
 import com.portwatch.service.PortfolioService;
+import com.portwatch.service.StockService;
 
 import javax.servlet.http.HttpSession;
 import java.math.BigDecimal;
@@ -18,10 +19,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 포트폴리오 컨트롤러
+ * ✅ 포트폴리오 컨트롤러 (완성)
  * 
  * @author PortWatch
- * @version 7.0 - 세션 필드명 통일 (loginMember) + 한글 인코딩 수정
+ * @version 8.0 - create, list 메서드 추가
  */
 @Controller
 @RequestMapping("/portfolio")
@@ -29,6 +30,87 @@ public class PortfolioController {
     
     @Autowired
     private PortfolioService portfolioService;
+    
+    @Autowired(required = false)
+    private StockService stockService;
+    
+    /**
+     * ✅ 포트폴리오 생성 페이지
+     * GET /portfolio/create
+     */
+    @GetMapping("/create")
+    public String createForm(HttpSession session, Model model) {
+        
+        // 로그인 체크
+        MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
+        
+        if (loginMember == null) {
+            return "redirect:/member/login";
+        }
+        
+        try {
+            // 주식 목록 조회 (선택사항)
+            if (stockService != null) {
+                model.addAttribute("stockList", stockService.getAllStocks());
+            }
+            
+            model.addAttribute("loginMember", loginMember);
+            
+        } catch (Exception e) {
+            System.err.println("포트폴리오 생성 페이지 로딩 실패: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return "portfolio/create";
+    }
+    
+    /**
+     * ✅ 포트폴리오 목록 페이지  
+     * GET /portfolio/list
+     */
+    @GetMapping("/list")
+    public String listPortfolio(HttpSession session, Model model) {
+        
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("📊 포트폴리오 목록 조회");
+        
+        // 로그인 체크
+        MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
+        
+        if (loginMember == null) {
+            System.out.println("❌ 로그인 필요");
+            return "redirect:/member/login";
+        }
+        
+        try {
+            String memberId = loginMember.getMemberId();
+            System.out.println("  - 회원 ID: " + memberId);
+            
+            // 포트폴리오 목록 조회
+            List<PortfolioVO> portfolioList = portfolioService.getPortfolioList(memberId);
+            
+            // 포트폴리오 요약 정보
+            Map<String, Object> summary = portfolioService.getPortfolioSummary(memberId);
+            
+            System.out.println("  - 포트폴리오 개수: " + portfolioList.size());
+            System.out.println("✅ 포트폴리오 조회 완료");
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            model.addAttribute("portfolioList", portfolioList);
+            model.addAttribute("summary", summary);
+            model.addAttribute("loginMember", loginMember);
+            
+            return "portfolio/list";
+            
+        } catch (Exception e) {
+            System.err.println("❌ 포트폴리오 조회 실패: " + e.getMessage());
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            e.printStackTrace();
+            
+            model.addAttribute("errorMessage", "포트폴리오 조회 중 오류가 발생했습니다: " + e.getMessage());
+            return "portfolio/list";
+        }
+    }
     
     /**
      * 포트폴리오 메인 페이지
@@ -50,6 +132,7 @@ public class PortfolioController {
             
             model.addAttribute("portfolioList", portfolioList);
             model.addAttribute("summary", summary);
+            model.addAttribute("loginMember", loginMember);
             
         } catch (Exception e) {
             model.addAttribute("errorMessage", "포트폴리오 조회 중 오류가 발생했습니다: " + e.getMessage());
@@ -82,10 +165,10 @@ public class PortfolioController {
             
             String memberId = loginMember.getMemberId();
             
-            // ✅ 회원 ID 설정
+            // 회원 ID 설정
             portfolio.setMemberId(memberId);
             
-            // ✅ 검증
+            // 검증
             if (portfolio.getStockId() == null) {
                 response.put("success", false);
                 response.put("message", "종목을 선택해주세요.");
@@ -98,41 +181,40 @@ public class PortfolioController {
                 return ResponseEntity.badRequest().body(response);
             }
             
-            if (portfolio.getAvgPurchasePrice() == null || portfolio.getAvgPurchasePrice().compareTo(BigDecimal.ZERO) <= 0) {
+            // 포트폴리오에 추가
+            boolean added = portfolioService.addStockToPortfolio(portfolio);
+            
+            if (added) {
+                response.put("success", true);
+                response.put("message", "포트폴리오에 추가되었습니다.");
+            } else {
                 response.put("success", false);
-                response.put("message", "평균 매입가는 0보다 커야 합니다.");
-                return ResponseEntity.badRequest().body(response);
+                response.put("message", "포트폴리오 추가에 실패했습니다.");
             }
-            
-            // ✅ 포트폴리오 추가
-            portfolioService.updatePortfolio(portfolio);
-            
-            response.put("success", true);
-            response.put("message", "포트폴리오에 추가되었습니다.");
             
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", e.getMessage());
             e.printStackTrace();
+            response.put("success", false);
+            response.put("message", "오류 발생: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
     
     /**
-     * 포트폴리오 수정 (AJAX)
+     * 포트폴리오 삭제 (AJAX)
      */
-    @PutMapping("/update")
+    @DeleteMapping("/delete")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> updatePortfolio(
-            @RequestBody PortfolioVO portfolio,
+    public ResponseEntity<Map<String, Object>> deletePortfolio(
+            @RequestParam("stockCode") String stockCode,
+            @RequestParam("quantity") double quantity,
             HttpSession session) {
         
         Map<String, Object> response = new HashMap<>();
         
         try {
-            // 세션에서 회원 정보 가져오기
             MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
             
             if (loginMember == null) {
@@ -142,75 +224,37 @@ public class PortfolioController {
             }
             
             String memberId = loginMember.getMemberId();
-            portfolio.setMemberId(memberId);
             
-            portfolioService.updatePortfolio(portfolio);
+            boolean deleted = portfolioService.removeStockFromPortfolio(memberId, stockCode, quantity);
             
-            response.put("success", true);
-            response.put("message", "포트폴리오가 수정되었습니다.");
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-    
-    /**
-     * 포트폴리오 삭제 (AJAX)
-     */
-    @DeleteMapping("/delete/{portfolioId}")
-    @ResponseBody
-    public ResponseEntity<Map<String, Object>> deletePortfolio(
-            @PathVariable Long portfolioId,
-            HttpSession session) {
-        
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            // 세션에서 회원 정보 가져오기
-            MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
-            
-            if (loginMember == null) {
-                response.put("success", false);
-                response.put("message", "로그인이 필요합니다.");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-            }
-            
-            // 주의: portfolioId로 삭제하는 메서드가 UnsupportedOperationException을 던질 수 있음
-            try {
-                portfolioService.deletePortfolio(portfolioId);
+            if (deleted) {
                 response.put("success", true);
                 response.put("message", "포트폴리오에서 삭제되었습니다.");
-            } catch (UnsupportedOperationException e) {
+            } else {
                 response.put("success", false);
-                response.put("message", e.getMessage());
-                return ResponseEntity.badRequest().body(response);
+                response.put("message", "삭제에 실패했습니다.");
             }
             
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", e.getMessage());
             e.printStackTrace();
+            response.put("success", false);
+            response.put("message", "오류 발생: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
     
     /**
-     * 포트폴리오 목록 조회 (AJAX)
+     * 포트폴리오 상세 조회 (AJAX)
      */
-    @GetMapping("/list")
+    @GetMapping("/detail")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> getPortfolioList(HttpSession session) {
+    public ResponseEntity<Map<String, Object>> getPortfolioDetail(HttpSession session) {
+        
         Map<String, Object> response = new HashMap<>();
         
         try {
-            // 세션에서 회원 정보 가져오기
             MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
             
             if (loginMember == null) {
@@ -231,46 +275,9 @@ public class PortfolioController {
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-    
-    /**
-     * 중복 체크 (AJAX)
-     */
-    @GetMapping("/check-duplicate")
-    @ResponseBody
-    public ResponseEntity<Map<String, Object>> checkDuplicate(
-            @RequestParam Integer stockId,
-            HttpSession session) {
-        
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            // 세션에서 회원 정보 가져오기
-            MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
-            
-            if (loginMember == null) {
-                response.put("success", false);
-                response.put("message", "로그인이 필요합니다.");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-            }
-            
-            String memberId = loginMember.getMemberId();
-            boolean exists = portfolioService.checkDuplicate(memberId, stockId);
-            
-            response.put("success", true);
-            response.put("exists", exists);
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
             response.put("success", false);
-            response.put("message", e.getMessage());
-            e.printStackTrace();
+            response.put("message", "오류 발생: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }

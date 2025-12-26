@@ -1,278 +1,200 @@
 package com.portwatch.controller;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.portwatch.domain.MemberVO;
 import com.portwatch.domain.StockVO;
 import com.portwatch.service.StockService;
-import com.portwatch.service.WatchlistService;
 
 /**
- * 종목 컨트롤러
+ * ✅ 주식 컨트롤러 (완전 수정)
+ * 
+ * URL 매핑:
+ * - /stock/list → 주식 목록 페이지
+ * - /stock/detail → 주식 상세 페이지
  * 
  * @author PortWatch Team
- * @version 2.0
+ * @version 2.0 - URL 매핑 수정
  */
 @Controller
-@RequestMapping("/stock")
+@RequestMapping("/stock")  // ✅ "/stocks" → "/stock"으로 변경
 public class StockController {
     
-    @Autowired
+    @Autowired(required = false)
     private StockService stockService;
     
-    @Autowired
-    private WatchlistService watchlistService;
-    
     /**
-     * 종목 목록 페이지
+     * ✅ 주식 목록 페이지
+     * GET /stock/list
      */
     @GetMapping("/list")
     public String stockList(
-            @RequestParam(name = "country", required = false) String country,
-            @RequestParam(name = "marketType", required = false) String marketType,
+            @RequestParam(value = "country", required = false) String country,
+            @RequestParam(value = "market", required = false) String market,
+            HttpSession session,
             Model model) {
         
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("📊 주식 목록 조회");
+        System.out.println("  - country: " + country);
+        System.out.println("  - market: " + market);
+        
+        // 로그인 체크 (선택사항)
+        MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
+        
         try {
-            // 기본값: 한국 주식
-            if (country == null) {
-                country = "KR";
-            }
-            
             List<StockVO> stockList;
             
-            if (marketType != null && !marketType.isEmpty()) {
-                // 시장별 조회
-                stockList = stockService.getStocksByMarket(marketType);
-            } else if ("KR".equals(country)) {
-                // 한국 전체
-                stockList = stockService.getKoreanStocks();
+            if (stockService != null) {
+                // 필터링 조건에 따라 주식 조회
+                if (country != null && !country.isEmpty()) {
+                    stockList = stockService.getStocksByCountry(country);
+                    System.out.println("  - 국가 필터: " + country);
+                } else if (market != null && !market.isEmpty()) {
+                    stockList = stockService.getStocksByMarket(market);
+                    System.out.println("  - 시장 필터: " + market);
+                } else {
+                    stockList = stockService.getAllStocks();
+                    System.out.println("  - 전체 조회");
+                }
+                
+                System.out.println("  - 조회된 주식 수: " + stockList.size());
+                model.addAttribute("stockList", stockList);
+                
             } else {
-                // 미국 전체
-                stockList = stockService.getUSStocks();
+                System.out.println("⚠️ StockService is null");
+                model.addAttribute("stockList", new java.util.ArrayList<>());
+                model.addAttribute("errorMessage", "StockService를 사용할 수 없습니다.");
             }
             
-            model.addAttribute("stockList", stockList);
-            model.addAttribute("country", country);
-            model.addAttribute("marketType", marketType);
+            System.out.println("✅ 주식 목록 조회 완료");
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            // 필터 정보
+            model.addAttribute("selectedCountry", country);
+            model.addAttribute("selectedMarket", market);
+            model.addAttribute("loginMember", loginMember);
+            
+            return "stock/list";
             
         } catch (Exception e) {
-            model.addAttribute("errorMessage", "종목 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+            System.err.println("❌ 주식 목록 조회 실패: " + e.getMessage());
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             e.printStackTrace();
+            
+            model.addAttribute("errorMessage", "주식 목록을 조회하는 중 오류가 발생했습니다: " + e.getMessage());
+            model.addAttribute("stockList", new java.util.ArrayList<>());
+            
+            return "stock/list";
         }
-        
-        return "stock/list";
     }
     
     /**
-     * 종목 상세 페이지
+     * 주식 상세 페이지
+     * GET /stock/detail
      */
-    @GetMapping("/detail/{stockId}")
+    @GetMapping("/detail")
     public String stockDetail(
-            @PathVariable Integer stockId,
+            @RequestParam("code") String stockCode,
             HttpSession session,
             Model model) {
         
-        try {
-            // 종목 정보 조회
-            StockVO stock = stockService.getStockById(stockId);
-            
-            if (stock == null) {
-                model.addAttribute("errorMessage", "종목을 찾을 수 없습니다.");
-                return "redirect:/stock/list";
-            }
-            
-            model.addAttribute("stock", stock);
-            
-            // 로그인 여부 확인
-            MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
-            
-            if (loginMember != null) {
-                // 관심종목 등록 여부 확인
-                String memberId = loginMember.getMemberId();
-                boolean isInWatchlist = watchlistService.checkWatchlist(memberId, stockId);
-                model.addAttribute("isInWatchlist", isInWatchlist);
-            }
-            
-        } catch (Exception e) {
-            model.addAttribute("errorMessage", "종목 상세 조회 중 오류가 발생했습니다: " + e.getMessage());
-            e.printStackTrace();
-            return "redirect:/stock/list";
-        }
-        
-        return "stock/detail";
-    }
-    
-    /**
-     * 종목 검색 (AJAX)
-     */
-    @GetMapping("/search")
-    @ResponseBody
-    public ResponseEntity<Map<String, Object>> searchStock(
-            @RequestParam(name = "keyword") String keyword) {
-        
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            List<StockVO> results = stockService.searchStocks(keyword);
-            
-            response.put("success", true);
-            response.put("stocks", results);
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-    
-    /**
-     * 주식 매수 페이지
-     */
-    @GetMapping("/purchase")
-    public String purchasePage(
-            @RequestParam(name = "stockId", required = false) Integer stockId,
-            HttpSession session,
-            Model model) {
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("📈 주식 상세 조회: " + stockCode);
         
         // 로그인 체크
         MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
         
-        if (loginMember == null) {
-            return "redirect:/member/login";
-        }
-        
         try {
-            if (stockId != null) {
-                StockVO stock = stockService.getStockById(stockId);
+            if (stockService != null) {
+                StockVO stock = stockService.getStockByCode(stockCode);
+                
+                if (stock == null) {
+                    System.out.println("⚠️ 주식을 찾을 수 없습니다: " + stockCode);
+                    model.addAttribute("errorMessage", "주식을 찾을 수 없습니다.");
+                    return "error";
+                }
+                
+                System.out.println("  - 주식명: " + stock.getStockName());
+                System.out.println("  - 현재가: " + stock.getCurrentPrice());
+                System.out.println("✅ 주식 상세 조회 완료");
+                
                 model.addAttribute("stock", stock);
+                
+            } else {
+                System.out.println("⚠️ StockService is null");
+                model.addAttribute("errorMessage", "StockService를 사용할 수 없습니다.");
+                return "error";
             }
             
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            model.addAttribute("loginMember", loginMember);
+            return "stock/detail";
+            
         } catch (Exception e) {
-            model.addAttribute("errorMessage", "오류가 발생했습니다: " + e.getMessage());
+            System.err.println("❌ 주식 상세 조회 실패: " + e.getMessage());
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             e.printStackTrace();
+            
+            model.addAttribute("errorMessage", "주식 정보를 조회하는 중 오류가 발생했습니다.");
+            return "error";
         }
-        
-        return "stock/purchase";
     }
     
     /**
-     * 종목 정보 조회 (AJAX)
+     * ✅ 주식 검색 (선택사항)
+     * GET /stock/search
      */
-    @GetMapping("/info/{stockId}")
-    @ResponseBody
-    public ResponseEntity<Map<String, Object>> getStockInfo(
-            @PathVariable Integer stockId) {
+    @GetMapping("/search")
+    public String searchStock(
+            @RequestParam("keyword") String keyword,
+            HttpSession session,
+            Model model) {
         
-        Map<String, Object> response = new HashMap<>();
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("🔍 주식 검색: " + keyword);
+        
+        MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
         
         try {
-            StockVO stock = stockService.getStockById(stockId);
-            
-            if (stock == null) {
-                response.put("success", false);
-                response.put("message", "종목을 찾을 수 없습니다.");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            if (stockService != null) {
+                List<StockVO> stockList = stockService.searchStocks(keyword);
+                
+                System.out.println("  - 검색 결과: " + stockList.size() + "개");
+                System.out.println("✅ 주식 검색 완료");
+                
+                model.addAttribute("stockList", stockList);
+                model.addAttribute("keyword", keyword);
+                
+            } else {
+                System.out.println("⚠️ StockService is null");
+                model.addAttribute("stockList", new java.util.ArrayList<>());
             }
             
-            response.put("success", true);
-            response.put("stock", stock);
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-    
-    /**
-     * 한국 주식 목록 (AJAX)
-     */
-    @GetMapping("/korean")
-    @ResponseBody
-    public ResponseEntity<Map<String, Object>> getKoreanStocks() {
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            List<StockVO> stocks = stockService.getKoreanStocks();
-            
-            response.put("success", true);
-            response.put("stocks", stocks);
-            
-            return ResponseEntity.ok(response);
+            model.addAttribute("loginMember", loginMember);
+            return "stock/list";
             
         } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", e.getMessage());
+            System.err.println("❌ 주식 검색 실패: " + e.getMessage());
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-    
-    /**
-     * 미국 주식 목록 (AJAX)
-     */
-    @GetMapping("/us")
-    @ResponseBody
-    public ResponseEntity<Map<String, Object>> getUSStocks() {
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            List<StockVO> stocks = stockService.getUSStocks();
             
-            response.put("success", true);
-            response.put("stocks", stocks);
+            model.addAttribute("errorMessage", "주식 검색 중 오류가 발생했습니다.");
+            model.addAttribute("stockList", new java.util.ArrayList<>());
             
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-    
-    /**
-     * 시장별 종목 목록 (AJAX)
-     */
-    @GetMapping("/market/{marketType}")
-    @ResponseBody
-    public ResponseEntity<Map<String, Object>> getStocksByMarket(
-            @PathVariable String marketType) {
-        
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            List<StockVO> stocks = stockService.getStocksByMarket(marketType);
-            
-            response.put("success", true);
-            response.put("stocks", stocks);
-            response.put("marketType", marketType);
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            return "stock/list";
         }
     }
 }

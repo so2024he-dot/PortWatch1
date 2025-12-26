@@ -1,104 +1,122 @@
 package com.portwatch.persistence;
 
 import java.util.List;
-import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import com.portwatch.domain.WatchlistVO;
-import com.portwatch.domain.WatchlistWithPriceVO;
 
 /**
- * ✅ 관심종목 DAO 인터페이스 (완전 수정)
+ * ✅ 관심종목 DAO 인터페이스
  * 
- * 수정 사항:
- * - @Mapper 어노테이션 추가 (필수!)
- * 
- * @author PortWatch
- * @version 3.0
+ * @author PortWatch Team
+ * @version 1.0
  */
-@Mapper  // ✅ MyBatis Mapper 어노테이션 (필수!)
 public interface WatchlistDAO {
     
-    // ========================================
-    // 기본 CRUD
-    // ========================================
-    
     /**
-     * 관심종목 추가
-     * @param watchlist 관심종목 정보
-     * @return 추가된 행 수
-     */
-    int insertWatchlist(WatchlistVO watchlist);
-    
-    /**
-     * ID로 조회
-     * @param watchlistId 관심종목 ID
-     * @return 관심종목 정보
-     */
-    WatchlistVO selectById(@Param("watchlistId") Integer watchlistId);
-    
-    /**
-     * 회원의 관심종목 목록 조회 (기본)
+     * 회원의 관심종목 목록 조회 (주식 정보 포함)
+     * 
      * @param memberId 회원 ID
      * @return 관심종목 목록
      */
-    List<WatchlistVO> selectWatchlistByMember(@Param("memberId") String memberId);
+    List<WatchlistVO> selectByMemberId(String memberId);
     
     /**
-     * 관심종목 존재 여부 확인
+     * 특정 관심종목 조회 (회원 + 종목 코드)
+     * 
      * @param memberId 회원 ID
-     * @param stockId 종목 ID
-     * @return 존재하면 1 이상, 없으면 0
+     * @param stockCode 종목 코드
+     * @return 관심종목 VO (없으면 null)
      */
-    int checkExists(@Param("memberId") String memberId, @Param("stockId") Integer stockId);
+    WatchlistVO selectByMemberAndStock(@Param("memberId") String memberId, 
+                                       @Param("stockCode") String stockCode);
     
     /**
-     * 관심종목 삭제 (memberId, stockId 사용)
-     * @param memberId 회원 ID
-     * @param stockId 종목 ID
-     * @return 삭제된 행 수
+     * 관심종목 추가
+     * 
+     * @param watchlist 관심종목 VO
+     * @return 추가된 행 수
      */
-    int deleteWatchlistByMemberAndStock(@Param("memberId") String memberId, @Param("stockId") Integer stockId);
+    int insert(WatchlistVO watchlist);
     
     /**
-     * 관심종목 삭제 (watchlistId 사용)
+     * 관심종목 삭제 (ID로)
+     * 
      * @param watchlistId 관심종목 ID
      * @return 삭제된 행 수
      */
-    int deleteWatchlistById(@Param("watchlistId") Integer watchlistId);
+    int deleteById(Long watchlistId);
+    
+    /**
+     * 관심종목 삭제 (회원 + 종목 코드)
+     * 
+     * @param memberId 회원 ID
+     * @param stockCode 종목 코드
+     * @return 삭제된 행 수
+     */
+    int delete(@Param("memberId") String memberId, 
+               @Param("stockCode") String stockCode);
     
     /**
      * 회원의 모든 관심종목 삭제
+     * 
      * @param memberId 회원 ID
      * @return 삭제된 행 수
      */
-    int deleteAllWatchlistByMember(@Param("memberId") String memberId);
-    
-    // ========================================
-    // 가격 정보 포함 조회
-    // ========================================
+    int deleteByMemberId(String memberId);
     
     /**
-     * ✅ 회원의 관심종목 목록 조회 (현재가 포함)
-     * @param memberId 회원 ID
-     * @return 관심종목 + 가격 정보 목록
-     */
-    List<WatchlistWithPriceVO> selectWatchlistWithPrices(@Param("memberId") String memberId);
-    
-    /**
-     * ✅ 특정 관심종목 조회 (현재가 포함)
-     * @param watchlistId 관심종목 ID
-     * @return 관심종목 + 가격 정보
-     */
-    WatchlistWithPriceVO selectWatchlistWithPriceById(@Param("watchlistId") Integer watchlistId);
-    
-    // ========================================
-    // 통계
-    // ========================================
-    
-    /**
-     * 관심종목 개수 조회
+     * 회원의 관심종목 개수
+     * 
      * @param memberId 회원 ID
      * @return 관심종목 개수
      */
-    int countWatchlist(@Param("memberId") String memberId);
+    int count(String memberId);
+    
+    /**
+     * 특정 종목을 관심종목으로 추가한 회원 수
+     * 
+     * @param stockCode 종목 코드
+     * @return 회원 수
+     */
+    int countByStockCode(String stockCode);
+    
+    /**
+     * 관심종목 여부 확인
+     * 
+     * @param memberId 회원 ID
+     * @param stockCode 종목 코드
+     * @return 존재 여부 (1: 존재, 0: 없음)
+     */
+    int exists(@Param("memberId") String memberId, 
+               @Param("stockCode") String stockCode);
+    
+    /**
+     * 특정 국가의 관심종목만 조회
+     * 
+     * @param memberId 회원 ID
+     * @param country 국가 (KR, US)
+     * @return 관심종목 목록
+     */
+    List<WatchlistVO> selectByMemberIdAndCountry(@Param("memberId") String memberId, 
+                                                  @Param("country") String country);
+    
+    /**
+     * 특정 시장의 관심종목만 조회
+     * 
+     * @param memberId 회원 ID
+     * @param marketType 시장 타입 (KOSPI, KOSDAQ, NASDAQ, NYSE)
+     * @return 관심종목 목록
+     */
+    List<WatchlistVO> selectByMemberIdAndMarket(@Param("memberId") String memberId, 
+                                                 @Param("marketType") String marketType);
+    
+    /**
+     * 최근 추가된 관심종목 조회 (N개)
+     * 
+     * @param memberId 회원 ID
+     * @param limit 조회 개수
+     * @return 관심종목 목록
+     */
+    List<WatchlistVO> selectRecentByMemberId(@Param("memberId") String memberId, 
+                                              @Param("limit") int limit);
 }

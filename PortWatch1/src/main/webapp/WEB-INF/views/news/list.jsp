@@ -92,7 +92,6 @@
             gap: 25px;
         }
         
-        /* ✅ 개선된 뉴스 카드 - 버퍼링 없음 */
         .news-card {
             background: white;
             border-radius: 15px;
@@ -108,7 +107,6 @@
             box-shadow: 0 12px 30px rgba(102, 126, 234, 0.3);
         }
         
-        /* ✅ 클릭 영역 전체 */
         .news-card a {
             text-decoration: none;
             color: inherit;
@@ -165,7 +163,6 @@
             font-weight: 600;
         }
         
-        /* 로딩 애니메이션 */
         .loading {
             text-align: center;
             padding: 50px;
@@ -185,7 +182,6 @@
             80%, 100% { content: ''; }
         }
         
-        /* 빈 상태 */
         .empty-state {
             text-align: center;
             padding: 80px 20px;
@@ -217,25 +213,25 @@
         <!-- ✅ 필터 컨트롤 -->
         <div class="filter-controls">
             <div class="filter-tabs">
-                <button class="filter-btn active" onclick="filterNews('all')">
+                <button class="filter-btn active" data-filter="all">
                     🌐 전체
                 </button>
-                <button class="filter-btn" onclick="filterNews('KR')">
+                <button class="filter-btn" data-filter="KR">
                     🇰🇷 한국
                 </button>
-                <button class="filter-btn" onclick="filterNews('US')">
+                <button class="filter-btn" data-filter="US">
                     🇺🇸 미국
                 </button>
-                <button class="filter-btn" onclick="filterNews('KOSPI')">
+                <button class="filter-btn" data-filter="KOSPI">
                     📊 KOSPI
                 </button>
-                <button class="filter-btn" onclick="filterNews('KOSDAQ')">
+                <button class="filter-btn" data-filter="KOSDAQ">
                     📈 KOSDAQ
                 </button>
-                <button class="filter-btn" onclick="filterNews('NASDAQ')">
+                <button class="filter-btn" data-filter="NASDAQ">
                     🚀 NASDAQ
                 </button>
-                <button class="filter-btn" onclick="filterNews('NYSE')">
+                <button class="filter-btn" data-filter="NYSE">
                     🏛️ NYSE
                 </button>
             </div>
@@ -253,35 +249,36 @@
 
     <script>
         // ✅ 전역 변수
-        let allNews = [];
-        let currentFilter = 'all';
+        var allNews = [];
+        var currentFilter = 'all';
         
         // ✅ 뉴스 로드
-        async function loadNews() {
-            try {
-                console.log('뉴스 로드 시작...');
-                
-                const response = await fetch('/portwatch/news/api/all');
-                const data = await response.json();
-                
-                if (data.success && data.newsList) {
-                    allNews = data.newsList;
-                    console.log('뉴스 로드 완료:', allNews.length + '개');
-                    displayNews(allNews);
-                } else {
-                    showEmptyState();
-                }
-                
-            } catch (error) {
-                console.error('뉴스 로드 실패:', error);
-                showErrorState();
-            }
+        function loadNews() {
+            console.log('뉴스 로드 시작...');
+            
+            fetch('/portwatch/api/news/all')
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(data) {
+                    if (data.success && data.newsList) {
+                        allNews = data.newsList;
+                        console.log('뉴스 로드 완료: ' + allNews.length + '개');
+                        displayNews(allNews);
+                    } else {
+                        showEmptyState();
+                    }
+                })
+                .catch(function(error) {
+                    console.error('뉴스 로드 실패:', error);
+                    showErrorState();
+                });
         }
         
-        // ✅ 뉴스 표시 (버퍼링 없음)
+        // ✅ 뉴스 표시 (템플릿 리터럴 제거)
         function displayNews(newsList) {
-            const grid = document.getElementById('newsGrid');
-            const countElement = document.getElementById('newsCount');
+            var grid = document.getElementById('newsGrid');
+            var countElement = document.getElementById('newsCount');
             
             if (!newsList || newsList.length === 0) {
                 showEmptyState();
@@ -289,46 +286,46 @@
             }
             
             grid.innerHTML = '';
-            countElement.textContent = `총 ${newsList.length}개의 뉴스`;
+            countElement.textContent = '총 ' + newsList.length + '개의 뉴스';  // ✅ 템플릿 리터럴 제거
             
-            newsList.forEach((news, index) => {
-                const card = createNewsCard(news, index);
+            for (var i = 0; i < newsList.length; i++) {
+                var card = createNewsCard(newsList[i], i);
                 grid.appendChild(card);
-            });
+            }
         }
         
-        // ✅ 뉴스 카드 생성 (버퍼링 없는 직접 링크)
+        // ✅ 뉴스 카드 생성 (템플릿 리터럴 완전 제거)
         function createNewsCard(news, index) {
-            const card = document.createElement('div');
+            var card = document.createElement('div');
             card.className = 'news-card';
             
             // ✅ 국가 판단
-            const isKorean = !news.country || news.country === 'KR' || 
+            var isKorean = !news.country || news.country === 'KR' || 
                             news.marketType === 'KOSPI' || news.marketType === 'KOSDAQ';
-            const countryFlag = isKorean ? '🇰🇷' : '🇺🇸';
+            var countryFlag = isKorean ? '🇰🇷' : '🇺🇸';
             
-            // ✅ 직접 링크 (버퍼링 없음)
-            card.innerHTML = `
-                <a href="${news.link}" target="_blank" rel="noopener noreferrer">
-                    <div class="news-header">
-                        <span class="news-source">${news.source || '뉴스'}</span>
-                        <span class="country-badge">${countryFlag}</span>
-                    </div>
-                    <h3 class="news-title">${news.title}</h3>
-                    <div class="news-meta">
-                        <span class="stock-badge">
-                            ${news.stockCode || ''} ${news.stockName || ''}
-                        </span>
-                        <span>${news.publishedAt || '방금 전'}</span>
-                    </div>
-                </a>
-            `;
+            // ✅ HTML 생성 (템플릿 리터럴 제거)
+            var html = '<a href="' + news.link + '" target="_blank" rel="noopener noreferrer">';
+            html += '<div class="news-header">';
+            html += '<span class="news-source">' + (news.source || '뉴스') + '</span>';
+            html += '<span class="country-badge">' + countryFlag + '</span>';
+            html += '</div>';
+            html += '<h3 class="news-title">' + news.title + '</h3>';
+            html += '<div class="news-meta">';
+            html += '<span class="stock-badge">';
+            html += (news.stockCode || '') + ' ' + (news.stockName || '');
+            html += '</span>';
+            html += '<span>' + (news.publishedAt || '방금 전') + '</span>';
+            html += '</div>';
+            html += '</a>';
+            
+            card.innerHTML = html;
             
             // ✅ 애니메이션 효과
             card.style.opacity = '0';
             card.style.transform = 'translateY(20px)';
             
-            setTimeout(() => {
+            setTimeout(function() {
                 card.style.transition = 'all 0.5s ease-out';
                 card.style.opacity = '1';
                 card.style.transform = 'translateY(0)';
@@ -338,66 +335,65 @@
         }
         
         // ✅ 필터링
-        function filterNews(filter) {
+        function filterNews(filter, clickedButton) {
             currentFilter = filter;
             
             // 버튼 상태 변경
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
+            var buttons = document.querySelectorAll('.filter-btn');
+            for (var i = 0; i < buttons.length; i++) {
+                buttons[i].classList.remove('active');
+            }
+            clickedButton.classList.add('active');
             
             // 뉴스 필터링
-            let filtered = allNews;
+            var filtered = allNews;
             
             if (filter !== 'all') {
-                filtered = allNews.filter(news => {
+                filtered = [];
+                for (var i = 0; i < allNews.length; i++) {
+                    var news = allNews[i];
+                    var match = false;
+                    
                     if (filter === 'KR') {
-                        return !news.country || news.country === 'KR' || 
+                        match = !news.country || news.country === 'KR' || 
                                news.marketType === 'KOSPI' || news.marketType === 'KOSDAQ';
                     } else if (filter === 'US') {
-                        return news.country === 'US' || 
+                        match = news.country === 'US' || 
                                news.marketType === 'NASDAQ' || news.marketType === 'NYSE';
                     } else {
-                        return news.marketType === filter;
+                        match = news.marketType === filter;
                     }
-                });
+                    
+                    if (match) {
+                        filtered.push(news);
+                    }
+                }
             }
             
-            console.log('필터링 결과:', filter, filtered.length + '개');
+            console.log('필터링 결과: ' + filter + ', ' + filtered.length + '개');
             displayNews(filtered);
         }
         
         // ✅ 빈 상태 표시
         function showEmptyState() {
-            const grid = document.getElementById('newsGrid');
-            grid.innerHTML = `
-                <div class="empty-state" style="grid-column: 1/-1;">
-                    <i class="bi bi-inbox"></i>
-                    <h3>뉴스가 없습니다</h3>
-                    <p style="color: #9ca3af; margin-top: 10px;">
-                        아직 등록된 뉴스가 없습니다.
-                    </p>
-                </div>
-            `;
+            var grid = document.getElementById('newsGrid');
+            grid.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;">' +
+                '<i class="bi bi-inbox"></i>' +
+                '<h3>뉴스가 없습니다</h3>' +
+                '<p style="color: #9ca3af; margin-top: 10px;">아직 등록된 뉴스가 없습니다.</p>' +
+                '</div>';
             document.getElementById('newsCount').textContent = '0개의 뉴스';
         }
         
         // ✅ 에러 상태 표시
         function showErrorState() {
-            const grid = document.getElementById('newsGrid');
-            grid.innerHTML = `
-                <div class="empty-state" style="grid-column: 1/-1;">
-                    <i class="bi bi-exclamation-triangle"></i>
-                    <h3>뉴스를 불러올 수 없습니다</h3>
-                    <p style="color: #9ca3af; margin-top: 10px;">
-                        잠시 후 다시 시도해주세요.
-                    </p>
-                    <button class="filter-btn" onclick="loadNews()" style="margin-top: 20px;">
-                        다시 시도
-                    </button>
-                </div>
-            `;
+            var grid = document.getElementById('newsGrid');
+            grid.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;">' +
+                '<i class="bi bi-exclamation-triangle"></i>' +
+                '<h3>뉴스를 불러올 수 없습니다</h3>' +
+                '<p style="color: #9ca3af; margin-top: 10px;">잠시 후 다시 시도해주세요.</p>' +
+                '<button class="filter-btn" onclick="loadNews()" style="margin-top: 20px;">다시 시도</button>' +
+                '</div>';
         }
         
         // ✅ 자동 새로고침 (5분마다)
@@ -408,9 +404,18 @@
         setInterval(autoRefresh, 5 * 60 * 1000); // 5분
         
         // ✅ 페이지 로드 시 뉴스 로드
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', function() {
             console.log('페이지 로드 완료');
             loadNews();
+            
+            // ✅ 필터 버튼 이벤트 리스너 등록
+            var filterButtons = document.querySelectorAll('.filter-btn');
+            for (var i = 0; i < filterButtons.length; i++) {
+                filterButtons[i].addEventListener('click', function() {
+                    var filter = this.getAttribute('data-filter');
+                    filterNews(filter, this);
+                });
+            }
         });
         
         // ✅ 뉴스 수동 새로고침
@@ -421,3 +426,5 @@
     </script>
 </body>
 </html>
+
+    

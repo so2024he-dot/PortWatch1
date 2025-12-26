@@ -8,156 +8,170 @@
          ResultMap 정의
          ======================================== -->
     
-    <!-- 기본 WatchlistVO -->
     <resultMap id="WatchlistResultMap" type="WatchlistVO">
         <id property="watchlistId" column="watchlist_id"/>
         <result property="memberId" column="member_id"/>
-        <result property="stockId" column="stock_id"/>
-        <result property="createdAt" column="created_at"/>
-    </resultMap>
-    
-    <!-- ✅ 가격 포함 WatchlistWithPriceVO -->
-    <resultMap id="WatchlistWithPriceResultMap" type="WatchlistWithPriceVO">
-        <id property="watchlistId" column="watchlist_id"/>
-        <result property="memberId" column="member_id"/>
-        <result property="stockId" column="stock_id"/>
-        <result property="createdAt" column="created_at"/>
-        <!-- 종목 정보 -->
         <result property="stockCode" column="stock_code"/>
+        <result property="createdAt" column="created_at"/>
+        <!-- 조인 시 사용할 추가 필드 -->
         <result property="stockName" column="stock_name"/>
+        <result property="currentPrice" column="current_price"/>
         <result property="marketType" column="market_type"/>
         <result property="country" column="country"/>
-        <result property="industry" column="industry"/>
-        <!-- 가격 정보 -->
-        <result property="currentPrice" column="current_price"/>
-        <result property="priceChange" column="price_change"/>
-        <result property="priceChangeRate" column="price_change_rate"/>
-        <result property="volume" column="volume"/>
     </resultMap>
 
     <!-- ========================================
          기본 CRUD
          ======================================== -->
     
-    <!-- 관심종목 추가 -->
-    <insert id="insertWatchlist" parameterType="WatchlistVO">
-        INSERT INTO watchlist (
-            member_id,
-            stock_id,
-            created_at
-        ) VALUES (
-            #{memberId},
-            #{stockId},
-            NOW()
-        )
-    </insert>
-    
-    <!-- ID로 조회 -->
-    <select id="selectById" parameterType="int" resultMap="WatchlistResultMap">
-        SELECT 
-            watchlist_id,
-            member_id,
-            stock_id,
-            created_at
-        FROM watchlist
-        WHERE watchlist_id = #{watchlistId}
-    </select>
-    
-    <!-- 회원의 관심종목 목록 조회 (기본) -->
-    <select id="selectWatchlistByMember" parameterType="string" resultMap="WatchlistResultMap">
-        SELECT 
-            watchlist_id,
-            member_id,
-            stock_id,
-            created_at
-        FROM watchlist
-        WHERE member_id = #{memberId}
-        ORDER BY created_at DESC
-    </select>
-    
-    <!-- 관심종목 존재 여부 확인 -->
-    <select id="checkExists" resultType="int">
-        SELECT COUNT(*)
-        FROM watchlist
-        WHERE member_id = #{memberId}
-          AND stock_id = #{stockId}
-    </select>
-    
-    <!-- 관심종목 삭제 (memberId, stockId 사용) -->
-    <delete id="deleteWatchlistByMemberAndStock">
-        DELETE FROM watchlist
-        WHERE member_id = #{memberId}
-          AND stock_id = #{stockId}
-    </delete>
-    
-    <!-- 관심종목 삭제 (watchlistId 사용) -->
-    <delete id="deleteWatchlistById" parameterType="int">
-        DELETE FROM watchlist
-        WHERE watchlist_id = #{watchlistId}
-    </delete>
-    
-    <!-- 회원의 모든 관심종목 삭제 -->
-    <delete id="deleteAllWatchlistByMember" parameterType="string">
-        DELETE FROM watchlist
-        WHERE member_id = #{memberId}
-    </delete>
-
-    <!-- ========================================
-         ✅ 가격 정보 포함 조회 (신규!)
-         ======================================== -->
-    
-    <!-- 회원의 관심종목 목록 + 현재가 -->
-    <select id="selectWatchlistWithPrices" parameterType="string" resultMap="WatchlistWithPriceResultMap">
+    <!-- 회원의 관심종목 목록 조회 (주식 정보 포함) -->
+    <select id="selectByMemberId" parameterType="string" resultMap="WatchlistResultMap">
         SELECT 
             w.watchlist_id,
             w.member_id,
-            w.stock_id,
+            w.stock_code,
             w.created_at,
-            s.stock_code,
             s.stock_name,
-            s.market_type,
-            s.country,
-            s.industry,
             s.current_price,
-            s.price_change,
-            s.price_change_rate,
-            s.volume
-        FROM watchlist w
-        INNER JOIN stock s ON w.stock_id = s.stock_id
+            s.market_type,
+            s.country
+        FROM WATCHLIST w
+        LEFT JOIN STOCK s ON w.stock_code = s.stock_code
         WHERE w.member_id = #{memberId}
         ORDER BY w.created_at DESC
     </select>
     
-    <!-- 특정 관심종목 + 현재가 -->
-    <select id="selectWatchlistWithPriceById" parameterType="int" resultMap="WatchlistWithPriceResultMap">
+    <!-- 특정 관심종목 조회 (회원 + 종목 코드) -->
+    <select id="selectByMemberAndStock" resultMap="WatchlistResultMap">
         SELECT 
             w.watchlist_id,
             w.member_id,
-            w.stock_id,
+            w.stock_code,
             w.created_at,
-            s.stock_code,
             s.stock_name,
-            s.market_type,
-            s.country,
-            s.industry,
             s.current_price,
-            s.price_change,
-            s.price_change_rate,
-            s.volume
-        FROM watchlist w
-        INNER JOIN stock s ON w.stock_id = s.stock_id
-        WHERE w.watchlist_id = #{watchlistId}
+            s.market_type,
+            s.country
+        FROM WATCHLIST w
+        LEFT JOIN STOCK s ON w.stock_code = s.stock_code
+        WHERE w.member_id = #{memberId}
+          AND w.stock_code = #{stockCode}
     </select>
+    
+    <!-- 관심종목 추가 -->
+    <insert id="insert" parameterType="WatchlistVO" useGeneratedKeys="true" keyProperty="watchlistId">
+        INSERT INTO WATCHLIST (
+            member_id,
+            stock_code,
+            created_at
+        ) VALUES (
+            #{memberId},
+            #{stockCode},
+            NOW()
+        )
+    </insert>
+    
+    <!-- 관심종목 삭제 (ID로) -->
+    <delete id="deleteById" parameterType="long">
+        DELETE FROM WATCHLIST
+        WHERE watchlist_id = #{watchlistId}
+    </delete>
+    
+    <!-- 관심종목 삭제 (회원 + 종목 코드) -->
+    <delete id="delete">
+        DELETE FROM WATCHLIST
+        WHERE member_id = #{memberId}
+          AND stock_code = #{stockCode}
+    </delete>
+    
+    <!-- 회원의 모든 관심종목 삭제 -->
+    <delete id="deleteByMemberId" parameterType="string">
+        DELETE FROM WATCHLIST
+        WHERE member_id = #{memberId}
+    </delete>
 
     <!-- ========================================
          통계 쿼리
          ======================================== -->
     
-    <!-- 관심종목 개수 -->
-    <select id="countWatchlist" parameterType="string" resultType="int">
+    <!-- 회원의 관심종목 개수 -->
+    <select id="count" parameterType="string" resultType="int">
         SELECT COUNT(*)
-        FROM watchlist
+        FROM WATCHLIST
         WHERE member_id = #{memberId}
+    </select>
+    
+    <!-- 특정 종목을 관심종목으로 추가한 회원 수 -->
+    <select id="countByStockCode" parameterType="string" resultType="int">
+        SELECT COUNT(*)
+        FROM WATCHLIST
+        WHERE stock_code = #{stockCode}
+    </select>
+    
+    <!-- 관심종목 여부 확인 -->
+    <select id="exists" resultType="int">
+        SELECT COUNT(*)
+        FROM WATCHLIST
+        WHERE member_id = #{memberId}
+          AND stock_code = #{stockCode}
+    </select>
+
+    <!-- ========================================
+         고급 쿼리
+         ======================================== -->
+    
+    <!-- 특정 국가의 관심종목만 조회 -->
+    <select id="selectByMemberIdAndCountry" resultMap="WatchlistResultMap">
+        SELECT 
+            w.watchlist_id,
+            w.member_id,
+            w.stock_code,
+            w.created_at,
+            s.stock_name,
+            s.current_price,
+            s.market_type,
+            s.country
+        FROM WATCHLIST w
+        LEFT JOIN STOCK s ON w.stock_code = s.stock_code
+        WHERE w.member_id = #{memberId}
+          AND s.country = #{country}
+        ORDER BY w.created_at DESC
+    </select>
+    
+    <!-- 특정 시장의 관심종목만 조회 -->
+    <select id="selectByMemberIdAndMarket" resultMap="WatchlistResultMap">
+        SELECT 
+            w.watchlist_id,
+            w.member_id,
+            w.stock_code,
+            w.created_at,
+            s.stock_name,
+            s.current_price,
+            s.market_type,
+            s.country
+        FROM WATCHLIST w
+        LEFT JOIN STOCK s ON w.stock_code = s.stock_code
+        WHERE w.member_id = #{memberId}
+          AND s.market_type = #{marketType}
+        ORDER BY w.created_at DESC
+    </select>
+    
+    <!-- 최근 추가된 관심종목 조회 (N개) -->
+    <select id="selectRecentByMemberId" resultMap="WatchlistResultMap">
+        SELECT 
+            w.watchlist_id,
+            w.member_id,
+            w.stock_code,
+            w.created_at,
+            s.stock_name,
+            s.current_price,
+            s.market_type,
+            s.country
+        FROM WATCHLIST w
+        LEFT JOIN STOCK s ON w.stock_code = s.stock_code
+        WHERE w.member_id = #{memberId}
+        ORDER BY w.created_at DESC
+        LIMIT #{limit}
     </select>
 
 </mapper>
