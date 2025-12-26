@@ -216,9 +216,10 @@ public class WatchlistWithPriceVO {
     // ========================================
     
     @Override
-    public String toString() {
-        return "WatchlistWithPriceVO [watchlistId=" + watchlistId + ", memberId=" + memberId + ", stockCode="
-                + stockCode + ", stockName=" + stockName + ", marketType=" + marketType + ", currentPrice="
-                + currentPrice + ", priceChange=" + priceChange + ", priceChangeRate=" + priceChangeRate + "]";
-    }
+	public String toString() {
+		return "WatchlistWithPriceVO [watchlistId=" + watchlistId + ", memberId=" + memberId + ", stockId=" + stockId
+				+ ", createdAt=" + createdAt + ", stockCode=" + stockCode + ", stockName=" + stockName + ", marketType="
+				+ marketType + ", country=" + country + ", industry=" + industry + ", currentPrice=" + currentPrice
+				+ ", priceChange=" + priceChange + ", priceChangeRate=" + priceChangeRate + ", volume=" + volume + "]";
+	}
 }

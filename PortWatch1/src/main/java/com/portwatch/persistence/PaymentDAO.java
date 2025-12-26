@@ -70,4 +70,14 @@ public interface PaymentDAO {
 	List<PaymentVO> selectPaymentsByMember(String memberId);
 
 	Map<String, Object> getPaymentSummary(String memberId);
+
+	List<PaymentVO> selectByMemberId(String memberId);
+
+	void insert(PaymentVO payment);
+
+	void update(PaymentVO payment);
+
+	PaymentVO selectById(Long paymentId);
+
+
 }

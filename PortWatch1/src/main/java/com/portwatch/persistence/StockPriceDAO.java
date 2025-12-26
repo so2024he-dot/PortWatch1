@@ -58,4 +58,8 @@ public interface StockPriceDAO {
      * 주가 정보 삭제 (특정 날짜 이전)
      */
     void deletePricesBeforeDate(Date beforeDate) throws Exception;
+
+	void insert(StockPriceVO stockPrice);
+
+	List<StockPriceVO> selectByStockIdAndDays(Integer stockId, int days);
 }

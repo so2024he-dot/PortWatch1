@@ -33,5 +33,5 @@ public interface ExchangeRateService {
 
 	BigDecimal getUSDToKRW();
 
-	BigDecimal convertUSDToKRW(BigDecimal currentPrice);
+	BigDecimal convertUSDToKRW(BigDecimal currentPrice) throws Exception;
 }

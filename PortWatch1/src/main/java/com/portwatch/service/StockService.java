@@ -145,4 +145,6 @@ public interface StockService {
      * @param stockId 종목 ID
      */
     void deleteStock(Integer stockId) throws Exception;
+
+	StockVO getStockById(Long stockId) throws Exception;
 }

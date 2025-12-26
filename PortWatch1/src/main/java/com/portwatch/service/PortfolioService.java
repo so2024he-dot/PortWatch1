@@ -214,4 +214,6 @@ public interface PortfolioService {
      * @param portfolioId 포트폴리오 ID (Integer)
      */
     void delete(Integer portfolioId);
+
+	boolean addStockToPortfolio(PortfolioVO portfolio);
 }

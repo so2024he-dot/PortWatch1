@@ -106,14 +106,9 @@ public class WatchlistVO {
     }
     
     @Override
-    public String toString() {
-        return "WatchlistVO [watchlistId=" + watchlistId + 
-               ", memberId=" + memberId + 
-               ", stockCode=" + stockCode + 
-               ", stockName=" + stockName + 
-               ", currentPrice=" + currentPrice + 
-               ", marketType=" + marketType + 
-               ", country=" + country + 
-               ", createdAt=" + createdAt + "]";
-    }
+	public String toString() {
+		return "WatchlistVO [watchlistId=" + watchlistId + ", memberId=" + memberId + ", stockCode=" + stockCode
+				+ ", createdAt=" + createdAt + ", stockName=" + stockName + ", currentPrice=" + currentPrice
+				+ ", marketType=" + marketType + ", country=" + country + "]";
+	}
 }

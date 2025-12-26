@@ -5,11 +5,12 @@ import java.util.List;
 
 import lombok.Data;
 
-@Data
+
 /**
  * 대시보드 통계 VO
  * 여러 테이블의 통계 정보를 담는 집계용 VO
  */
+@Data
 public class DashboardVO {
     
     // 전체 통계
@@ -167,4 +168,15 @@ public class DashboardVO {
     public void setRecentNews(List<NewsVO> recentNews) {
         this.recentNews = recentNews;
     }
+
+	@Override
+	public String toString() {
+		return "DashboardVO [totalPortfolios=" + totalPortfolios + ", totalStocks=" + totalStocks + ", totalWatchlist="
+				+ totalWatchlist + ", totalInvestment=" + totalInvestment + ", totalCurrentValue=" + totalCurrentValue
+				+ ", totalProfitLoss=" + totalProfitLoss + ", totalProfitLossRate=" + totalProfitLossRate
+				+ ", portfolioSummaries=" + portfolioSummaries + ", topStocks=" + topStocks + ", recentNews="
+				+ recentNews + "]";
+	}
+    
+    
 }

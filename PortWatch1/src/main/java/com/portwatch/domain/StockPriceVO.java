@@ -26,7 +26,9 @@ public class StockPriceVO {
     // 추가 정보 (JOIN용)
     private String stockCode;
     private String stockName;
-    
+    private BigDecimal currentPrice;
+    private BigDecimal priceChange;
+    private BigDecimal priceChangeRate;
     public StockPriceVO() {}
     
     // Getters and Setters
@@ -124,38 +126,32 @@ public class StockPriceVO {
     
     public void setStockName(String stockName) {
         this.stockName = stockName;
-    }
-    
-    @Override
-    public String toString() {
-        return "StockPriceVO{" +
-                "priceId=" + priceId +
-                ", stockId=" + stockId +
-                ", stockCode='" + stockCode + '\'' +
-                ", stockName='" + stockName + '\'' +
-                ", tradeDate=" + tradeDate +
-                ", openPrice=" + openPrice +
-                ", highPrice=" + highPrice +
-                ", lowPrice=" + lowPrice +
-                ", closePrice=" + closePrice +
-                ", volume=" + volume +
-                ", tradingValue=" + tradingValue +
-                '}';
-    }
+    }  
 
 	public void setCurrentPrice(BigDecimal currentPrice) {
-		this.setCurrentPrice(currentPrice);		
-	}
-
-	public void setPriceChange(BigDecimal priceChange) {
-		this.setPriceChange(priceChange);			
-	}
-
-	public void setPriceChangeRate(BigDecimal priceChangeRate) {
-		this.setPriceChangeRate(priceChangeRate);
+		this.currentPrice = currentPrice;
 		
 	}
 
+	public void setPriceChange(BigDecimal priceChange) {
+		this.priceChange = priceChange;
+		
+	}
+
+	public void setPriceChangeRate(BigDecimal priceChangeRate) {
+		this.priceChangeRate = priceChangeRate;
+		
+	}
+
+	@Override
+	public String toString() {
+		return "StockPriceVO [priceId=" + priceId + ", stockId=" + stockId + ", tradeDate=" + tradeDate + ", openPrice="
+				+ openPrice + ", highPrice=" + highPrice + ", lowPrice=" + lowPrice + ", closePrice=" + closePrice
+				+ ", volume=" + volume + ", tradingValue=" + tradingValue + ", createdAt=" + createdAt + ", stockCode="
+				+ stockCode + ", stockName=" + stockName + ", currentPrice=" + currentPrice + ", priceChange="
+				+ priceChange + ", priceChangeRate=" + priceChangeRate + "]";
+	}	
+	
 	
 
 	

@@ -1,9 +1,10 @@
 package com.portwatch.domain;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 
 import lombok.Data;
-@Data
+
 /**
  * 포트폴리오 아이템 VO
  * 
@@ -12,12 +13,16 @@ import lombok.Data;
  * @author PortWatch
  * @version 2.0 - Spring 5.0.7 + MySQL 8.0.33 호환
  */
+@Data
 public class PortfolioItemVO {
     
     private String memberId;           // 회원 ID
     private String stockCode;          // 종목 코드
     private BigDecimal quantity;       // 수량
     private BigDecimal price;          // 가격
+    private BigDecimal purchasePrice;  // 현재가 
+    private Timestamp purchaseDate;    // 현재시간
+    private int StockId;               // 
     
     // 기본 생성자
     public PortfolioItemVO() {
@@ -64,20 +69,27 @@ public class PortfolioItemVO {
         this.price = price;
     }
     public void setPurchaseDate() {
-    	this.setPurchaseDate();
-    }
-    @Override
-    public String toString() {
-        return "PortfolioItemVO{" +
-                "memberId='" + memberId + '\'' +
-                ", stockCode='" + stockCode + '\'' +
-                ", quantity=" + quantity +
-                ", price=" + price +
-                '}';
-    }
-
+    	this.setPurchaseDate();;
+    }   
+    
+    // 현재가 메서드 추가
 	public BigDecimal getPurchasePrice() {
-		// TODO Auto-generated method stub
-		return getPurchasePrice();
+		return purchasePrice;
+	
 	}
+
+	@Override
+	public String toString() {
+		return "PortfolioItemVO [memberId=" + memberId + ", stockCode=" + stockCode + ", quantity=" + quantity
+				+ ", price=" + price + ", purchasePrice=" + purchasePrice + "]";
+	}
+
+	
+	public BigDecimal getAvgPurchasePrice() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	
+	
 }

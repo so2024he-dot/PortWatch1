@@ -27,9 +27,10 @@ import java.util.List;
  * 
  * @author PortWatch
  * @version 10.0 - 타입 안정성 완료
+ * @param <StockDAO>
  */
 @Component
-public class NaverNewsCrawler implements NewsCrawler {
+public class NaverNewsCrawler<StockDAO> implements NewsCrawler {
     
     @Autowired
     private StockDAO stockDAO;
@@ -185,7 +186,7 @@ public class NaverNewsCrawler implements NewsCrawler {
     private Integer getStockId(String stockCode) {
         try {
             // ✅ StockVO로 정확히 받기
-            StockVO stock = stockDAO.selectStockByCode(stockCode);
+            StockVO stock = ((com.portwatch.persistence.StockDAO) stockDAO).selectStockByCode(stockCode);
             
             if (stock != null) {
                 return stock.getStockId();

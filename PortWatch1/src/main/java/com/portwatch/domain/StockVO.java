@@ -2,6 +2,8 @@ package com.portwatch.domain;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.List;
+
 import lombok.Data;
 
 /**
@@ -35,7 +37,8 @@ public class StockVO {
     private String sector;             // 섹터 (기술, 금융, 헬스케어 등)
     private String industry;           // 업종 (반도체, 자동차, 소프트웨어 등)
     private Timestamp updatedAt;       // 업데이트 시간
-    
+    private String string;
+    private StockVO stock;
     // ========================================
     // ✅ 생성자
     // ========================================
@@ -109,27 +112,30 @@ public class StockVO {
     public boolean isUSStock() {
         return "US".equals(country);
     }
-    
+   
     // ========================================
     // ✅ Lombok @Data가 자동 생성하는 메서드:
     // - getter/setter (모든 필드)
     // - toString()
     // - equals() / hashCode()
     // ========================================
-    
-    @Override
-    public String toString() {
-        return "StockVO{" +
-                "stockId=" + stockId +
-                ", stockCode='" + stockCode + '\'' +
-                ", stockName='" + stockName + '\'' +
-                ", country='" + country + '\'' +
-                ", marketType='" + marketType + '\'' +
-                ", industry='" + industry + '\'' +
-                ", currentPrice=" + currentPrice +
-                ", changeAmount=" + changeAmount +
-                ", changeRate=" + changeRate +
-                ", updatedAt=" + updatedAt +
-                '}';
+    public List<StockVO> selectByMarket(String string) {
+		this.string = string;
+		return null;
+		
     }
+
+	public void update(StockVO stock) {
+		this.stock = stock;
+		
+	}
+	
+    @Override
+	public String toString() {
+		return "StockVO [stockId=" + stockId + ", stockCode=" + stockCode + ", stockName=" + stockName + ", country="
+				+ country + ", marketType=" + marketType + ", currentPrice=" + currentPrice + ", changeAmount="
+				+ changeAmount + ", changeRate=" + changeRate + ", tradingVolume=" + tradingVolume + ", marketCap="
+				+ marketCap + ", sector=" + sector + ", industry=" + industry + ", updatedAt=" + updatedAt + ", string="
+				+ string + ", stock=" + stock + "]";
+	}
 }

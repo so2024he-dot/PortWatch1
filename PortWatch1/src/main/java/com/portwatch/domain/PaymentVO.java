@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 import lombok.Data;
-@Data
+
 /**
  * 결제 VO
  * 
@@ -12,6 +12,7 @@ import lombok.Data;
  * @author PortWatch
  * @version 2.0 - Spring 5.0.7 + MySQL 8.0.33 호환
  */
+@Data
 public class PaymentVO {
     
     private Long paymentId;              // 결제 ID
@@ -35,7 +36,8 @@ public class PaymentVO {
     private BigDecimal localAmount;      // 원화 환산 금액
     private Timestamp createdAt;         // 생성일시
     private Timestamp updatedAt;         // 수정일시
-    
+    private Timestamp completedAt;       // 완료일시
+    private Timestamp cancelledAt;       // 취소일시
     // 기본 생성자
     public PaymentVO() {
     }
@@ -209,17 +211,28 @@ public class PaymentVO {
         this.updatedAt = updatedAt;
     }
     
-    @Override
-    public String toString() {
-        return "PaymentVO{" +
-                "paymentId=" + paymentId +
-                ", memberId='" + memberId + '\'' +
-                ", stockCode='" + stockCode + '\'' +
-                ", stockName='" + stockName + '\'' +
-                ", quantity=" + quantity +
-                ", totalAmount=" + totalAmount +
-                ", paymentStatus='" + paymentStatus + '\'' +
-                ", currency='" + currency + '\'' +
-                '}';
-    }
+    
+	public void setCompletedAt(Timestamp timestamp) {
+		this.completedAt = timestamp;
+	}	
+
+	public void setCancelledAt(Timestamp timestamp) {
+		this.cancelledAt = timestamp;
+		
+	}
+
+	@Override
+	public String toString() {
+		return "PaymentVO [paymentId=" + paymentId + ", memberId=" + memberId + ", stockId=" + stockId + ", stockCode="
+				+ stockCode + ", stockName=" + stockName + ", quantity=" + quantity + ", purchasePrice=" + purchasePrice
+				+ ", totalAmount=" + totalAmount + ", paymentMethod=" + paymentMethod + ", paymentStatus="
+				+ paymentStatus + ", cardNumber=" + cardNumber + ", cardCompany=" + cardCompany + ", pgProvider="
+				+ pgProvider + ", transactionId=" + transactionId + ", portfolioId=" + portfolioId + ", country="
+				+ country + ", currency=" + currency + ", exchangeRate=" + exchangeRate + ", localAmount=" + localAmount
+				+ ", createdAt=" + createdAt + ", updatedAt=" + updatedAt + ", completedAt=" + completedAt
+				+ ", cancelledAt=" + cancelledAt + "]";
+	}	
+	
+	
+	
 }

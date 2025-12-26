@@ -26,13 +26,13 @@ public class PortfolioVO {
     private Timestamp purchaseDate;             // 매입일
     private Timestamp createdAt;           // 생성일시
     private Timestamp updatedAt;           // 수정일시
-    
+    private String country;                // 국가 지정
     // 추가 필드 (현재가 계산용)
     private BigDecimal currentPrice;       // 현재가
     private BigDecimal totalValue;         // 총 평가액
     private BigDecimal profitLoss;         // 손익
     private BigDecimal profitLossRate;     // 수익률(%)
-    
+    private String marketType;             // 시장타입
     // 기본 생성자
     public PortfolioVO() {
     }
@@ -161,6 +161,17 @@ public class PortfolioVO {
 
 	public void setProfitRate(BigDecimal profitRate) {		
 		return;		
+	}	
+
+	public void setCountry(String country) {
+		this.country = country;
+		
+	}
+	
+
+	public void setMarketType(String marketType) {
+		this.marketType = marketType;
+		
 	}
 
 	@Override
@@ -168,9 +179,13 @@ public class PortfolioVO {
 		return "PortfolioVO [portfolioId=" + portfolioId + ", memberId=" + memberId + ", stockId=" + stockId
 				+ ", stockCode=" + stockCode + ", stockName=" + stockName + ", quantity=" + quantity
 				+ ", avgPurchasePrice=" + avgPurchasePrice + ", purchaseDate=" + purchaseDate + ", createdAt="
-				+ createdAt + ", updatedAt=" + updatedAt + ", currentPrice=" + currentPrice + ", totalValue="
-				+ totalValue + ", profitLoss=" + profitLoss + ", profitLossRate=" + profitLossRate + "]";
+				+ createdAt + ", updatedAt=" + updatedAt + ", country=" + country + ", currentPrice=" + currentPrice
+				+ ", totalValue=" + totalValue + ", profitLoss=" + profitLoss + ", profitLossRate=" + profitLossRate
+				+ ", marketType=" + marketType + "]";
 	}
+	
+	
+	
 	
 	
 }
