@@ -18,11 +18,11 @@ import com.portwatch.domain.NewsVO;
 import com.portwatch.service.NewsService;
 
 /**
- * 뉴스 API 컨트롤러 (신규 추가)
+ * ✅ 뉴스 API 컨트롤러 (수정 버전)
  * REST API 엔드포인트 제공
  * 
  * @author PortWatch Team
- * @version 3.0
+ * @version 3.1 - /api/news/all 엔드포인트 추가
  */
 @RestController
 @RequestMapping("/api/news")
@@ -32,6 +32,47 @@ public class NewsApiController {
     
     @Autowired(required = false)
     private NewsService newsService;
+    
+    /**
+     * ✅ 모든 뉴스 조회 (list.jsp에서 사용)
+     * GET /api/news/all
+     */
+    @GetMapping("/all")
+    public ResponseEntity<Map<String, Object>> getAllNews() {
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        logger.info("📰 전체 뉴스 조회 API 호출");
+        
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            if (newsService == null) {
+                logger.error("❌ NewsService is null");
+                response.put("success", false);
+                response.put("message", "NewsService가 초기화되지 않았습니다.");
+                response.put("newsList", java.util.Collections.emptyList());
+                return ResponseEntity.status(500).body(response);
+            }
+            
+            // 뉴스 목록 조회 (최대 50개)
+            List<NewsVO> newsList = newsService.getRecentNews(50);
+            
+            logger.info("✅ 전체 뉴스 {} 건 조회 완료", newsList.size());
+            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            response.put("success", true);
+            response.put("newsList", newsList);
+            response.put("count", newsList.size());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            logger.error("❌ 전체 뉴스 조회 실패", e);
+            response.put("success", false);
+            response.put("message", "뉴스 조회 실패: " + e.getMessage());
+            response.put("newsList", java.util.Collections.emptyList());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
     
     /**
      * 뉴스 크롤링 시작
