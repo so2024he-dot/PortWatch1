@@ -39,7 +39,7 @@ public class PortfolioServiceImpl implements PortfolioService {
      * ✅ 포트폴리오 목록 조회 (String memberId)
      */
     @Override
-    public List<PortfolioVO> getPortfolioList(String memberId) throws Exception {
+    public List<PortfolioVO> getPortfolioList(String memberId) {
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         System.out.println("📊 포트폴리오 목록 조회");
         System.out.println("  - 회원 ID: " + memberId);

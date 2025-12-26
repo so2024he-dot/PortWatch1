@@ -90,9 +90,6 @@ public class PortfolioVO {
         return avgPurchasePrice;
     }
     
-    public void setPurchaseDate() {
-    	this.setPurchaseDate();
-    }
     public void setAvgPurchasePrice(BigDecimal avgPurchasePrice) {
         this.avgPurchasePrice = avgPurchasePrice;
     }
@@ -160,18 +157,20 @@ public class PortfolioVO {
     
     public void setProfitLossRate(BigDecimal profitLossRate) {
         this.profitLossRate = profitLossRate;
-    }
-    
-    @Override
-    public String toString() {
-        return "PortfolioVO{" +
-                "portfolioId=" + portfolioId +
-                ", memberId='" + memberId + '\'' +
-                ", stockCode='" + stockCode + '\'' +
-                ", stockName='" + stockName + '\'' +
-                ", quantity=" + quantity +
-                ", avgPurchasePrice=" + avgPurchasePrice +
-                ", currentPrice=" + currentPrice +
-                '}';
-    }
+    }  
+
+	public void setProfitRate(BigDecimal profitRate) {		
+		return;		
+	}
+
+	@Override
+	public String toString() {
+		return "PortfolioVO [portfolioId=" + portfolioId + ", memberId=" + memberId + ", stockId=" + stockId
+				+ ", stockCode=" + stockCode + ", stockName=" + stockName + ", quantity=" + quantity
+				+ ", avgPurchasePrice=" + avgPurchasePrice + ", purchaseDate=" + purchaseDate + ", createdAt="
+				+ createdAt + ", updatedAt=" + updatedAt + ", currentPrice=" + currentPrice + ", totalValue="
+				+ totalValue + ", profitLoss=" + profitLoss + ", profitLossRate=" + profitLossRate + "]";
+	}
+	
+	
 }

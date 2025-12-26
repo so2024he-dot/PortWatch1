@@ -75,4 +75,8 @@ public interface PortfolioDAO {
 	void deletePortfolio(Long portfolioId);
 
 	void deletePortfolioByMemberAndStock(String memberId, Integer stockId);
+
+	List<PortfolioVO> selectPortfolioByMember(String memberId);
+
+	PortfolioVO selectByMemberAndStock(String memberId, Integer stockId);
 }

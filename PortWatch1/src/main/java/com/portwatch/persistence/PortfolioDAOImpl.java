@@ -207,6 +207,18 @@ public class PortfolioDAOImpl implements PortfolioDAO {
 		
 	}
 
+	@Override
+	public List<PortfolioVO> selectPortfolioByMember(String memberId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public PortfolioVO selectByMemberAndStock(String memberId, Integer stockId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	/*
 	 * @Override public List<PortfolioVO> selectPortfolioByMemberId(String memberId)
 	 * { // TODO Auto-generated method stub return null; }

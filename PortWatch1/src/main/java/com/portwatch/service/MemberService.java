@@ -54,4 +54,10 @@ public interface MemberService {
      * ID 중복 체크
      */
     boolean isIdDuplicate(String memberId) throws Exception;
+
+	boolean checkEmailAvailable(String email);
+
+	String generateVerificationCode();
+
+	boolean verifyCode(String email, String code);
 }

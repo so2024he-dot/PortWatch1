@@ -227,4 +227,10 @@ public class WatchlistServiceImpl implements WatchlistService {
         System.out.println("✅ 관심종목 삭제 완료!");
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     }
+
+	@Override
+	public boolean checkWatchlist(String memberId, Integer stockId) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 }

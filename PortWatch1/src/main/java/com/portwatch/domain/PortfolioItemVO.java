@@ -3,7 +3,7 @@ package com.portwatch.domain;
 import java.math.BigDecimal;
 
 import lombok.Data;
-
+@Data
 /**
  * 포트폴리오 아이템 VO
  * 
@@ -12,7 +12,6 @@ import lombok.Data;
  * @author PortWatch
  * @version 2.0 - Spring 5.0.7 + MySQL 8.0.33 호환
  */
-@Data
 public class PortfolioItemVO {
     
     private String memberId;           // 회원 ID
@@ -76,4 +75,9 @@ public class PortfolioItemVO {
                 ", price=" + price +
                 '}';
     }
+
+	public BigDecimal getPurchasePrice() {
+		// TODO Auto-generated method stub
+		return getPurchasePrice();
+	}
 }

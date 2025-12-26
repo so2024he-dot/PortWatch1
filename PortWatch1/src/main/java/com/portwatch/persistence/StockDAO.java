@@ -125,4 +125,19 @@ public interface StockDAO {
      * 나라별 종목 수
      */
     int countStocksByCountry(@Param("country") String country);
+
+	StockVO selectById(Integer stockId);
+
+	List<StockVO> getStocksByMarketType(String string);
+
+	StockVO getStockByCode(String stockCode);
+
+	void updateCurrentPrice(String stockCode, BigDecimal currentPrice, BigDecimal priceChange,
+			BigDecimal priceChangeRate);
+
+	List<StockVO> selectStocksByMarket(String marketType);
+
+	void updateCurrentPrice(Integer stockId, BigDecimal currentPrice);
+
+	void deleteStock(Integer stockId);
 }

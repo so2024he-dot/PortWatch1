@@ -2,9 +2,6 @@ package com.portwatch.domain;
 
 import java.sql.Timestamp;
 
-import lombok.Data;
-
-
 /**
  * ✅ 뉴스 VO (완전 구현)
  * 
@@ -13,7 +10,6 @@ import lombok.Data;
  * @author PortWatch
  * @version 3.0 - MySQL 8.0 호환
  */
-@Data
 public class NewsVO {
     
     private Long newsId;              // news_id BIGINT

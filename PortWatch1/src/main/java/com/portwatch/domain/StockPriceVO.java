@@ -5,12 +5,11 @@ import java.sql.Date;
 import java.sql.Timestamp;
 
 import lombok.Data;
-
+@Data
 /**
  * 주가 정보 VO (STOCK_PRICE 테이블)
  * 실시간 주가 업데이트용
  */
-@Data
 public class StockPriceVO {
     
     private Long priceId;
@@ -143,18 +142,19 @@ public class StockPriceVO {
                 ", tradingValue=" + tradingValue +
                 '}';
     }
-	/*
-	 * public void setCurrentPrice(BigDecimal currentPrice) {
-	 * this.setCurrentPrice(currentPrice); }
-	 * 
-	 * public void setPriceChange(BigDecimal priceChange) {
-	 * this.setPriceChange(priceChange); }
-	 * 
-	 * public void setPriceChangeRate(BigDecimal priceChangeRate) {
-	 * this.setPriceChangeRate(priceChangeRate);
-	 * 
-	 * }
-	 */
+
+	public void setCurrentPrice(BigDecimal currentPrice) {
+		this.setCurrentPrice(currentPrice);		
+	}
+
+	public void setPriceChange(BigDecimal priceChange) {
+		this.setPriceChange(priceChange);			
+	}
+
+	public void setPriceChangeRate(BigDecimal priceChangeRate) {
+		this.setPriceChangeRate(priceChangeRate);
+		
+	}
 
 	
 

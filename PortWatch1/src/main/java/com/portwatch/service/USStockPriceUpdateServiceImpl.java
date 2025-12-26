@@ -379,4 +379,16 @@ public class USStockPriceUpdateServiceImpl implements USStockPriceUpdateService 
             "히스토리가 필요한 경우 STOCK_PRICE_HISTORY 테이블을 생성하세요."
         );
     }
+
+	@Override
+	public void updateByMarketType(String marketType) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public Map<String, Object> crawlStockPriceFromYahoo(String symbol) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

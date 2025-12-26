@@ -4,12 +4,11 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 import lombok.Data;
-
+@Data
 /**
  * 포트폴리오에 속한 종목 정보
  * PORTFOLIO_STOCK 테이블과 매핑
  */
-@Data
 public class PortfolioStockVO {
     private Integer portfolioStockId;
     private Integer portfolioId;

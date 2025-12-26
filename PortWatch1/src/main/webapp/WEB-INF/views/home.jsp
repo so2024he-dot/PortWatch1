@@ -98,64 +98,78 @@
     <div class="container mt-5">
         <div class="row">
             <div class="col-md-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-globe-americas"></i>
+                <a href="${pageContext.request.contextPath}/stock/list" style="text-decoration: none; color: inherit;">
+                    <div class="feature-card" style="cursor: pointer;">
+                        <div class="feature-icon">
+                            <i class="fas fa-globe-americas"></i>
+                        </div>
+                        <h3>한국 + 미국 주식</h3>
+                        <p>KOSPI, KOSDAQ, NASDAQ, NYSE의 주식을 한 곳에서 관리하세요.</p>
+                        <small class="text-muted">클릭하여 종목 보기 →</small>
                     </div>
-                    <h3>한국 + 미국 주식</h3>
-                    <p>KOSPI, KOSDAQ, NASDAQ, NYSE의 주식을 한 곳에서 관리하세요.</p>
-                </div>
+                </a>
             </div>
             
             <div class="col-md-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-chart-bar"></i>
+                <a href="${pageContext.request.contextPath}/stock/list?country=KR" style="text-decoration: none; color: inherit;">
+                    <div class="feature-card" style="cursor: pointer;">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <h3>실시간 차트</h3>
+                        <p>일봉, 주봉, 월봉 차트로 종목 흐름을 한눈에 파악하세요.</p>
+                        <small class="text-muted">클릭하여 차트 보기 →</small>
                     </div>
-                    <h3>실시간 차트</h3>
-                    <p>일봉, 주봉, 월봉 차트로 종목 흐름을 한눈에 파악하세요.</p>
-                </div>
+                </a>
             </div>
             
             <div class="col-md-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-newspaper"></i>
+                <a href="${pageContext.request.contextPath}/news/list" style="text-decoration: none; color: inherit;">
+                    <div class="feature-card" style="cursor: pointer;">
+                        <div class="feature-icon">
+                            <i class="fas fa-newspaper"></i>
+                        </div>
+                        <h3>자동 뉴스 수집</h3>
+                        <p>관련 뉴스를 자동으로 수집하여 투자 결정을 도와드립니다.</p>
+                        <small class="text-muted">클릭하여 뉴스 보기 →</small>
                     </div>
-                    <h3>자동 뉴스 수집</h3>
-                    <p>관련 뉴스를 자동으로 수집하여 투자 결정을 도와드립니다.</p>
-                </div>
+                </a>
             </div>
         </div>
         
         <div class="row mt-4">
             <div class="col-md-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-filter"></i>
+                <a href="${pageContext.request.contextPath}/stock/list?country=US" style="text-decoration: none; color: inherit;">
+                    <div class="feature-card" style="cursor: pointer;">
+                        <div class="feature-icon">
+                            <i class="fas fa-filter"></i>
+                        </div>
+                        <h3>스마트 필터링</h3>
+                        <p>나라, 시장, 업종별로 원하는 종목을 빠르게 찾으세요.</p>
+                        <small class="text-muted">클릭하여 필터 사용하기 →</small>
                     </div>
-                    <h3>스마트 필터링</h3>
-                    <p>나라, 시장, 업종별로 원하는 종목을 빠르게 찾으세요.</p>
-                </div>
+                </a>
             </div>
             
             <div class="col-md-4">
-                <div class="feature-card">
+                <div class="feature-card" style="cursor: pointer;" onclick="goToPurchase()">
                     <div class="feature-icon">
                         <i class="fas fa-shopping-cart"></i>
                     </div>
                     <h3>간편한 매매</h3>
                     <p>실시간 검증과 함께 안전하게 주식을 매매하세요.</p>
+                    <small class="text-muted">클릭하여 매매하기 →</small>
                 </div>
             </div>
             
             <div class="col-md-4">
-                <div class="feature-card">
+                <div class="feature-card" style="cursor: pointer;" onclick="goToPortfolio()">
                     <div class="feature-icon">
                         <i class="fas fa-wallet"></i>
                     </div>
                     <h3>포트폴리오 관리</h3>
                     <p>수익률, 보유 종목, 거래 내역을 한눈에 확인하세요.</p>
+                    <small class="text-muted">클릭하여 관리하기 →</small>
                 </div>
             </div>
         </div>
@@ -174,5 +188,37 @@
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    // ✅ 간편한 매매 페이지로 이동
+    function goToPurchase() {
+        <c:choose>
+            <c:when test="${not empty loginMember}">
+                // 로그인 상태: 포트폴리오 페이지로 이동
+                window.location.href = '${pageContext.request.contextPath}/portfolio';
+            </c:when>
+            <c:otherwise>
+                // 비로그인 상태: 로그인 페이지로 이동
+                alert('로그인이 필요한 서비스입니다.');
+                window.location.href = '${pageContext.request.contextPath}/member/login';
+            </c:otherwise>
+        </c:choose>
+    }
+    
+    // ✅ 포트폴리오 관리 페이지로 이동
+    function goToPortfolio() {
+        <c:choose>
+            <c:when test="${not empty loginMember}">
+                // 로그인 상태: 대시보드로 이동
+                window.location.href = '${pageContext.request.contextPath}/dashboard';
+            </c:when>
+            <c:otherwise>
+                // 비로그인 상태: 로그인 페이지로 이동
+                alert('로그인이 필요한 서비스입니다.');
+                window.location.href = '${pageContext.request.contextPath}/member/login';
+            </c:otherwise>
+        </c:choose>
+    }
+    </script>
 </body>
 </html>

@@ -66,4 +66,6 @@ public interface WatchlistService {
      * @throws Exception
      */
     void removeFromWatchlist(Integer watchlistId) throws Exception;
+
+	boolean checkWatchlist(String memberId, Integer stockId);
 }

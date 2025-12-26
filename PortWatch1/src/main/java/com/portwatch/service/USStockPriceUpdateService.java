@@ -83,4 +83,8 @@ public interface USStockPriceUpdateService {
      * @throws UnsupportedOperationException 현재 미지원
      */
     List<StockPriceVO> getUSStockPriceHistory(String symbol, int days) throws Exception;
+
+	void updateByMarketType(String marketType);
+
+	Map<String, Object> crawlStockPriceFromYahoo(String symbol);
 }

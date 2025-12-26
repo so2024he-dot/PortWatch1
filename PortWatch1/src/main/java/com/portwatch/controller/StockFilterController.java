@@ -154,7 +154,7 @@ public class StockFilterController {
      */
     @GetMapping("/search")
     public ResponseEntity<Map<String, Object>> searchStocks(
-            @RequestParam(name = "keyword") String keyword) {
+            @RequestParam String keyword) {
         
         Map<String, Object> response = new HashMap<>();
         
@@ -259,9 +259,9 @@ public class StockFilterController {
      */
     @GetMapping("/filter")
     public ResponseEntity<Map<String, Object>> filterStocks(
-            @RequestParam(required = false) String country,
-            @RequestParam(required = false) String market,
-            @RequestParam(required = false) String industry) {
+            @RequestParam(name = "country", required = false) String country,
+            @RequestParam(name = "market", required = false) String market,
+            @RequestParam(name = "industry", required = false) String industry) {
         
         Map<String, Object> response = new HashMap<>();
         

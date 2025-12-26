@@ -54,8 +54,9 @@ public interface PortfolioService {
      * 
      * @param memberId 회원 ID (String)
      * @return 요약 정보 (총 평가액, 총 손익, 수익률 등)
+     * @throws Exception 
      */
-    Map<String, Object> getPortfolioSummary(String memberId);
+    Map<String, Object> getPortfolioSummary(String memberId) throws Exception;
     
     /**
      * 포트폴리오 요약 정보 조회 (Integer 버전 - Deprecated)
@@ -75,8 +76,9 @@ public interface PortfolioService {
      * @param quantity 수량
      * @param price 매입 가격
      * @return 성공 여부
+     * @throws Exception 
      */
-    boolean addStockToPortfolio(String memberId, String stockCode, double quantity, double price);
+    boolean addStockToPortfolio(String memberId, String stockCode, double quantity, double price) throws Exception;
     
     /**
      * 주식 매수 - PortfolioItemVO 사용
@@ -100,8 +102,9 @@ public interface PortfolioService {
      * 포트폴리오 업데이트
      * 
      * @param portfolio 포트폴리오 정보
+     * @throws Exception 
      */
-    void updatePortfolio(PortfolioVO portfolio);
+    void updatePortfolio(PortfolioVO portfolio) throws Exception;
     
     /**
      * 포트폴리오 총 평가액 계산

@@ -141,4 +141,15 @@ public class MemberVO {
                ", memberName=" + memberName + ", memberPhone=" + memberPhone + 
                ", memberRole=" + memberRole + ", memberStatus=" + memberStatus + "]";
     }
+
+	public Object getEmail() {
+			return getEmail();
+	}
+
+	public Object getStatus() {
+		// TODO Auto-generated method stub
+		return getStatus();
+	}
+
+	
 }

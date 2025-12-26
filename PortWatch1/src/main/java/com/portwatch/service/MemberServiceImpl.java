@@ -191,4 +191,22 @@ public class MemberServiceImpl implements MemberService {
             throw new RuntimeException("비밀번호 암호화 실패", e);
         }
     }
+
+	@Override
+	public boolean checkEmailAvailable(String email) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public String generateVerificationCode() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean verifyCode(String email, String code) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 }
