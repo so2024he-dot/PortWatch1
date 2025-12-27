@@ -29,6 +29,7 @@ public class StockPriceVO {
     private BigDecimal currentPrice;
     private BigDecimal priceChange;
     private BigDecimal priceChangeRate;
+    private Date priceDate;
     public StockPriceVO() {}
     
     // Getters and Setters
@@ -143,14 +144,21 @@ public class StockPriceVO {
 		
 	}
 
+	public void setPriceDate(Date date) {
+		this.priceDate = date;
+		
+	}	
+	
 	@Override
 	public String toString() {
 		return "StockPriceVO [priceId=" + priceId + ", stockId=" + stockId + ", tradeDate=" + tradeDate + ", openPrice="
 				+ openPrice + ", highPrice=" + highPrice + ", lowPrice=" + lowPrice + ", closePrice=" + closePrice
 				+ ", volume=" + volume + ", tradingValue=" + tradingValue + ", createdAt=" + createdAt + ", stockCode="
 				+ stockCode + ", stockName=" + stockName + ", currentPrice=" + currentPrice + ", priceChange="
-				+ priceChange + ", priceChangeRate=" + priceChangeRate + "]";
-	}	
+				+ priceChange + ", priceChangeRate=" + priceChangeRate + ", priceDate=" + priceDate + "]";
+	}
+
+	
 	
 	
 

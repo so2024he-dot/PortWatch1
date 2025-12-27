@@ -62,4 +62,6 @@ public interface StockPriceDAO {
 	void insert(StockPriceVO stockPrice);
 
 	List<StockPriceVO> selectByStockIdAndDays(Integer stockId, int days);
+
+	List<StockPriceVO> selectRecentByStockId(Integer stockId, int days);
 }

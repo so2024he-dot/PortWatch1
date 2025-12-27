@@ -55,9 +55,32 @@ public interface MemberService {
      */
     boolean isIdDuplicate(String memberId) throws Exception;
 
-	boolean checkEmailAvailable(String email);
+	boolean checkEmailAvailable(String email) throws Exception;
 
-	String generateVerificationCode();
+	String generateVerificationCode() throws Exception;
 
-	boolean verifyCode(String email, String code);
+	boolean verifyCode(String email, String code) throws Exception;
+
+	/**
+	 * ✅ 인증 코드 저장
+	 * 
+	 * @param email 이메일
+	 * @param code 인증 코드
+	 */
+	void saveVerificationCode(String email, String code) throws Exception;
+
+	/**
+	 * ✅ 비밀번호 변경
+	 * 
+	 * @param memberId 회원 ID
+	 * @param newPassword 새 비밀번호
+	 */
+	void changePassword(String memberId, String newPassword) throws Exception;
+
+	/**
+	 * ✅ 회원 탈퇴
+	 * 
+	 * @param memberId 회원 ID
+	 */
+	void deleteMember(String memberId) throws Exception;
 }

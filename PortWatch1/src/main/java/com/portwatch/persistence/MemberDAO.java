@@ -1,5 +1,7 @@
 package com.portwatch.persistence;
 
+import java.lang.System.Logger;
+
 import com.portwatch.domain.MemberVO;
 
 /**
@@ -59,4 +61,13 @@ public interface MemberDAO {
      * 활성 회원 수
      */
     int getActiveMemberCount() throws Exception;
+    
+	static MemberVO selectByEmail(String email) throws Exception{
+		
+	    return null;
+	}
+
+	void updatePassword(String memberId, String newPassword);
+
+
 }

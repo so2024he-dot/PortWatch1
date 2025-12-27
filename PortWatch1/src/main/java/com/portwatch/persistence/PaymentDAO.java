@@ -79,5 +79,7 @@ public interface PaymentDAO {
 
 	PaymentVO selectById(Long paymentId);
 
+	void updatePaymentStatus(Long paymentId, String status);
+
 
 }

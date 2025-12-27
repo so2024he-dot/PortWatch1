@@ -2,20 +2,16 @@ package com.portwatch.domain;
 
 import java.sql.Timestamp;
 
-import lombok.Data;
-
 /**
- * ✅ 회원 VO (완전 수정)
+ * ✅ 회원 VO - 완벽 수정
  * 
  * MEMBER 테이블과 1:1 매핑
- * - memberRegDate alias 추가
- * - getEmail() alias 추가 (호환성)
- * - getStatus() alias 추가 (호환성)
+ * - 중복 메서드 모두 제거
+ * - Alias 메서드 추가 (호환성)
  * 
  * @author PortWatch
- * @version 4.0 - 모든 alias 메서드 추가
+ * @version FINAL - Spring 5.0.7 + MySQL 8.0.33 완전 대응
  */
-@Data
 public class MemberVO {
     
     // 기본 정보
@@ -40,7 +36,7 @@ public class MemberVO {
     public MemberVO() {
     }
     
-    // ===== Getter & Setter =====
+    // ===== Getters and Setters =====
     
     public String getMemberId() {
         return memberId;
@@ -152,7 +148,8 @@ public class MemberVO {
     }
     
     /**
-     * ✅ 디버그 호환성: getEmail() alias (memberEmail를 반환)
+     * ✅ email alias (memberEmail를 반환)
+     * MemberServiceImpl, Controller에서 사용
      */
     public String getEmail() {
         return this.memberEmail;
@@ -163,7 +160,31 @@ public class MemberVO {
     }
     
     /**
-     * ✅ 디버그 호환성: getStatus() alias (memberStatus를 반환)
+     * ✅ name alias (memberName를 반환)
+     * Controller, JSP에서 사용
+     */
+    public String getName() {
+        return this.memberName;
+    }
+    
+    public void setName(String name) {
+        this.memberName = name;
+    }
+    
+    /**
+     * ✅ password alias (memberPass를 반환)
+     * MemberServiceImpl.login()에서 사용
+     */
+    public String getPassword() {
+        return this.memberPass;
+    }
+    
+    public void setPassword(String password) {
+        this.memberPass = password;
+    }
+    
+    /**
+     * ✅ status alias (memberStatus를 반환)
      */
     public String getStatus() {
         return this.memberStatus;
@@ -175,8 +196,9 @@ public class MemberVO {
     
     @Override
     public String toString() {
-        return "MemberVO [memberId=" + memberId + ", memberEmail=" + memberEmail + 
-               ", memberName=" + memberName + ", memberPhone=" + memberPhone + 
-               ", memberRole=" + memberRole + ", memberStatus=" + memberStatus + "]";
+        return "MemberVO [memberId=" + memberId + ", memberEmail=" + memberEmail + ", memberPass=" + memberPass
+                + ", memberName=" + memberName + ", memberPhone=" + memberPhone + ", memberAddress=" + memberAddress
+                + ", memberGender=" + memberGender + ", memberBirth=" + memberBirth + ", memberRole=" + memberRole
+                + ", memberStatus=" + memberStatus + ", createdAt=" + createdAt + ", updatedAt=" + updatedAt + "]";
     }
 }

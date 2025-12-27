@@ -60,6 +60,29 @@ public interface PaymentService {
 	List<PaymentVO> getPaymentHistory(String memberId) throws Exception;
 
 	Map<String, Object> getPaymentSummary(String memberId) throws Exception;
+
+	/**
+	 * ✅ 결제 생성
+	 * 
+	 * @param payment 결제 정보
+	 */
+	void createPayment(PaymentVO payment) throws Exception;
+
+	/**
+	 * ✅ 결제 상태 업데이트
+	 * 
+	 * @param paymentId 결제 ID
+	 * @param status 결제 상태
+	 */
+	void updatePaymentStatus(Long paymentId, String status) throws Exception;
+
+	/**
+	 * ✅ 결제 조회 (ID로)
+	 * 
+	 * @param paymentId 결제 ID
+	 * @return 결제 정보
+	 */
+	PaymentVO getPaymentById(Long paymentId) throws Exception;
     
     /**
      * 회원의 결제 요약 정보 조회

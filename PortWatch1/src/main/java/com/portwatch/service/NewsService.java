@@ -56,4 +56,18 @@ public interface NewsService {
      * DB에 저장된 최신 뉴스 조회 (별칭)
      */
     List<NewsVO> getLatestNews(int limit) throws Exception;
+
+	/**
+	 * ✅ 전체 뉴스 조회
+	 * 
+	 * @return 전체 뉴스 리스트
+	 */
+	List<NewsVO> getAllNews() throws Exception;
+
+	/**
+	 * ✅ 뉴스 추가
+	 * 
+	 * @param news 뉴스 정보
+	 */
+	void insertNews(NewsVO news) throws Exception;
 }

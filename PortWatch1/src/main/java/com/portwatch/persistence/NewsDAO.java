@@ -60,4 +60,10 @@ public interface NewsDAO {
      * 오늘 등록된 뉴스 개수
      */
     int getTodayNewsCount() throws Exception;
+
+	List<NewsVO> selectAllNews();
+
+	List<NewsVO> selectRecentNews(int limit);
+
+	List<NewsVO> selectNewsByStock(String stockCode, int limit);
 }

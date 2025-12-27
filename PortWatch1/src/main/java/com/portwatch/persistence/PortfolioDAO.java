@@ -84,5 +84,11 @@ public interface PortfolioDAO {
 
 	void update(PortfolioVO portfolio);
 
+	PortfolioVO selectByMemberAndStockCode(String memberId, String stockCode);
+
+	PortfolioVO selectPortfolioById(Long portfolioId);
+
+	void deleteAllByMember(String memberId);
+
 
 }

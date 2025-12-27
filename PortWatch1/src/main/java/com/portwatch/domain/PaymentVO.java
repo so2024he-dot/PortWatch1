@@ -2,6 +2,10 @@ package com.portwatch.domain;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.List;
+
+import org.apache.ibatis.javassist.bytecode.stackmap.TypeData.UninitThis;
+import org.eclipse.jdt.internal.compiler.ast.ThisReference;
 
 import lombok.Data;
 
@@ -38,6 +42,7 @@ public class PaymentVO {
     private Timestamp updatedAt;         // 수정일시
     private Timestamp completedAt;       // 완료일시
     private Timestamp cancelledAt;       // 취소일시
+    private BigDecimal amount;           // 총계
     // 기본 생성자
     public PaymentVO() {
     }
@@ -221,6 +226,10 @@ public class PaymentVO {
 		
 	}
 
+	public void getAmount(BigDecimal amount) {
+		this.amount = amount;		
+	}	
+	
 	@Override
 	public String toString() {
 		return "PaymentVO [paymentId=" + paymentId + ", memberId=" + memberId + ", stockId=" + stockId + ", stockCode="
@@ -230,8 +239,11 @@ public class PaymentVO {
 				+ pgProvider + ", transactionId=" + transactionId + ", portfolioId=" + portfolioId + ", country="
 				+ country + ", currency=" + currency + ", exchangeRate=" + exchangeRate + ", localAmount=" + localAmount
 				+ ", createdAt=" + createdAt + ", updatedAt=" + updatedAt + ", completedAt=" + completedAt
-				+ ", cancelledAt=" + cancelledAt + "]";
-	}	
+				+ ", cancelledAt=" + cancelledAt + ", amount=" + amount + "]";
+	}
+
+	
+
 	
 	
 	
