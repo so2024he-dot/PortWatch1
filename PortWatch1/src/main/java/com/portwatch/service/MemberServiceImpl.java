@@ -449,9 +449,67 @@ public class MemberServiceImpl implements MemberService {
         withdrawMember(memberId);
     }
 
-	@Override
-	public void changePassword(String memberId, String newPassword) throws Exception {
-		// TODO Auto-generated method stub
-		
-	}
+    @Override
+    @Transactional
+    public void changePassword(String memberId, String newPassword) throws Exception {
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("🔐 비밀번호 변경 (간단 버전)");
+        System.out.println("  - 회원 ID: " + memberId);
+        
+        try {
+            // 1. 회원 정보 조회
+            MemberVO member = memberDAO.selectMemberById(memberId);
+            
+            if (member == null) {
+                System.out.println("❌ 회원을 찾을 수 없습니다");
+                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                throw new Exception("회원을 찾을 수 없습니다");
+            }
+            
+            // 2. 새 비밀번호 해시 처리
+            String hashedNewPassword = hashPassword(newPassword);
+            
+            System.out.println("  - 원본 비밀번호: " + newPassword);
+            System.out.println("  - 해시 비밀번호: " + hashedNewPassword);
+            
+            // 3. 비밀번호 업데이트
+            memberDAO.updatePassword(memberId, hashedNewPassword);
+            
+            System.out.println("✅ 비밀번호 변경 완료");
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+        } catch (Exception e) {
+            System.err.println("❌ 비밀번호 변경 실패: " + e.getMessage());
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            throw new Exception("비밀번호 변경 실패: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * ✅ SHA-256 해시 생성 (비밀번호 해시용)
+     * 
+     * 이미 MemberServiceImpl.java에 있는 메서드를 사용합니다.
+     * 없다면 아래 코드를 추가하세요.
+     */
+    private String hashPassword1(String password) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
+            
+            // 바이트를 16진수 문자열로 변환
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+            return hexString.toString();
+            
+        } catch (Exception e) {
+            System.err.println("❌ 비밀번호 해시 생성 실패: " + e.getMessage());
+            return password; // 실패 시 원본 반환 (fallback)
+        }
+    }
 }

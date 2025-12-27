@@ -1,374 +1,289 @@
 package com.portwatch.controller;
 
+import java.util.List;
+
+import javax.servlet.http.HttpSession;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.portwatch.domain.MemberVO;
 import com.portwatch.domain.PortfolioVO;
+import com.portwatch.domain.StockVO;
 import com.portwatch.service.PortfolioService;
 import com.portwatch.service.StockService;
 
-import javax.servlet.http.HttpSession;
-import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import lombok.Setter;
+import lombok.extern.log4j.Log4j;
 
 /**
- * ✅ 포트폴리오 컨트롤러 (느슨한 결합 개선)
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * PORTFOLIO CONTROLLER - 완벽 수정
+ * Spring 5.0.7 + MySQL 8.0.33
  * 
- * 개선 사항:
- * - 생성자 주입 사용 (필드 주입 → 생성자 주입)
- * - final 키워드로 불변성 보장
- * - 인터페이스 의존
- * 
- * @author PortWatch
- * @version 9.0 - Loose Coupling
+ * 수정 내역:
+ * 1. @RequestMapping("/portfolio") 변경 (404 해결)
+ * 2. 메인 페이지 매핑: "", "/", "/list" 모두 처리
+ * 3. portfolioVO Model 추가
+ * 4. 세션 체크 개선
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
 @Controller
 @RequestMapping("/portfolio")
+@Log4j
 public class PortfolioController {
     
-    private final PortfolioService portfolioService;
-    private final StockService stockService;
+    @Setter(onMethod_ = @Autowired)
+    private PortfolioService portfolioService;
+    
+    @Setter(onMethod_ = @Autowired)
+    private StockService stockService;
     
     /**
-     * 생성자 주입 (권장)
-     * - 테스트 용이성 증가
-     * - 순환 참조 방지
-     * - 불변성 보장
+     * ✅ 포트폴리오 메인 페이지 (/, "", /list 모두 처리)
      */
-    @Autowired
-    public PortfolioController(
-            PortfolioService portfolioService,
-            StockService stockService) {
-        this.portfolioService = portfolioService;
-        this.stockService = stockService;
-    }
-    
-    /**
-     * ✅ 포트폴리오 메인 페이지
-     * GET /portfolio 또는 /portfolio/
-     */
-    @GetMapping({"", "/"})
+    @GetMapping(value = {"", "/", "/list"})
     public String portfolioMain(HttpSession session, Model model) {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("📊 포트폴리오 메인 페이지");
+        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        log.info("📊 포트폴리오 메인 페이지");
         
-        // 로그인 체크
-        MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
-        
-        if (loginMember == null) {
-            System.out.println("❌ 로그인 필요");
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        MemberVO member = (MemberVO) session.getAttribute("member");
+        if (member == null) {
+            log.info("❌ 로그인 필요");
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             return "redirect:/member/login";
         }
         
+        String memberId = member.getMemberId();
+        log.info("  - 회원 ID: " + memberId);
+        
         try {
-            String memberId = loginMember.getMemberId();
-            System.out.println("  - 회원 ID: " + memberId);
-            
             List<PortfolioVO> portfolioList = portfolioService.getPortfolioList(memberId);
-            Map<String, Object> summary = portfolioService.getPortfolioSummary(memberId);
-            
-            System.out.println("  - 포트폴리오 개수: " + portfolioList.size());
-            System.out.println("✅ 포트폴리오 조회 완료");
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
             model.addAttribute("portfolioList", portfolioList);
-            model.addAttribute("summary", summary);
-            model.addAttribute("loginMember", loginMember);
-            
-            return "portfolio/portfolio";
-            
+            log.info("✅ 포트폴리오 목록 조회 완료: " + portfolioList.size() + "개");
         } catch (Exception e) {
-            System.err.println("❌ 포트폴리오 조회 실패: " + e.getMessage());
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            e.printStackTrace();
-            
-            model.addAttribute("errorMessage", "포트폴리오 조회 중 오류가 발생했습니다: " + e.getMessage());
-            return "portfolio/portfolio";
+            log.error("❌ 포트폴리오 조회 실패: " + e.getMessage(), e);
+            model.addAttribute("portfolioList", List.of());
+            model.addAttribute("errorMessage", "포트폴리오 조회에 실패했습니다.");
         }
+        
+        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        return "portfolio/list";
     }
     
     /**
-     * ✅ 포트폴리오 생성 페이지
-     * GET /portfolio/create
+     * ✅ 포트폴리오 등록 페이지
      */
     @GetMapping("/create")
     public String createForm(HttpSession session, Model model) {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("📝 포트폴리오 생성 페이지");
+        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        log.info("📝 포트폴리오 등록 페이지");
         
-        // 로그인 체크
-        MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
-        
-        if (loginMember == null) {
-            System.out.println("❌ 로그인 필요");
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        MemberVO member = (MemberVO) session.getAttribute("member");
+        if (member == null) {
+            log.info("❌ 로그인 필요");
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             return "redirect:/member/login";
         }
         
         try {
-            // 주식 목록 조회
-            if (stockService != null) {
-                List<?> stockList = stockService.getAllStocks();
-                System.out.println("  - 주식 목록: " + stockList.size() + "개");
-                model.addAttribute("stockList", stockList);
-            }
+            // ✅ portfolioVO를 Model에 추가 (BindingResult 에러 해결)
+            model.addAttribute("portfolioVO", new PortfolioVO());
             
-            model.addAttribute("loginMember", loginMember);
-            
-            System.out.println("✅ 생성 페이지 로딩 완료");
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
+            List<StockVO> stockList = stockService.getAllStocks();
+            model.addAttribute("stockList", stockList);
+            log.info("✅ 주식 목록 조회 완료: " + stockList.size() + "개");
+            log.info("✅ portfolioVO 추가 완료");
         } catch (Exception e) {
-            System.err.println("❌ 생성 페이지 로딩 실패: " + e.getMessage());
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            e.printStackTrace();
+            log.error("❌ 주식 목록 조회 실패: " + e.getMessage(), e);
+            model.addAttribute("stockList", List.of());
+            model.addAttribute("errorMessage", "주식 목록 조회에 실패했습니다.");
         }
         
+        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         return "portfolio/create";
     }
     
     /**
-     * ✅ 포트폴리오 목록 페이지  
-     * GET /portfolio/list
+     * ✅ 포트폴리오 등록 처리
      */
-    @GetMapping("/list")
-    public String listPortfolio(HttpSession session, Model model) {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("📊 포트폴리오 목록 조회");
+    @PostMapping("/create")
+    public String create(@ModelAttribute PortfolioVO portfolio, 
+                        HttpSession session, 
+                        RedirectAttributes rttr) {
+        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        log.info("📝 포트폴리오 등록 처리");
         
-        // 로그인 체크
-        MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
-        
-        if (loginMember == null) {
-            System.out.println("❌ 로그인 필요");
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        MemberVO member = (MemberVO) session.getAttribute("member");
+        if (member == null) {
+            log.info("❌ 로그인 필요");
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             return "redirect:/member/login";
         }
         
         try {
-            String memberId = loginMember.getMemberId();
-            System.out.println("  - 회원 ID: " + memberId);
+            portfolio.setMemberId(member.getMemberId());
             
-            // 포트폴리오 목록 조회
-            List<PortfolioVO> portfolioList = portfolioService.getPortfolioList(memberId);
+            // purchasePrice가 null이면 0으로 설정
+            if (portfolio.getPurchasePrice() == null) {
+                portfolio.setPurchasePrice(0.0);
+            }
             
-            // 포트폴리오 요약 정보
-            Map<String, Object> summary = portfolioService.getPortfolioSummary(memberId);
+            portfolioService.register(portfolio);
             
-            System.out.println("  - 포트폴리오 개수: " + portfolioList.size());
-            System.out.println("✅ 포트폴리오 조회 완료");
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            log.info("✅ 포트폴리오 등록 완료");
+            log.info("  - 주식 ID: " + portfolio.getStockId());
+            log.info("  - 수량: " + portfolio.getQuantity());
+            log.info("  - 매입 단가: " + portfolio.getPurchasePrice());
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             
-            model.addAttribute("portfolioList", portfolioList);
-            model.addAttribute("summary", summary);
-            model.addAttribute("loginMember", loginMember);
-            
-            return "portfolio/list";
-            
+            rttr.addFlashAttribute("message", "포트폴리오가 등록되었습니다.");
+            return "redirect:/portfolio/list";
         } catch (Exception e) {
-            System.err.println("❌ 포트폴리오 조회 실패: " + e.getMessage());
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            e.printStackTrace();
+            log.error("❌ 포트폴리오 등록 실패: " + e.getMessage(), e);
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             
-            model.addAttribute("errorMessage", "포트폴리오 조회 중 오류가 발생했습니다: " + e.getMessage());
-            return "portfolio/list";
+            rttr.addFlashAttribute("errorMessage", "포트폴리오 등록에 실패했습니다: " + e.getMessage());
+            return "redirect:/portfolio/create";
         }
     }
     
     /**
-     * ✅ 포트폴리오 추가 (AJAX)
-     * POST /portfolio/add
+     * ✅ 포트폴리오 상세 조회
      */
-    @PostMapping("/add")
-    @ResponseBody
-    public ResponseEntity<Map<String, Object>> addPortfolio(
-            @RequestBody PortfolioVO portfolio,
-            HttpSession session) {
+    @GetMapping("/{portfolioId}")
+    public String detail(@PathVariable Long portfolioId, 
+                        HttpSession session, 
+                        Model model) {
+        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        log.info("📊 포트폴리오 상세 조회");
+        log.info("  - 포트폴리오 ID: " + portfolioId);
         
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("➕ 포트폴리오 추가 요청");
-        
-        Map<String, Object> response = new HashMap<>();
+        MemberVO member = (MemberVO) session.getAttribute("member");
+        if (member == null) {
+            log.info("❌ 로그인 필요");
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            return "redirect:/member/login";
+        }
         
         try {
-            // 세션에서 회원 정보 가져오기
-            MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
+            PortfolioVO portfolio = portfolioService.getPortfolio(portfolioId);
+            model.addAttribute("portfolio", portfolio);
             
-            if (loginMember == null) {
-                System.out.println("❌ 로그인 필요");
-                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                response.put("success", false);
-                response.put("message", "로그인이 필요합니다.");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-            }
-            
-            String memberId = loginMember.getMemberId();
-            portfolio.setMemberId(memberId);
-            
-            System.out.println("  - 회원 ID: " + memberId);
-            System.out.println("  - 종목 ID: " + portfolio.getStockId());
-            System.out.println("  - 수량: " + portfolio.getQuantity());
-            
-            // 검증
-            if (portfolio.getStockId() == null) {
-                System.out.println("❌ 종목 미선택");
-                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                response.put("success", false);
-                response.put("message", "종목을 선택해주세요.");
-                return ResponseEntity.badRequest().body(response);
-            }
-            
-            if (portfolio.getQuantity() == null || portfolio.getQuantity().compareTo(BigDecimal.ZERO) <= 0) {
-                System.out.println("❌ 수량 오류");
-                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                response.put("success", false);
-                response.put("message", "수량은 0보다 커야 합니다.");
-                return ResponseEntity.badRequest().body(response);
-            }
-            
-            // 포트폴리오에 추가
-            boolean added = portfolioService.addStockToPortfolio(portfolio);
-            
-            if (added) {
-                System.out.println("✅ 포트폴리오 추가 성공");
-                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                response.put("success", true);
-                response.put("message", "포트폴리오에 추가되었습니다.");
-            } else {
-                System.out.println("❌ 포트폴리오 추가 실패");
-                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                response.put("success", false);
-                response.put("message", "포트폴리오 추가에 실패했습니다.");
-            }
-            
-            return ResponseEntity.ok(response);
-            
+            log.info("✅ 포트폴리오 상세 조회 완료");
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         } catch (Exception e) {
-            System.err.println("❌ 추가 실패: " + e.getMessage());
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            e.printStackTrace();
+            log.error("❌ 포트폴리오 조회 실패: " + e.getMessage(), e);
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             
-            response.put("success", false);
-            response.put("message", "오류 발생: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            model.addAttribute("errorMessage", "포트폴리오 조회에 실패했습니다.");
+            return "redirect:/portfolio/list";
+        }
+        
+        return "portfolio/detail";
+    }
+    
+    /**
+     * ✅ 포트폴리오 수정 페이지
+     */
+    @GetMapping("/update/{portfolioId}")
+    public String updateForm(@PathVariable Long portfolioId, 
+                            HttpSession session, 
+                            Model model) {
+        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        log.info("✏️ 포트폴리오 수정 페이지");
+        log.info("  - 포트폴리오 ID: " + portfolioId);
+        
+        MemberVO member = (MemberVO) session.getAttribute("member");
+        if (member == null) {
+            log.info("❌ 로그인 필요");
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            return "redirect:/member/login";
+        }
+        
+        try {
+            PortfolioVO portfolio = portfolioService.getPortfolio(portfolioId);
+            model.addAttribute("portfolio", portfolio);
+            
+            List<StockVO> stockList = stockService.getAllStocks();
+            model.addAttribute("stockList", stockList);
+            
+            log.info("✅ 포트폴리오 조회 완료");
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        } catch (Exception e) {
+            log.error("❌ 포트폴리오 조회 실패: " + e.getMessage(), e);
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            model.addAttribute("errorMessage", "포트폴리오 조회에 실패했습니다.");
+            return "redirect:/portfolio/list";
+        }
+        
+        return "portfolio/update";
+    }
+    
+    /**
+     * ✅ 포트폴리오 수정 처리
+     */
+    @PostMapping("/update")
+    public String update(@ModelAttribute PortfolioVO portfolio, 
+                        RedirectAttributes rttr) {
+        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        log.info("✏️ 포트폴리오 수정 처리");
+        log.info("  - 포트폴리오 ID: " + portfolio.getPortfolioId());
+        
+        try {
+            // purchasePrice가 null이면 0으로 설정
+            if (portfolio.getPurchasePrice() == null) {
+                portfolio.setPurchasePrice(0.0);
+            }
+            
+            portfolioService.modify(portfolio);
+            
+            log.info("✅ 포트폴리오 수정 완료");
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            rttr.addFlashAttribute("message", "포트폴리오가 수정되었습니다.");
+            return "redirect:/portfolio/" + portfolio.getPortfolioId();
+        } catch (Exception e) {
+            log.error("❌ 포트폴리오 수정 실패: " + e.getMessage(), e);
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            rttr.addFlashAttribute("errorMessage", "포트폴리오 수정에 실패했습니다: " + e.getMessage());
+            return "redirect:/portfolio/update/" + portfolio.getPortfolioId();
         }
     }
     
     /**
-     * ✅ 포트폴리오 삭제 (AJAX)
-     * DELETE /portfolio/delete
+     * ✅ 포트폴리오 삭제
      */
-    @DeleteMapping("/delete")
-    @ResponseBody
-    public ResponseEntity<Map<String, Object>> deletePortfolio(
-            @RequestParam("stockCode") String stockCode,
-            @RequestParam("quantity") double quantity,
-            HttpSession session) {
-        
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("🗑️ 포트폴리오 삭제 요청");
-        
-        Map<String, Object> response = new HashMap<>();
+    @PostMapping("/delete/{portfolioId}")
+    public String delete(@PathVariable Long portfolioId, 
+                        RedirectAttributes rttr) {
+        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        log.info("🗑️ 포트폴리오 삭제");
+        log.info("  - 포트폴리오 ID: " + portfolioId);
         
         try {
-            MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
+            portfolioService.remove(portfolioId);
             
-            if (loginMember == null) {
-                System.out.println("❌ 로그인 필요");
-                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                response.put("success", false);
-                response.put("message", "로그인이 필요합니다.");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-            }
+            log.info("✅ 포트폴리오 삭제 완료");
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             
-            String memberId = loginMember.getMemberId();
-            
-            System.out.println("  - 회원 ID: " + memberId);
-            System.out.println("  - 종목 코드: " + stockCode);
-            System.out.println("  - 수량: " + quantity);
-            
-            boolean deleted = portfolioService.removeStockFromPortfolio(memberId, stockCode, quantity);
-            
-            if (deleted) {
-                System.out.println("✅ 포트폴리오 삭제 성공");
-                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                response.put("success", true);
-                response.put("message", "포트폴리오에서 삭제되었습니다.");
-            } else {
-                System.out.println("❌ 포트폴리오 삭제 실패");
-                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                response.put("success", false);
-                response.put("message", "삭제에 실패했습니다.");
-            }
-            
-            return ResponseEntity.ok(response);
-            
+            rttr.addFlashAttribute("message", "포트폴리오가 삭제되었습니다.");
+            return "redirect:/portfolio/list";
         } catch (Exception e) {
-            System.err.println("❌ 삭제 실패: " + e.getMessage());
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            e.printStackTrace();
+            log.error("❌ 포트폴리오 삭제 실패: " + e.getMessage(), e);
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             
-            response.put("success", false);
-            response.put("message", "오류 발생: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-    
-    /**
-     * ✅ 포트폴리오 상세 조회 (AJAX)
-     * GET /portfolio/detail
-     */
-    @GetMapping("/detail")
-    @ResponseBody
-    public ResponseEntity<Map<String, Object>> getPortfolioDetail(HttpSession session) {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("📊 포트폴리오 상세 조회 (AJAX)");
-        
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
-            
-            if (loginMember == null) {
-                System.out.println("❌ 로그인 필요");
-                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                response.put("success", false);
-                response.put("message", "로그인이 필요합니다.");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-            }
-            
-            String memberId = loginMember.getMemberId();
-            System.out.println("  - 회원 ID: " + memberId);
-            
-            List<PortfolioVO> portfolioList = portfolioService.getPortfolioList(memberId);
-            Map<String, Object> summary = portfolioService.getPortfolioSummary(memberId);
-            
-            System.out.println("  - 포트폴리오 개수: " + portfolioList.size());
-            System.out.println("✅ 상세 조회 완료");
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            response.put("success", true);
-            response.put("portfolioList", portfolioList);
-            response.put("summary", summary);
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            System.err.println("❌ 상세 조회 실패: " + e.getMessage());
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            e.printStackTrace();
-            
-            response.put("success", false);
-            response.put("message", "오류 발생: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            rttr.addFlashAttribute("errorMessage", "포트폴리오 삭제에 실패했습니다: " + e.getMessage());
+            return "redirect:/portfolio/" + portfolioId;
         }
     }
 }

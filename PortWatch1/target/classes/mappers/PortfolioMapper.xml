@@ -1,43 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
-"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PORTFOLIO MAPPER - 완벽 수정
+Spring 5.0.7 + MySQL 8.0.33 + MyBatis 3.4.6
+
+수정 내용:
+- avg_price → purchase_price로 변경
+- 모든 테이블명 소문자 사용 (stock, portfolio)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-->
 
 <mapper namespace="com.portwatch.persistence.PortfolioDAO">
-
-    <!-- ========================================
-         ResultMap 정의
-         ======================================== -->
     
-    <resultMap id="PortfolioResultMap" type="PortfolioVO">
-        <id property="portfolioId" column="portfolio_id"/>
-        <result property="memberId" column="member_id"/>
-        <result property="stockId" column="stock_id"/>
-        <result property="stockCode" column="stock_code"/>
-        <result property="quantity" column="quantity"/>
-        <result property="avgPrice" column="avg_price"/>
-        <result property="avgPurchasePrice" column="avg_price"/>
-        <result property="purchaseDate" column="purchase_date"/>
-        <result property="createdAt" column="created_at"/>
-        <result property="updatedAt" column="updated_at"/>
-        <!-- 추가 필드 (조인 시 사용) -->
-        <result property="stockName" column="stock_name"/>
-        <result property="currentPrice" column="current_price"/>
-        <result property="marketType" column="market_type"/>
-        <result property="country" column="country"/>
-    </resultMap>
-
-    <!-- ========================================
-         기본 CRUD
-         ======================================== -->
-    
-    <!-- ✅ 회원의 전체 포트폴리오 조회 (이름 통일) -->
-    <select id="selectPortfolioByMember" parameterType="string" resultMap="PortfolioResultMap">
+    <!-- ✅ 회원별 포트폴리오 조회 (stock 정보 포함) -->
+    <select id="selectPortfolioByMember" parameterType="string" resultType="PortfolioVO">
         SELECT 
             p.portfolio_id,
             p.member_id,
             p.stock_id,
             p.quantity,
-            p.avg_price,
+            p.purchase_price,
             p.purchase_date,
             p.created_at,
             p.updated_at,
@@ -47,19 +33,19 @@
             s.market_type,
             s.country
         FROM portfolio p
-        LEFT JOIN STOCK s ON p.stock_id = s.stock_id
+        LEFT JOIN stock s ON p.stock_id = s.stock_id
         WHERE p.member_id = #{memberId}
         ORDER BY p.created_at DESC
     </select>
     
-    <!-- ✅ Alias for backward compatibility -->
-    <select id="selectPortfolioByMemberId" parameterType="string" resultMap="PortfolioResultMap">
+    <!-- ✅ 포트폴리오 ID로 조회 -->
+    <select id="selectPortfolioById" parameterType="long" resultType="PortfolioVO">
         SELECT 
             p.portfolio_id,
             p.member_id,
             p.stock_id,
             p.quantity,
-            p.avg_price,
+            p.purchase_price,
             p.purchase_date,
             p.created_at,
             p.updated_at,
@@ -69,62 +55,32 @@
             s.market_type,
             s.country
         FROM portfolio p
-        LEFT JOIN STOCK s ON p.stock_id = s.stock_id
-        WHERE p.member_id = #{memberId}
-        ORDER BY p.created_at DESC
+        LEFT JOIN stock s ON p.stock_id = s.stock_id
+        WHERE p.portfolio_id = #{portfolioId}
     </select>
     
-    <!-- 특정 종목의 포트폴리오 조회 (stock_id 사용) -->
-    <select id="selectByMemberAndStock" resultMap="PortfolioResultMap">
+    <!-- ✅ 회원 + 주식으로 포트폴리오 조회 -->
+    <select id="selectByMemberAndStock" parameterType="map" resultType="PortfolioVO">
         SELECT 
-            p.portfolio_id,
-            p.member_id,
-            p.stock_id,
-            p.quantity,
-            p.avg_price,
-            p.purchase_date,
-            p.created_at,
-            p.updated_at,
-            s.stock_code,
-            s.stock_name,
-            s.current_price,
-            s.market_type,
-            s.country
-        FROM portfolio p
-        LEFT JOIN STOCK s ON p.stock_id = s.stock_id
-        WHERE p.member_id = #{memberId}
-          AND p.stock_id = #{stockId}
+            portfolio_id,
+            member_id,
+            stock_id,
+            quantity,
+            purchase_price,
+            purchase_date,
+            created_at,
+            updated_at
+        FROM portfolio
+        WHERE member_id = #{memberId} AND stock_id = #{stockId}
     </select>
     
-    <!-- stock_code로 조회 (backward compatibility) -->
-    <select id="selectPortfolioByMemberAndStock" resultMap="PortfolioResultMap">
-        SELECT 
-            p.portfolio_id,
-            p.member_id,
-            p.stock_id,
-            p.quantity,
-            p.avg_price,
-            p.purchase_date,
-            p.created_at,
-            p.updated_at,
-            s.stock_code,
-            s.stock_name,
-            s.current_price,
-            s.market_type,
-            s.country
-        FROM portfolio p
-        LEFT JOIN STOCK s ON p.stock_id = s.stock_id
-        WHERE p.member_id = #{memberId}
-          AND s.stock_code = #{stockCode}
-    </select>
-    
-    <!-- 포트폴리오 추가 -->
+    <!-- ✅ 포트폴리오 등록 -->
     <insert id="insertPortfolio" parameterType="PortfolioVO" useGeneratedKeys="true" keyProperty="portfolioId">
         INSERT INTO portfolio (
             member_id,
             stock_id,
             quantity,
-            avg_price,
+            purchase_price,
             purchase_date,
             created_at,
             updated_at
@@ -132,75 +88,71 @@
             #{memberId},
             #{stockId},
             #{quantity},
-            #{avgPurchasePrice},
+            #{purchasePrice},
             #{purchaseDate},
             NOW(),
             NOW()
         )
     </insert>
     
-    <!-- 포트폴리오 수정 (ID로) -->
+    <!-- ✅ 포트폴리오 수정 -->
     <update id="updatePortfolio" parameterType="PortfolioVO">
         UPDATE portfolio
-        SET quantity = #{quantity},
-            avg_price = #{avgPurchasePrice},
+        SET 
+            quantity = #{quantity},
+            purchase_price = #{purchasePrice},
+            purchase_date = #{purchaseDate},
             updated_at = NOW()
         WHERE portfolio_id = #{portfolioId}
     </update>
     
-    <!-- 포트폴리오 수정 (회원ID + 주식ID) -->
-    <update id="updatePortfolioByMemberAndStock">
-        UPDATE portfolio
-        SET quantity = #{quantity},
-            avg_price = #{avgPrice},
-            updated_at = NOW()
-        WHERE member_id = #{memberId}
-          AND stock_id = #{stockId}
-    </update>
-    
-    <!-- 포트폴리오 삭제 (ID로) -->
+    <!-- ✅ 포트폴리오 삭제 -->
     <delete id="deletePortfolio" parameterType="long">
         DELETE FROM portfolio
         WHERE portfolio_id = #{portfolioId}
     </delete>
     
-    <!-- 포트폴리오 삭제 (회원ID + 주식 코드) -->
-    <delete id="deleteByMemberAndStock">
-        DELETE FROM portfolio
-        WHERE member_id = #{memberId}
-          AND stock_id = #{stockId}
-    </delete>
+    <!-- ✅ 총 평가액 조회 -->
+    <select id="getTotalValue" parameterType="string" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(p.quantity * s.current_price), 0)
+        FROM portfolio p
+        LEFT JOIN stock s ON p.stock_id = s.stock_id
+        WHERE p.member_id = #{memberId}
+    </select>
     
-    <!-- 포트폴리오 전체 삭제 -->
-    <delete id="deleteAllPortfolio" parameterType="string">
-        DELETE FROM portfolio
+    <!-- ✅ 총 투자금액 조회 -->
+    <select id="getTotalInvestment" parameterType="string" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(p.quantity * p.purchase_price), 0)
+        FROM portfolio
         WHERE member_id = #{memberId}
-    </delete>
-
-    <!-- ========================================
-         통계 쿼리
-         ======================================== -->
+    </select>
     
-    <!-- 포트폴리오 보유 종목 수 -->
+    <!-- ✅ 포트폴리오 개수 조회 -->
     <select id="countPortfolio" parameterType="string" resultType="int">
         SELECT COUNT(*)
         FROM portfolio
         WHERE member_id = #{memberId}
     </select>
     
-    <!-- 포트폴리오 총 평가액 -->
-    <select id="selectTotalValue" parameterType="string" resultType="double">
-        SELECT COALESCE(SUM(p.quantity * s.current_price), 0) AS total_value
+    <!-- ✅ 모든 포트폴리오 조회 (관리자용) -->
+    <select id="selectAllPortfolio" resultType="PortfolioVO">
+        SELECT 
+            p.portfolio_id,
+            p.member_id,
+            p.stock_id,
+            p.quantity,
+            p.purchase_price,
+            p.purchase_date,
+            p.created_at,
+            p.updated_at,
+            s.stock_code,
+            s.stock_name,
+            s.current_price,
+            s.market_type,
+            s.country
         FROM portfolio p
-        JOIN STOCK s ON p.stock_id = s.stock_id
-        WHERE p.member_id = #{memberId}
+        LEFT JOIN stock s ON p.stock_id = s.stock_id
+        ORDER BY p.created_at DESC
     </select>
     
-    <!-- 포트폴리오 총 매입액 -->
-    <select id="selectTotalBuyAmount" parameterType="string" resultType="double">
-        SELECT COALESCE(SUM(p.quantity * p.avg_price), 0) AS total_buy_amount
-        FROM portfolio p
-        WHERE p.member_id = #{memberId}
-    </select>
-
 </mapper>
