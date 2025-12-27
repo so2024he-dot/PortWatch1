@@ -448,4 +448,10 @@ public class MemberServiceImpl implements MemberService {
     public void deleteMember(String memberId) throws Exception {
         withdrawMember(memberId);
     }
+
+	@Override
+	public void changePassword(String memberId, String newPassword) throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
 }
