@@ -1,428 +1,435 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>실시간 증권 뉴스 - PortWatch</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <title>증권 뉴스 - PortWatch</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1400px;
-        }
-        
-        .header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-        
-        .header h1 {
-            font-size: 2.5em;
-            font-weight: 700;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin: 0 0 10px 0;
-        }
-        
-        /* ✅ 필터 컨트롤 */
-        .filter-controls {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        .filter-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-        
-        .filter-btn {
-            padding: 10px 20px;
-            border: none;
-            background: #f3f4f6;
-            color: #6b7280;
-            border-radius: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .filter-btn:hover {
-            background: #e5e7eb;
-        }
-        
-        .filter-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        
-        .news-count {
-            font-size: 1.1em;
-            font-weight: 600;
-            color: #1f2937;
-            margin-top: 10px;
-        }
-        
-        .news-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 25px;
-        }
-        
         .news-card {
-            background: white;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.2s, box-shadow 0.2s;
             cursor: pointer;
-            position: relative;
+            height: 100%;
         }
         
         .news-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.3);
-        }
-        
-        .news-card a {
-            text-decoration: none;
-            color: inherit;
-            display: block;
-            padding: 20px;
-        }
-        
-        .news-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        
-        .news-source {
-            font-size: 0.85em;
-            font-weight: 600;
-            color: #667eea;
-            background: rgba(102, 126, 234, 0.1);
-            padding: 5px 12px;
-            border-radius: 20px;
-        }
-        
-        .country-badge {
-            font-size: 1.2rem;
-        }
-        
-        .news-title {
-            font-size: 1.1em;
-            font-weight: 600;
-            color: #1f2937;
-            line-height: 1.5;
-            margin-bottom: 10px;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
         
         .news-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             font-size: 0.85em;
-            color: #6b7280;
-            margin-top: 15px;
+            color: #6c757d;
         }
         
-        .stock-badge {
-            background: #f3f4f6;
-            color: #374151;
-            padding: 5px 10px;
-            border-radius: 8px;
-            font-weight: 600;
+        .news-category {
+            display: inline-block;
+            padding: 3px 10px;
+            background: #e9ecef;
+            border-radius: 15px;
+            font-size: 0.75em;
+            margin-right: 5px;
         }
         
-        .loading {
-            text-align: center;
-            padding: 50px;
-            color: white;
-            font-size: 1.2em;
+        .news-source {
+            color: #6c757d;
         }
         
-        .loading::after {
-            content: '...';
-            animation: dots 1.5s steps(4, end) infinite;
-        }
-        
-        @keyframes dots {
-            0%, 20% { content: '.'; }
-            40% { content: '..'; }
-            60% { content: '...'; }
-            80%, 100% { content: ''; }
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 80px 20px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-        }
-        
-        .empty-state i {
-            font-size: 4rem;
-            color: #d1d5db;
+        .refresh-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
             margin-bottom: 20px;
-        }
-        
-        .empty-state h3 {
-            color: #6b7280;
-            margin: 0;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        
-        <!-- 헤더 -->
-        <div class="header">
-            <h1>📰 실시간 증권 뉴스</h1>
-            <p>최신 주식 뉴스를 한눈에</p>
+    <!-- 네비게이션 바 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="${pageContext.request.contextPath}/">
+                <i class="fas fa-chart-line"></i> PortWatch
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="${pageContext.request.contextPath}/dashboard">
+                            <i class="fas fa-th-large"></i> 대시보드
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="${pageContext.request.contextPath}/stock/list">
+                            <i class="fas fa-chart-bar"></i> 주식
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="${pageContext.request.contextPath}/watchlist/list">
+                            <i class="fas fa-star"></i> 관심종목
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="${pageContext.request.contextPath}/news/list">
+                            <i class="fas fa-newspaper"></i> 뉴스
+                        </a>
+                    </li>
+                    <c:choose>
+                        <c:when test="${not empty loginMember}">
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" 
+                                   role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user"></i> ${loginMember.name}
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                                    <li>
+                                        <a class="dropdown-item" href="${pageContext.request.contextPath}/member/mypage">
+                                            <i class="fas fa-user-circle"></i> 마이페이지
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="${pageContext.request.contextPath}/member/logout">
+                                            <i class="fas fa-sign-out-alt"></i> 로그아웃
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        </c:when>
+                        <c:otherwise>
+                            <li class="nav-item">
+                                <a class="nav-link" href="${pageContext.request.contextPath}/member/login">
+                                    <i class="fas fa-sign-in-alt"></i> 로그인
+                                </a>
+                            </li>
+                        </c:otherwise>
+                    </c:choose>
+                </ul>
+            </div>
         </div>
-        
-        <!-- ✅ 필터 컨트롤 -->
-        <div class="filter-controls">
-            <div class="filter-tabs">
-                <button class="filter-btn active" data-filter="all">
-                    🌐 전체
-                </button>
-                <button class="filter-btn" data-filter="KR">
-                    🇰🇷 한국
-                </button>
-                <button class="filter-btn" data-filter="US">
-                    🇺🇸 미국
-                </button>
-                <button class="filter-btn" data-filter="KOSPI">
-                    📊 KOSPI
-                </button>
-                <button class="filter-btn" data-filter="KOSDAQ">
-                    📈 KOSDAQ
-                </button>
-                <button class="filter-btn" data-filter="NASDAQ">
-                    🚀 NASDAQ
-                </button>
-                <button class="filter-btn" data-filter="NYSE">
-                    🏛️ NYSE
+    </nav>
+    
+    <!-- 메인 컨텐츠 -->
+    <div class="container mt-4">
+        <!-- 페이지 헤더 -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="fas fa-newspaper"></i> 실시간 증권 뉴스
+            </h2>
+            <div>
+                <!-- ✅ 수정: onclick 제거, id 추가 -->
+                <button id="refreshNewsBtn" class="btn btn-primary">
+                    <i class="fas fa-sync-alt"></i> 새로고침
                 </button>
             </div>
-            <div class="news-count" id="newsCount">
-                뉴스를 불러오는 중...
+        </div>
+        
+        <!-- 자동 새로고침 안내 -->
+        <div class="refresh-info">
+            <i class="fas fa-info-circle"></i>
+            <strong>자동 새로고침:</strong> 5분마다 최신 뉴스가 자동으로 업데이트됩니다.
+        </div>
+        
+        <!-- 뉴스 목록 -->
+        <div id="newsContainer">
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">로딩중...</span>
+                </div>
+                <p class="mt-3">뉴스를 불러오는 중입니다...</p>
             </div>
         </div>
-        
-        <!-- 뉴스 그리드 -->
-        <div class="news-grid" id="newsGrid">
-            <div class="loading">뉴스를 불러오는 중입니다</div>
-        </div>
-        
     </div>
-
+    
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         ✅ 수정된 JavaScript - API 엔드포인트 수정
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <script>
-        // ✅ 전역 변수
-        var allNews = [];
-        var currentFilter = 'all';
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * NewsManager 객체 - 뉴스 관리
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * 
+     * 핵심 수정:
+     * ❌ 잘못된 API: /portwatch/api/news/all
+     * ✅ 올바른 API: /api/news/recent?limit=50
+     * 
+     * 기능:
+     * - 실시간 뉴스 로드
+     * - 수동 새로고침 (크롤링)
+     * - 자동 새로고침 (5분 간격)
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    
+    const NewsManager = {
+        // ✅ 올바른 방법: Controller에서 전달받은 값 직접 사용
+        contextPath: '${pageContext.request.contextPath}',
+        autoRefreshInterval: null,
         
-        // ✅ 뉴스 로드
-        function loadNews() {
-            console.log('뉴스 로드 시작...');
+        /**
+         * 초기화
+         */
+        init: function() {
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            console.log('📰 뉴스 매니저 초기화');
+            console.log('  - contextPath:', this.contextPath);
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             
-            fetch('/portwatch/api/news/all')
-                .then(function(response) {
+            this.bindEvents();
+            this.loadNews();
+            this.startAutoRefresh();  // 5분마다 자동 새로고침
+        },
+        
+        /**
+         * 이벤트 리스너 바인딩
+         */
+        bindEvents: function() {
+            console.log('🔗 이벤트 리스너 바인딩');
+            
+            // ✅ 새로고침 버튼
+            const refreshBtn = document.getElementById('refreshNewsBtn');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    console.log('🔄 뉴스 새로고침 버튼 클릭!');
+                    this.refreshNews();
+                });
+                console.log('✅ 새로고침 버튼 이벤트 등록 완료');
+            } else {
+                console.error('❌ 새로고침 버튼을 찾을 수 없습니다!');
+            }
+        },
+        
+        /**
+         * 뉴스 로드
+         */
+        loadNews: function() {
+            console.log('📰 뉴스 로드 시작');
+            this.showLoading();
+            
+            // ✅ 올바른 API 엔드포인트
+            const apiUrl = this.contextPath + '/api/news/recent?limit=50';
+            console.log('🔗 API 호출:', apiUrl);
+            
+            fetch(apiUrl)
+                .then(response => {
+                    console.log('📡 서버 응답:', response.status);
+                    if (!response.ok) {
+                        throw new Error('뉴스 로드 실패: ' + response.status);
+                    }
                     return response.json();
                 })
-                .then(function(data) {
-                    if (data.success && data.newsList) {
-                        allNews = data.newsList;
-                        console.log('뉴스 로드 완료: ' + allNews.length + '개');
-                        displayNews(allNews);
-                    } else {
-                        showEmptyState();
-                    }
+                .then(data => {
+                    console.log('✅ 뉴스 로드 완료:', data);
+                    
+                    // 응답 데이터 파싱
+                    const newsList = Array.isArray(data) ? data : (data.news || data.newsList || []);
+                    
+                    console.log('📋 뉴스 개수:', newsList.length);
+                    
+                    // 뉴스 렌더링
+                    this.renderNews(newsList);
+                    this.hideLoading();
                 })
-                .catch(function(error) {
-                    console.error('뉴스 로드 실패:', error);
-                    showErrorState();
+                .catch(error => {
+                    console.error('❌ 뉴스 로드 실패:', error);
+                    this.showError('뉴스를 불러오는데 실패했습니다: ' + error.message);
                 });
-        }
+        },
         
-        // ✅ 뉴스 표시 (템플릿 리터럴 제거)
-        function displayNews(newsList) {
-            var grid = document.getElementById('newsGrid');
-            var countElement = document.getElementById('newsCount');
+        /**
+         * 뉴스 새로고침 (크롤링)
+         */
+        refreshNews: function() {
+            console.log('🔄 뉴스 크롤링 시작');
+            
+            const refreshBtn = document.getElementById('refreshNewsBtn');
+            const originalHtml = refreshBtn.innerHTML;
+            
+            // 버튼 비활성화
+            refreshBtn.disabled = true;
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 크롤링 중...';
+            
+            fetch(this.contextPath + '/api/news/crawl', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('✅ 크롤링 완료:', data);
+                
+                // 버튼 복원
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = originalHtml;
+                
+                // 뉴스 목록 새로고침
+                this.loadNews();
+                
+                const count = data.count || data.newCount || 0;
+                alert(count + '개의 새로운 뉴스를 불러왔습니다!');
+            })
+            .catch(error => {
+                console.error('❌ 뉴스 새로고침 실패:', error);
+                
+                // 버튼 복원
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = originalHtml;
+                
+                alert('뉴스 새로고침에 실패했습니다.');
+            });
+        },
+        
+        /**
+         * 자동 새로고침 시작
+         */
+        startAutoRefresh: function() {
+            console.log('⏰ 자동 새로고침 시작 (5분 간격)');
+            
+            // 기존 인터벌 제거
+            if (this.autoRefreshInterval) {
+                clearInterval(this.autoRefreshInterval);
+            }
+            
+            // 5분마다 자동 새로고침
+            this.autoRefreshInterval = setInterval(() => {
+                const now = new Date();
+                console.log('🔄 자동 새로고침 실행:', now.toLocaleTimeString());
+                this.loadNews();
+            }, 5 * 60 * 1000);  // 5분 = 300,000ms
+            
+            console.log('✅ 자동 새로고침 설정 완료');
+        },
+        
+        /**
+         * 뉴스 렌더링
+         */
+        renderNews: function(newsList) {
+            console.log('🎨 뉴스 렌더링');
+            
+            const container = document.getElementById('newsContainer');
             
             if (!newsList || newsList.length === 0) {
-                showEmptyState();
+                container.innerHTML = `
+                    <div class="alert alert-info text-center">
+                        <i class="fas fa-info-circle"></i>
+                        뉴스가 없습니다. 새로고침 버튼을 눌러 뉴스를 불러오세요.
+                    </div>
+                `;
                 return;
             }
             
-            grid.innerHTML = '';
-            countElement.textContent = '총 ' + newsList.length + '개의 뉴스';  // ✅ 템플릿 리터럴 제거
+            let html = '<div class="row">';
             
-            for (var i = 0; i < newsList.length; i++) {
-                var card = createNewsCard(newsList[i], i);
-                grid.appendChild(card);
-            }
-        }
-        
-        // ✅ 뉴스 카드 생성 (템플릿 리터럴 완전 제거)
-        function createNewsCard(news, index) {
-            var card = document.createElement('div');
-            card.className = 'news-card';
-            
-            // ✅ 국가 판단
-            var isKorean = !news.country || news.country === 'KR' || 
-                            news.marketType === 'KOSPI' || news.marketType === 'KOSDAQ';
-            var countryFlag = isKorean ? '🇰🇷' : '🇺🇸';
-            
-            // ✅ HTML 생성 (템플릿 리터럴 제거)
-            var html = '<a href="' + news.link + '" target="_blank" rel="noopener noreferrer">';
-            html += '<div class="news-header">';
-            html += '<span class="news-source">' + (news.source || '뉴스') + '</span>';
-            html += '<span class="country-badge">' + countryFlag + '</span>';
-            html += '</div>';
-            html += '<h3 class="news-title">' + news.title + '</h3>';
-            html += '<div class="news-meta">';
-            html += '<span class="stock-badge">';
-            html += (news.stockCode || '') + ' ' + (news.stockName || '');
-            html += '</span>';
-            html += '<span>' + (news.publishedAt || '방금 전') + '</span>';
-            html += '</div>';
-            html += '</a>';
-            
-            card.innerHTML = html;
-            
-            // ✅ 애니메이션 효과
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
-            
-            setTimeout(function() {
-                card.style.transition = 'all 0.5s ease-out';
-                card.style.opacity = '1';
-                card.style.transform = 'translateY(0)';
-            }, index * 50);
-            
-            return card;
-        }
-        
-        // ✅ 필터링
-        function filterNews(filter, clickedButton) {
-            currentFilter = filter;
-            
-            // 버튼 상태 변경
-            var buttons = document.querySelectorAll('.filter-btn');
-            for (var i = 0; i < buttons.length; i++) {
-                buttons[i].classList.remove('active');
-            }
-            clickedButton.classList.add('active');
-            
-            // 뉴스 필터링
-            var filtered = allNews;
-            
-            if (filter !== 'all') {
-                filtered = [];
-                for (var i = 0; i < allNews.length; i++) {
-                    var news = allNews[i];
-                    var match = false;
-                    
-                    if (filter === 'KR') {
-                        match = !news.country || news.country === 'KR' || 
-                               news.marketType === 'KOSPI' || news.marketType === 'KOSDAQ';
-                    } else if (filter === 'US') {
-                        match = news.country === 'US' || 
-                               news.marketType === 'NASDAQ' || news.marketType === 'NYSE';
-                    } else {
-                        match = news.marketType === filter;
-                    }
-                    
-                    if (match) {
-                        filtered.push(news);
-                    }
+            newsList.forEach(news => {
+                // 날짜 포맷팅
+                let dateStr = '';
+                if (news.publishedAt) {
+                    dateStr = news.publishedAt;
+                } else if (news.createdAt) {
+                    dateStr = news.createdAt;
                 }
-            }
+                
+                html += `
+                    <div class="col-md-6 mb-4">
+                        <div class="card news-card h-100" 
+                             onclick="location.href='${this.contextPath}/news/detail/${news.newsId}'">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    ${news.title}
+                                </h5>
+                                
+                                ${news.category ? `
+                                    <div class="mb-2">
+                                        <span class="news-category">${news.category}</span>
+                                    </div>
+                                ` : ''}
+                                
+                                <p class="card-text text-muted">
+                                    ${news.summary || news.content || ''}
+                                </p>
+                                
+                                <div class="news-meta mt-3">
+                                    <small>
+                                        <i class="fas fa-calendar"></i>
+                                        ${dateStr}
+                                    </small>
+                                    ${news.source ? `
+                                        <small class="ms-3">
+                                            <i class="fas fa-newspaper"></i>
+                                            ${news.source}
+                                        </small>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
             
-            console.log('필터링 결과: ' + filter + ', ' + filtered.length + '개');
-            displayNews(filtered);
-        }
-        
-        // ✅ 빈 상태 표시
-        function showEmptyState() {
-            var grid = document.getElementById('newsGrid');
-            grid.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;">' +
-                '<i class="bi bi-inbox"></i>' +
-                '<h3>뉴스가 없습니다</h3>' +
-                '<p style="color: #9ca3af; margin-top: 10px;">아직 등록된 뉴스가 없습니다.</p>' +
-                '</div>';
-            document.getElementById('newsCount').textContent = '0개의 뉴스';
-        }
-        
-        // ✅ 에러 상태 표시
-        function showErrorState() {
-            var grid = document.getElementById('newsGrid');
-            grid.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;">' +
-                '<i class="bi bi-exclamation-triangle"></i>' +
-                '<h3>뉴스를 불러올 수 없습니다</h3>' +
-                '<p style="color: #9ca3af; margin-top: 10px;">잠시 후 다시 시도해주세요.</p>' +
-                '<button class="filter-btn" onclick="loadNews()" style="margin-top: 20px;">다시 시도</button>' +
-                '</div>';
-        }
-        
-        // ✅ 자동 새로고침 (5분마다)
-        function autoRefresh() {
-            loadNews();
-        }
-        
-        setInterval(autoRefresh, 5 * 60 * 1000); // 5분
-        
-        // ✅ 페이지 로드 시 뉴스 로드
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('페이지 로드 완료');
-            loadNews();
+            html += '</div>';
+            container.innerHTML = html;
             
-            // ✅ 필터 버튼 이벤트 리스너 등록
-            var filterButtons = document.querySelectorAll('.filter-btn');
-            for (var i = 0; i < filterButtons.length; i++) {
-                filterButtons[i].addEventListener('click', function() {
-                    var filter = this.getAttribute('data-filter');
-                    filterNews(filter, this);
-                });
-            }
-        });
+            console.log('✅ 뉴스 렌더링 완료');
+        },
         
-        // ✅ 뉴스 수동 새로고침
-        function refreshNews() {
-            document.getElementById('newsGrid').innerHTML = '<div class="loading">뉴스를 불러오는 중입니다</div>';
-            loadNews();
+        /**
+         * 로딩 표시
+         */
+        showLoading: function() {
+            const container = document.getElementById('newsContainer');
+            container.innerHTML = `
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">로딩중...</span>
+                    </div>
+                    <p class="mt-3">뉴스를 불러오는 중입니다...</p>
+                </div>
+            `;
+        },
+        
+        /**
+         * 로딩 숨김
+         */
+        hideLoading: function() {
+            // 렌더링으로 자동 제거됨
+        },
+        
+        /**
+         * 에러 표시
+         */
+        showError: function(message) {
+            const container = document.getElementById('newsContainer');
+            container.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    ${message}
+                </div>
+            `;
         }
+    };
+    
+    // ✅ 페이지 로드 시 초기화
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('📄 News List 페이지 로드 완료');
+        NewsManager.init();
+    });
+    
+    // 페이지 종료 시 인터벌 정리
+    window.addEventListener('beforeunload', function() {
+        if (NewsManager.autoRefreshInterval) {
+            clearInterval(NewsManager.autoRefreshInterval);
+        }
+    });
     </script>
 </body>
 </html>

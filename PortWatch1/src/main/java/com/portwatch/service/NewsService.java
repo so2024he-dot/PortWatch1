@@ -70,4 +70,10 @@ public interface NewsService {
 	 * @param news 뉴스 정보
 	 */
 	void insertNews(NewsVO news) throws Exception;
+
+	List<NewsVO> getNewsByCategory(String category, int limit) throws Exception;
+
+	List<NewsVO> searchNews(String keyword, int limit) throws Exception;
+
+	
 }

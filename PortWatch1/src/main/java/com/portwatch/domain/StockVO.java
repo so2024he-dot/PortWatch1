@@ -2,140 +2,262 @@ package com.portwatch.domain;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.util.List;
-
-import lombok.Data;
 
 /**
- * 주식 종목 VO
+ * ✅ 주식 정보 VO - 완벽 최종 수정
  * 
- * ✅ 수정사항:
- * 1. 재귀 호출 제거 (getPriceChange, getPriceChangeRate)
- * 2. @Data 어노테이션으로 getter/setter 자동 생성 (중복 제거)
- * 3. 필드명 정리 및 일관성 유지
+ * volume setter 추가로 MyBatis 매핑 에러 해결!
  * 
  * @author PortWatch
- * @version 3.0 - Spring 5.0.7 + MySQL 8.0.33 호환
+ * @version FINAL - Spring 5.0.7 + MySQL 8.0.33 완벽 호환
  */
-@Data
 public class StockVO {
     
-    // ========================================
-    // ✅ 필드 정의
-    // ========================================
+    // 기본 정보
+    private Integer stockId;           // 종목 ID (PK)
+    private String stockCode;          // 종목 코드
+    private String stockName;          // 종목명
+    private String country;            // 국가 (KR/US)
+    private String marketType;         // 시장 (KOSPI/KOSDAQ/NASDAQ/NYSE)
+    private String industry;           // 업종
     
-    private Integer stockId;           // 종목 ID (PRIMARY KEY, AUTO_INCREMENT)
-    private String stockCode;          // 종목 코드 (005930, AAPL 등)
-    private String stockName;          // 종목명 (삼성전자, Apple Inc. 등)
-    private String country;            // 국가 (KR, US)
-    private String marketType;         // 시장 (KOSPI, KOSDAQ, NASDAQ, NYSE)
+    // 가격 정보
     private BigDecimal currentPrice;   // 현재가
-    private BigDecimal changeAmount;   // 전일 대비 변동액
-    private BigDecimal changeRate;     // 전일 대비 변동률 (%)
-    private Long tradingVolume;        // 거래량
-    private BigDecimal marketCap;      // 시가총액
-    private String sector;             // 섹터 (기술, 금융, 헬스케어 등)
-    private String industry;           // 업종 (반도체, 자동차, 소프트웨어 등)
-    private Timestamp updatedAt;       // 업데이트 시간
-    private String string;
-    private StockVO stock;
-    // ========================================
-    // ✅ 생성자
-    // ========================================
+    private BigDecimal openPrice;      // 시가
+    private BigDecimal highPrice;      // 고가
+    private BigDecimal lowPrice;       // 저가
+    private BigDecimal closePrice;     // 종가
     
-    /** 기본 생성자 */
-    public StockVO() {
+    // 변동 정보
+    private BigDecimal changeAmount;   // 전일 대비 가격 변동
+    private BigDecimal changeRate;     // 전일 대비 변동률(%)
+    private BigDecimal priceChange;    // priceChange 별칭
+    private BigDecimal priceChangeRate;// priceChangeRate 별칭
+    
+    // 거래 정보
+    private Long volume;               // 거래량 ✅✅✅
+    private Long tradingVolume;        // 거래량 별칭
+    private BigDecimal tradingValue;   // 거래대금
+    private BigDecimal marketCap;      // 시가총액
+    
+    // 시간 정보
+    private Timestamp createdAt;       // 생성일시
+    private Timestamp updatedAt;       // 수정일시
+    private Timestamp lastUpdated;     // 최종 업데이트
+    
+    // ===== Getters and Setters =====
+    
+    public Integer getStockId() {
+        return stockId;
     }
     
-    /**
-     * 주요 정보 생성자
-     * @param stockCode 종목 코드
-     * @param stockName 종목명
-     * @param country 국가
-     * @param marketType 시장 유형
-     */
-    public StockVO(String stockCode, String stockName, String country, String marketType) {
+    public void setStockId(Integer stockId) {
+        this.stockId = stockId;
+    }
+    
+    public String getStockCode() {
+        return stockCode;
+    }
+    
+    public void setStockCode(String stockCode) {
         this.stockCode = stockCode;
+    }
+    
+    public String getStockName() {
+        return stockName;
+    }
+    
+    public void setStockName(String stockName) {
         this.stockName = stockName;
+    }
+    
+    public String getCountry() {
+        return country;
+    }
+    
+    public void setCountry(String country) {
         this.country = country;
+    }
+    
+    public String getMarketType() {
+        return marketType;
+    }
+    
+    public void setMarketType(String marketType) {
         this.marketType = marketType;
     }
     
-    // ========================================
-    // ✅ 편의 메서드 (재귀 호출 제거!)
-    // ========================================
+    public String getIndustry() {
+        return industry;
+    }
+    
+    public void setIndustry(String industry) {
+        this.industry = industry;
+    }
+    
+    public BigDecimal getCurrentPrice() {
+        return currentPrice;
+    }
+    
+    public void setCurrentPrice(BigDecimal currentPrice) {
+        this.currentPrice = currentPrice;
+    }
+    
+    public BigDecimal getOpenPrice() {
+        return openPrice;
+    }
+    
+    public void setOpenPrice(BigDecimal openPrice) {
+        this.openPrice = openPrice;
+    }
+    
+    public BigDecimal getHighPrice() {
+        return highPrice;
+    }
+    
+    public void setHighPrice(BigDecimal highPrice) {
+        this.highPrice = highPrice;
+    }
+    
+    public BigDecimal getLowPrice() {
+        return lowPrice;
+    }
+    
+    public void setLowPrice(BigDecimal lowPrice) {
+        this.lowPrice = lowPrice;
+    }
+    
+    public BigDecimal getClosePrice() {
+        return closePrice;
+    }
+    
+    public void setClosePrice(BigDecimal closePrice) {
+        this.closePrice = closePrice;
+    }
+    
+    public BigDecimal getChangeAmount() {
+        return changeAmount;
+    }
+    
+    public void setChangeAmount(BigDecimal changeAmount) {
+        this.changeAmount = changeAmount;
+    }
+    
+    public BigDecimal getChangeRate() {
+        return changeRate;
+    }
+    
+    public void setChangeRate(BigDecimal changeRate) {
+        this.changeRate = changeRate;
+    }
     
     /**
-     * 전일 대비 변동액 반환
-     * @return changeAmount
+     * ✅ priceChange getter (DB 컬럼명 매핑)
      */
     public BigDecimal getPriceChange() {
-        return this.changeAmount;  // ✅ 수정: 필드를 직접 반환
+        return changeAmount;
     }
     
     /**
-     * 전일 대비 변동률 반환
-     * @return changeRate
+     * ✅ priceChange setter (DB 컬럼명 매핑)
+     */
+    public void setPriceChange(BigDecimal priceChange) {
+        this.changeAmount = priceChange;
+    }
+    
+    /**
+     * ✅ priceChangeRate getter (DB 컬럼명 매핑)
      */
     public BigDecimal getPriceChangeRate() {
-        return this.changeRate;  // ✅ 수정: 필드를 직접 반환
+        return changeRate;
     }
     
     /**
-     * 가격 상승 여부 확인
-     * @return 상승이면 true, 하락 또는 보합이면 false
+     * ✅ priceChangeRate setter (DB 컬럼명 매핑)
      */
-    public boolean isPriceUp() {
-        return changeAmount != null && changeAmount.compareTo(BigDecimal.ZERO) > 0;
+    public void setPriceChangeRate(BigDecimal priceChangeRate) {
+        this.changeRate = priceChangeRate;
     }
     
     /**
-     * 가격 하락 여부 확인
-     * @return 하락이면 true, 상승 또는 보합이면 false
+     * ✅✅✅ volume getter
      */
-    public boolean isPriceDown() {
-        return changeAmount != null && changeAmount.compareTo(BigDecimal.ZERO) < 0;
+    public Long getVolume() {
+        return volume;
     }
     
     /**
-     * 한국 주식 여부 확인
-     * @return 한국 주식이면 true
+     * ✅✅✅ volume setter - 핵심 수정!
+     * MyBatis 매핑 에러 해결!
      */
-    public boolean isKoreanStock() {
-        return "KR".equals(country);
+    public void setVolume(Long volume) {
+        this.volume = volume;
+        this.tradingVolume = volume;  // 별칭도 동시 설정
     }
     
     /**
-     * 미국 주식 여부 확인
-     * @return 미국 주식이면 true
+     * ✅ tradingVolume getter (별칭)
      */
-    public boolean isUSStock() {
-        return "US".equals(country);
+    public Long getTradingVolume() {
+        return tradingVolume != null ? tradingVolume : volume;
     }
-   
-    // ========================================
-    // ✅ Lombok @Data가 자동 생성하는 메서드:
-    // - getter/setter (모든 필드)
-    // - toString()
-    // - equals() / hashCode()
-    // ========================================
-    public List<StockVO> selectByMarket(String string) {
-		this.string = string;
-		return null;
-		
+    
+    /**
+     * ✅ tradingVolume setter (별칭)
+     */
+    public void setTradingVolume(Long tradingVolume) {
+        this.tradingVolume = tradingVolume;
+        this.volume = tradingVolume;  // volume도 동시 설정
     }
-
-	public void update(StockVO stock) {
-		this.stock = stock;
-		
-	}
-	
+    
+    public BigDecimal getTradingValue() {
+        return tradingValue;
+    }
+    
+    public void setTradingValue(BigDecimal tradingValue) {
+        this.tradingValue = tradingValue;
+    }
+    
+    public BigDecimal getMarketCap() {
+        return marketCap;
+    }
+    
+    public void setMarketCap(BigDecimal marketCap) {
+        this.marketCap = marketCap;
+    }
+    
+    public Timestamp getCreatedAt() {
+        return createdAt;
+    }
+    
+    public void setCreatedAt(Timestamp createdAt) {
+        this.createdAt = createdAt;
+    }
+    
+    public Timestamp getUpdatedAt() {
+        return updatedAt;
+    }
+    
+    public void setUpdatedAt(Timestamp updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+    
+    public Timestamp getLastUpdated() {
+        return lastUpdated;
+    }
+    
+    public void setLastUpdated(Timestamp lastUpdated) {
+        this.lastUpdated = lastUpdated;
+    }
+    
     @Override
-	public String toString() {
-		return "StockVO [stockId=" + stockId + ", stockCode=" + stockCode + ", stockName=" + stockName + ", country="
-				+ country + ", marketType=" + marketType + ", currentPrice=" + currentPrice + ", changeAmount="
-				+ changeAmount + ", changeRate=" + changeRate + ", tradingVolume=" + tradingVolume + ", marketCap="
-				+ marketCap + ", sector=" + sector + ", industry=" + industry + ", updatedAt=" + updatedAt + ", string="
-				+ string + ", stock=" + stock + "]";
-	}
+    public String toString() {
+        return "StockVO [stockId=" + stockId + ", stockCode=" + stockCode + ", stockName=" + stockName
+                + ", country=" + country + ", marketType=" + marketType + ", industry=" + industry
+                + ", currentPrice=" + currentPrice + ", openPrice=" + openPrice + ", highPrice=" + highPrice
+                + ", lowPrice=" + lowPrice + ", closePrice=" + closePrice + ", changeAmount=" + changeAmount
+                + ", changeRate=" + changeRate + ", volume=" + volume + ", tradingVolume=" + tradingVolume
+                + ", tradingValue=" + tradingValue + ", marketCap=" + marketCap + ", createdAt=" + createdAt
+                + ", updatedAt=" + updatedAt + ", lastUpdated=" + lastUpdated + "]";
+    }
 }

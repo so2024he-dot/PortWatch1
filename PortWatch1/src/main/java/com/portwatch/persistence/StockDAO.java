@@ -255,4 +255,14 @@ public interface StockDAO {
 
 	void updateCurrentPrice(String stockCode, BigDecimal currentPrice, BigDecimal priceChange,
 			BigDecimal priceChangeRate);
+	
+	/**
+	 * ✅ 국가+시장별 종목 조회
+	 * 
+	 * @param country 국가 코드 (KR, US)
+	 * @param market 시장 타입 (KOSPI, KOSDAQ, NASDAQ, NYSE)
+	 * @return List<StockVO>
+	 * @throws Exception
+	 */
+	List<StockVO> selectByCountryAndMarket(String country, String market) throws Exception;
 }

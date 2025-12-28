@@ -244,4 +244,12 @@ public interface PortfolioService {
 	 * @return 포트폴리오 정보
 	 */
 	PortfolioVO getPortfolioById(Long portfolioId) throws Exception;
+
+	PortfolioVO getPortfolio(Long portfolioId);
+
+	void register(PortfolioVO portfolio);
+
+	void modify(PortfolioVO portfolio);
+
+	void remove(Long portfolioId);
 }

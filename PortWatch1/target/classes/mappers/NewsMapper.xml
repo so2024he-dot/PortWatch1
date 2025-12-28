@@ -3,134 +3,158 @@
     PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<!-- 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-NEWS MAPPER - 완벽 수정
-Spring 5.0.7 + MySQL 8.0.33 + MyBatis 3.4.6
+<!--
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NewsMapper - 뉴스 SQL 매퍼
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-추가된 메서드:
-- selectRecentNews: 최근 뉴스 조회 (limit)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Spring 5.0.7 + MySQL 8.0.33 호환
+
+수정 내역:
+- 2025-12-29: selectByCategory, search 쿼리 추가
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 -->
 
 <mapper namespace="com.portwatch.persistence.NewsDAO">
-    
-    <!-- ✅ 최근 뉴스 조회 (신규 추가) -->
-    <select id="selectRecentNews" parameterType="int" resultType="NewsVO">
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         ResultMap 정의
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <resultMap id="NewsResultMap" type="com.portwatch.domain.NewsVO">
+        <id property="newsId" column="news_id"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="summary" column="summary"/>
+        <result property="url" column="url"/>
+        <result property="source" column="source"/>
+        <result property="category" column="category"/>
+        <result property="publishedAt" column="published_at"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         최근 뉴스 조회
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <select id="selectRecent" parameterType="int" resultMap="NewsResultMap">
         SELECT 
             news_id,
-            stock_code,
-            news_title,
-            news_content,
-            news_url,
-            published_date,
+            title,
+            content,
+            summary,
+            url,
             source,
+            category,
+            published_at,
             created_at
         FROM news
-        ORDER BY published_date DESC, created_at DESC
+        ORDER BY created_at DESC
         LIMIT #{limit}
     </select>
-    
-    <!-- ✅ 모든 뉴스 조회 -->
-    <select id="selectAllNews" resultType="NewsVO">
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         ✅ 카테고리별 뉴스 조회 (신규 추가)
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         
+         파라미터:
+         - category: 카테고리명 (예: 증시, 경제, 산업)
+         - limit: 조회 개수
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <select id="selectByCategory" resultMap="NewsResultMap">
         SELECT 
             news_id,
-            stock_code,
-            news_title,
-            news_content,
-            news_url,
-            published_date,
+            title,
+            content,
+            summary,
+            url,
             source,
+            category,
+            published_at,
             created_at
         FROM news
-        ORDER BY published_date DESC
+        WHERE category = #{category}
+        ORDER BY created_at DESC
+        LIMIT #{limit}
     </select>
-    
-    <!-- ✅ 특정 주식 뉴스 조회 -->
-    <select id="selectNewsByStock" parameterType="map" resultType="NewsVO">
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         ✅ 뉴스 검색 (신규 추가)
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         
+         파라미터:
+         - keyword: 검색 키워드
+         - limit: 조회 개수
+         
+         검색 대상:
+         - title: 뉴스 제목
+         - content: 뉴스 내용
+         - summary: 뉴스 요약
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <select id="search" resultMap="NewsResultMap">
         SELECT 
             news_id,
-            stock_code,
-            news_title,
-            news_content,
-            news_url,
-            published_date,
+            title,
+            content,
+            summary,
+            url,
             source,
+            category,
+            published_at,
             created_at
         FROM news
-        WHERE stock_code = #{stockCode}
-        ORDER BY published_date DESC
-        <if test="limit != null">
-            LIMIT #{limit}
-        </if>
+        WHERE title LIKE CONCAT('%', #{keyword}, '%')
+           OR content LIKE CONCAT('%', #{keyword}, '%')
+           OR summary LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY created_at DESC
+        LIMIT #{limit}
     </select>
-    
-    <!-- ✅ 뉴스 상세 조회 -->
-    <select id="selectNewsById" parameterType="long" resultType="NewsVO">
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         뉴스 상세 조회
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <select id="selectById" parameterType="long" resultMap="NewsResultMap">
         SELECT 
             news_id,
-            stock_code,
-            news_title,
-            news_content,
-            news_url,
-            published_date,
+            title,
+            content,
+            summary,
+            url,
             source,
+            category,
+            published_at,
             created_at
         FROM news
         WHERE news_id = #{newsId}
     </select>
-    
-    <!-- ✅ 뉴스 삽입 -->
-    <insert id="insertNews" parameterType="NewsVO">
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         뉴스 등록
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <insert id="insert" parameterType="com.portwatch.domain.NewsVO">
         INSERT INTO news (
-            stock_code,
-            news_title,
-            news_content,
-            news_url,
-            published_date,
+            title,
+            content,
+            summary,
+            url,
             source,
-            created_at
+            category,
+            published_at
         ) VALUES (
-            #{stockCode},
-            #{newsTitle},
-            #{newsContent},
-            #{newsUrl},
-            #{publishedDate},
+            #{title},
+            #{content},
+            #{summary},
+            #{url},
             #{source},
-            NOW()
+            #{category},
+            #{publishedAt}
         )
     </insert>
-    
-    <!-- ✅ 뉴스 수정 -->
-    <update id="updateNews" parameterType="NewsVO">
-        UPDATE news
-        SET 
-            stock_code = #{stockCode},
-            news_title = #{newsTitle},
-            news_content = #{newsContent},
-            news_url = #{newsUrl},
-            published_date = #{publishedDate},
-            source = #{source}
-        WHERE news_id = #{newsId}
-    </update>
-    
-    <!-- ✅ 뉴스 삭제 -->
-    <delete id="deleteNews" parameterType="long">
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         뉴스 삭제
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <delete id="delete" parameterType="long">
         DELETE FROM news
         WHERE news_id = #{newsId}
     </delete>
-    
-    <!-- ✅ 총 뉴스 개수 -->
-    <select id="countNews" resultType="int">
-        SELECT COUNT(*)
-        FROM news
-    </select>
-    
-    <!-- ✅ 주식별 뉴스 개수 -->
-    <select id="countNewsByStock" parameterType="string" resultType="int">
-        SELECT COUNT(*)
-        FROM news
-        WHERE stock_code = #{stockCode}
-    </select>
-    
+
 </mapper>

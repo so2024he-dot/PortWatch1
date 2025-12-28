@@ -162,9 +162,9 @@ public class PortfolioServiceImpl implements PortfolioService {
             
             for (PortfolioVO portfolio : portfolioList) {
                 if (portfolio.getPurchasePrice() != null && portfolio.getQuantity() != null) {
-                    BigDecimal investment = ((BigDecimal) portfolio.getPurchasePrice())
-                        .multiply(portfolio.getQuantity());
-                    totalInvestment = totalInvestment.add(investment);
+                	BigDecimal investment = portfolio.getPurchasePrice()
+                            .multiply(portfolio.getQuantity());
+                        totalInvestment = totalInvestment.add(investment);
                 }
                 
                 if (portfolio.getCurrentPrice() != null && portfolio.getQuantity() != null) {
@@ -348,10 +348,11 @@ public class PortfolioServiceImpl implements PortfolioService {
                 BigDecimal newQuantity = existingPortfolio.getQuantity().add(portfolio.getQuantity());
                 
                 // 평균 매입 단가 계산
-                BigDecimal existingTotalCost = ((BigDecimal) existingPortfolio.getPurchasePrice())
-                    .multiply(existingPortfolio.getQuantity());
-                BigDecimal newTotalCost = ((BigDecimal) portfolio.getPurchasePrice())
-                    .multiply(portfolio.getQuantity());
+                BigDecimal existingTotalCost = existingPortfolio.getPurchasePrice()
+                        .multiply(existingPortfolio.getQuantity());
+                    BigDecimal newTotalCost = portfolio.getPurchasePrice()
+                        .multiply(portfolio.getQuantity());
+
                 BigDecimal combinedTotalCost = existingTotalCost.add(newTotalCost);
                 BigDecimal averagePrice = combinedTotalCost
                     .divide(newQuantity, 2, RoundingMode.HALF_UP);
@@ -507,8 +508,7 @@ public class PortfolioServiceImpl implements PortfolioService {
     /**
      * ✅ 포트폴리오 조회 (ID로)
      */
-    @Override
-    public PortfolioVO getPortfolioById(Long portfolioId) throws Exception {
+    public PortfolioVO getPortfolioById1(Long portfolioId) throws Exception {
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         System.out.println("🔍 포트폴리오 조회 (ID)");
         System.out.println("  - 포트폴리오 ID: " + portfolioId);
@@ -801,4 +801,182 @@ public class PortfolioServiceImpl implements PortfolioService {
             throw new Exception("포트폴리오 delete 실패: " + e.getMessage(), e);
         }
     }
+    /**
+     * ✅ 포트폴리오 ID로 조회 (PortfolioController용)
+     */
+    @Override
+    public PortfolioVO getPortfolio(Long portfolioId) {
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("🔍 포트폴리오 ID로 조회");
+        System.out.println("  - 포트폴리오 ID: " + portfolioId);
+        
+        try {
+            PortfolioVO portfolio = portfolioDAO.selectPortfolioById(portfolioId);
+            
+            if (portfolio != null) {
+                System.out.println("✅ 포트폴리오 조회 완료");
+                System.out.println("  - 종목명: " + portfolio.getStockName());
+                System.out.println("  - 수량: " + portfolio.getQuantity());
+            } else {
+                System.out.println("⚠️ 포트폴리오를 찾을 수 없습니다");
+            }
+            
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            return portfolio;
+            
+        } catch (Exception e) {
+            System.err.println("❌ 포트폴리오 조회 실패: " + e.getMessage());
+            e.printStackTrace();
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            return null;
+        }
+    }
+
+    /**
+     * ✅ 포트폴리오 등록 (PortfolioController용)
+     */
+    @Override
+    @Transactional
+    public void register(PortfolioVO portfolio) {
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("➕ 포트폴리오 등록");
+        System.out.println("  - 회원 ID: " + portfolio.getMemberId());
+        System.out.println("  - 종목 ID: " + portfolio.getStockId());
+        System.out.println("  - 수량: " + portfolio.getQuantity());
+        System.out.println("  - 매입가: " + portfolio.getPurchasePrice());
+        
+        try {
+            // 기존 포트폴리오 확인
+            String memberId = portfolio.getMemberId();
+            Integer stockId = portfolio.getStockId();
+            
+            PortfolioVO existingPortfolio = portfolioDAO.selectByMemberAndStock(memberId, stockId);
+            
+            if (existingPortfolio != null) {
+                // 이미 존재하면 수량과 평균 단가 업데이트
+                BigDecimal newQuantity = existingPortfolio.getQuantity().add(portfolio.getQuantity());
+                
+                // 평균 매입 단가 계산
+                BigDecimal existingTotalCost = existingPortfolio.getPurchasePrice()
+                    .multiply(existingPortfolio.getQuantity());
+                BigDecimal newTotalCost = portfolio.getPurchasePrice()
+                    .multiply(portfolio.getQuantity());
+                BigDecimal combinedTotalCost = existingTotalCost.add(newTotalCost);
+                BigDecimal averagePrice = combinedTotalCost
+                    .divide(newQuantity, 2, java.math.RoundingMode.HALF_UP);
+                
+                existingPortfolio.setQuantity(newQuantity);
+                existingPortfolio.setPurchasePrice(averagePrice);
+                
+                portfolioDAO.updatePortfolio(existingPortfolio);
+                
+                System.out.println("✅ 기존 포트폴리오 업데이트 완료");
+                System.out.println("  - 새 수량: " + newQuantity);
+                System.out.println("  - 평균 매입가: " + averagePrice);
+            } else {
+                // 새로 추가
+                portfolioDAO.insertPortfolio(portfolio);
+                
+                System.out.println("✅ 새 포트폴리오 추가 완료");
+            }
+            
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+        } catch (Exception e) {
+            System.err.println("❌ 포트폴리오 등록 실패: " + e.getMessage());
+            e.printStackTrace();
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            throw new RuntimeException("포트폴리오 등록 실패: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * ✅ 포트폴리오 ID로 조회 (PortfolioController용)
+     */
+    public PortfolioVO getPortfolio1(Long portfolioId) {
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("🔍 포트폴리오 ID로 조회");
+        System.out.println("  - 포트폴리오 ID: " + portfolioId);
+        
+        try {
+            PortfolioVO portfolio = portfolioDAO.selectPortfolioById(portfolioId);
+            
+            if (portfolio != null) {
+                System.out.println("✅ 포트폴리오 조회 완료");
+                System.out.println("  - 종목명: " + portfolio.getStockName());
+                System.out.println("  - 수량: " + portfolio.getQuantity());
+            } else {
+                System.out.println("⚠️ 포트폴리오를 찾을 수 없습니다");
+            }
+            
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            return portfolio;
+            
+        } catch (Exception e) {
+            System.err.println("❌ 포트폴리오 조회 실패: " + e.getMessage());
+            e.printStackTrace();
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            return null;
+        }
+    }
+
+    /**
+     * ✅ 포트폴리오 수정 (PortfolioController용)
+     */
+    @Override
+    @Transactional
+    public void modify(PortfolioVO portfolio) {
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("✏️ 포트폴리오 수정");
+        System.out.println("  - 포트폴리오 ID: " + portfolio.getPortfolioId());
+        System.out.println("  - 수량: " + portfolio.getQuantity());
+        System.out.println("  - 매입가: " + portfolio.getPurchasePrice());
+        
+        try {
+            portfolioDAO.updatePortfolio(portfolio);
+            
+            System.out.println("✅ 포트폴리오 수정 완료");
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+        } catch (Exception e) {
+            System.err.println("❌ 포트폴리오 수정 실패: " + e.getMessage());
+            e.printStackTrace();
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            throw new RuntimeException("포트폴리오 수정 실패: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * ✅ 포트폴리오 삭제 (PortfolioController용)
+     */
+    @Override
+    @Transactional
+    public void remove(Long portfolioId) {
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("🗑️ 포트폴리오 삭제");
+        System.out.println("  - 포트폴리오 ID: " + portfolioId);
+        
+        try {
+            portfolioDAO.deletePortfolio(portfolioId);
+            
+            System.out.println("✅ 포트폴리오 삭제 완료");
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+        } catch (Exception e) {
+            System.err.println("❌ 포트폴리오 삭제 실패: " + e.getMessage());
+            e.printStackTrace();
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            throw new RuntimeException("포트폴리오 삭제 실패: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * ✅ 포트폴리오 ID로 조회 (별칭 - Exception 버전)
+     */
+    @Override
+    public PortfolioVO getPortfolioById(Long portfolioId) throws Exception {
+        return getPortfolio(portfolioId);
+    }
+
+
 }

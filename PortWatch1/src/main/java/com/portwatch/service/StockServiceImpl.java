@@ -524,4 +524,35 @@ public class StockServiceImpl implements StockService {
             throw new Exception("종목 삭제 실패: " + e.getMessage(), e);
         }
     }
+
+	/**
+	 * ✅ 국가+시장별 종목 조회 (완전 구현)
+	 * 
+	 * @param country 국가 코드 (KR, US)
+	 * @param market 시장 타입 (KOSPI, KOSDAQ, NASDAQ, NYSE)
+	 * @return List<StockVO> 종목 목록
+	 * @throws Exception
+	 */
+	@Override
+	public List<StockVO> getStocksByCountryAndMarket(String country, String market) throws Exception {
+		System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+		System.out.println("🌏🏛️ 국가+시장별 종목 조회");
+		System.out.println("  - 국가: " + country);
+		System.out.println("  - 시장: " + market);
+		
+		try {
+			List<StockVO> stocks = stockDAO.selectByCountryAndMarket(country, market);
+			
+			System.out.println("  - 조회 결과: " + stocks.size() + "개");
+			System.out.println("✅ 국가+시장별 종목 조회 완료");
+			System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+			
+			return stocks;
+			
+		} catch (Exception e) {
+			System.err.println("❌ 국가+시장별 종목 조회 실패: " + e.getMessage());
+			System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+			throw new Exception("국가+시장별 종목 조회 실패: " + e.getMessage(), e);
+		}
+	}
 }

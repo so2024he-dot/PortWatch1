@@ -6,6 +6,7 @@ import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -229,61 +230,65 @@ public class PortfolioController {
     }
     
     /**
-     * ✅ 포트폴리오 수정 처리
+     * ✅ 포트폴리오 수정 (PortfolioController용)
      */
-    @PostMapping("/update")
-    public String update(@ModelAttribute PortfolioVO portfolio, 
-                        RedirectAttributes rttr) {
-        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        log.info("✏️ 포트폴리오 수정 처리");
-        log.info("  - 포트폴리오 ID: " + portfolio.getPortfolioId());
+    @Transactional
+    public void modify(PortfolioVO portfolio) {
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("✏️ 포트폴리오 수정");
+        System.out.println("  - 포트폴리오 ID: " + portfolio.getPortfolioId());
+        System.out.println("  - 수량: " + portfolio.getQuantity());
+        System.out.println("  - 매입가: " + portfolio.getPurchasePrice());
         
         try {
-            // purchasePrice가 null이면 0으로 설정
-            if (portfolio.getPurchasePrice() == null) {
-                portfolio.setPurchasePrice(0.0);
-            }
+            PortfolioService portfolioDAO = null;
+			portfolioDAO.updatePortfolio(portfolio);
             
-            portfolioService.modify(portfolio);
+            System.out.println("✅ 포트폴리오 수정 완료");
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             
-            log.info("✅ 포트폴리오 수정 완료");
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            rttr.addFlashAttribute("message", "포트폴리오가 수정되었습니다.");
-            return "redirect:/portfolio/" + portfolio.getPortfolioId();
         } catch (Exception e) {
-            log.error("❌ 포트폴리오 수정 실패: " + e.getMessage(), e);
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            rttr.addFlashAttribute("errorMessage", "포트폴리오 수정에 실패했습니다: " + e.getMessage());
-            return "redirect:/portfolio/update/" + portfolio.getPortfolioId();
+            System.err.println("❌ 포트폴리오 수정 실패: " + e.getMessage());
+            e.printStackTrace();
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            throw new RuntimeException("포트폴리오 수정 실패: " + e.getMessage(), e);
         }
     }
-    
+
     /**
-     * ✅ 포트폴리오 삭제
+     * ✅ 포트폴리오 삭제 (PortfolioController용)
      */
-    @PostMapping("/delete/{portfolioId}")
-    public String delete(@PathVariable Long portfolioId, 
-                        RedirectAttributes rttr) {
-        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        log.info("🗑️ 포트폴리오 삭제");
-        log.info("  - 포트폴리오 ID: " + portfolioId);
+    @Transactional
+    public void remove(Long portfolioId) {
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("🗑️ 포트폴리오 삭제");
+        System.out.println("  - 포트폴리오 ID: " + portfolioId);
         
         try {
-            portfolioService.remove(portfolioId);
+            PortfolioService portfolioDAO = null;
+			portfolioDAO.deletePortfolio(portfolioId);
             
-            log.info("✅ 포트폴리오 삭제 완료");
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            System.out.println("✅ 포트폴리오 삭제 완료");
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             
-            rttr.addFlashAttribute("message", "포트폴리오가 삭제되었습니다.");
-            return "redirect:/portfolio/list";
         } catch (Exception e) {
-            log.error("❌ 포트폴리오 삭제 실패: " + e.getMessage(), e);
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            rttr.addFlashAttribute("errorMessage", "포트폴리오 삭제에 실패했습니다: " + e.getMessage());
-            return "redirect:/portfolio/" + portfolioId;
+            System.err.println("❌ 포트폴리오 삭제 실패: " + e.getMessage());
+            e.printStackTrace();
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            throw new RuntimeException("포트폴리오 삭제 실패: " + e.getMessage(), e);
         }
     }
+
+    /**
+     * ✅ 포트폴리오 ID로 조회 (별칭 - Exception 버전)
+     */
+    public PortfolioVO getPortfolioById(Long portfolioId) throws Exception {
+        return getPortfolio(portfolioId);
+    }
+
+	private PortfolioVO getPortfolio(Long portfolioId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

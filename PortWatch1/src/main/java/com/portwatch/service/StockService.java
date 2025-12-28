@@ -147,4 +147,6 @@ public interface StockService {
     void deleteStock(Integer stockId) throws Exception;
 
 	StockVO getStockById(Long stockId) throws Exception;
+
+	List<StockVO> getStocksByCountryAndMarket(String country, String market) throws Exception;
 }

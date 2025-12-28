@@ -4,14 +4,13 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 /**
- * ✅ 포트폴리오 VO - 완벽 수정
+ * ✅ 포트폴리오 VO - 완벽 최종 수정
  * 
- * Ambiguous setters 에러 완전 해결!
- * - quantity: BigDecimal 타입으로 통일
- * - 중복 setter 모두 제거
+ * getPurchasePrice() BigDecimal 반환으로 통일!
+ * PortfolioServiceImpl과 완벽 호환!
  * 
  * @author PortWatch
- * @version FINAL - Spring 5.0.7 + MySQL 8.0.33 완전 대응
+ * @version FINAL - Spring 5.0.7 + MySQL 8.0.33 완벽 호환
  */
 public class PortfolioVO {
     
@@ -97,7 +96,6 @@ public class PortfolioVO {
     
     /**
      * ✅ quantity setter (double 자동 변환)
-     * PortfolioServiceImpl에서 사용
      */
     public void setQuantity(double quantity) {
         this.quantity = BigDecimal.valueOf(quantity);
@@ -123,14 +121,32 @@ public class PortfolioVO {
     }
     
     /**
-     * ✅ purchasePrice 별칭 (PortfolioServiceImpl 호환)
+     * ✅✅✅ purchasePrice getter - BigDecimal 반환!
+     * PortfolioServiceImpl의 165, 351, 353번 라인 호환!
      */
     public BigDecimal getPurchasePrice() {
         return avgPurchasePrice;
     }
     
+    /**
+     * ✅ purchasePrice setter (BigDecimal 버전)
+     */
     public void setPurchasePrice(BigDecimal purchasePrice) {
         this.avgPurchasePrice = purchasePrice;
+    }
+    
+    /**
+     * ✅ purchasePrice setter (double 버전 - PortfolioController 호환)
+     */
+    public void setPurchasePrice(double purchasePrice) {
+        this.avgPurchasePrice = BigDecimal.valueOf(purchasePrice);
+    }
+    
+    /**
+     * ✅ purchasePrice setter (Double 래퍼 타입 버전)
+     */
+    public void setPurchasePrice(Double purchasePrice) {
+        this.avgPurchasePrice = purchasePrice != null ? BigDecimal.valueOf(purchasePrice) : null;
     }
     
     public Timestamp getPurchaseDate() {
@@ -175,7 +191,6 @@ public class PortfolioVO {
     
     /**
      * ✅ setCurrentPrice (Object 자동 변환)
-     * PortfolioServiceImpl에서 사용
      */
     public void setCurrentPrice(Object currentPrice) {
         if (currentPrice instanceof BigDecimal) {

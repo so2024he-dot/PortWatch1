@@ -1,355 +1,223 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
-"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+StockMapper - 주식 SQL 매퍼
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Spring 5.0.7 + MySQL 8.0.33 호환
+
+수정 내역:
+- 2025-12-29: selectByCountryAndMarket 쿼리 추가
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-->
 
 <mapper namespace="com.portwatch.persistence.StockDAO">
 
-    <!-- ========================================
-         ✅ ResultMap 정의 (중복 제거!)
-         ======================================== -->
-    
-    <resultMap id="StockResultMap" type="StockVO">
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         ResultMap 정의
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <resultMap id="StockResultMap" type="com.portwatch.domain.StockVO">
         <id property="stockId" column="stock_id"/>
         <result property="stockCode" column="stock_code"/>
         <result property="stockName" column="stock_name"/>
-        <result property="marketType" column="market_type"/>
         <result property="country" column="country"/>
+        <result property="marketType" column="market_type"/>
         <result property="industry" column="industry"/>
         <result property="currentPrice" column="current_price"/>
-        <result property="priceChange" column="price_change"/>
-        <result property="priceChangeRate" column="price_change_rate"/>
+        <result property="changeRate" column="change_rate"/>
         <result property="volume" column="volume"/>
-        <result property="createdAt" column="created_at"/>
+        <result property="marketCap" column="market_cap"/>
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
 
-    <!-- ========================================
-         기본 CRUD
-         ======================================== -->
-    
-    <!-- 종목 코드로 조회 (StockVO 전체 반환) -->
-    <select id="selectStockByCode" parameterType="string" resultMap="StockResultMap">
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         전체 주식 조회
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <select id="selectAll" resultMap="StockResultMap">
         SELECT 
-            stock_id, stock_code, stock_name, market_type,
-            country, industry, current_price, price_change,
-            price_change_rate, volume, created_at, updated_at
-        FROM stock 
-        WHERE stock_code = #{stockCode}
-    </select>
-    
-    <!-- 종목 코드로 조회 (별칭) -->
-    <select id="selectByCode" parameterType="string" resultMap="StockResultMap">
-        SELECT 
-            stock_id, stock_code, stock_name, market_type,
-            country, industry, current_price, price_change,
-            price_change_rate, volume, created_at, updated_at
-        FROM stock 
-        WHERE stock_code = #{stockCode}
-    </select>
-    
-    <!-- 종목 ID로 조회 -->
-    <select id="selectStockById" parameterType="int" resultMap="StockResultMap">
-        SELECT 
-            stock_id, stock_code, stock_name, market_type,
-            country, industry, current_price, price_change,
-            price_change_rate, volume, created_at, updated_at
-        FROM stock 
-        WHERE stock_id = #{stockId}
-    </select>
-    
-    <!-- 전체 종목 조회 -->
-    <select id="selectAllStocks" resultMap="StockResultMap">
-        SELECT 
-            stock_id, stock_code, stock_name, market_type,
-            country, industry, current_price, price_change,
-            price_change_rate, volume, created_at, updated_at
+            stock_id,
+            stock_code,
+            stock_name,
+            country,
+            market_type,
+            industry,
+            current_price,
+            change_rate,
+            volume,
+            market_cap,
+            updated_at
         FROM stock
-        ORDER BY stock_name
+        ORDER BY stock_name ASC
     </select>
 
-    <!-- ========================================
-         필터링 쿼리
-         ======================================== -->
-    
-    <!-- 나라별 조회 -->
-    <select id="selectStocksByCountry" parameterType="string" resultMap="StockResultMap">
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         종목 코드로 조회
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <select id="selectByCode" parameterType="string" resultMap="StockResultMap">
         SELECT 
-            stock_id, stock_code, stock_name, market_type,
-            country, industry, current_price, price_change,
-            price_change_rate, volume, created_at, updated_at
+            stock_id,
+            stock_code,
+            stock_name,
+            country,
+            market_type,
+            industry,
+            current_price,
+            change_rate,
+            volume,
+            market_cap,
+            updated_at
+        FROM stock
+        WHERE stock_code = #{stockCode}
+    </select>
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         국가별 조회
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <select id="selectByCountry" parameterType="string" resultMap="StockResultMap">
+        SELECT 
+            stock_id,
+            stock_code,
+            stock_name,
+            country,
+            market_type,
+            industry,
+            current_price,
+            change_rate,
+            volume,
+            market_cap,
+            updated_at
         FROM stock
         WHERE country = #{country}
-        ORDER BY stock_name
+        ORDER BY stock_name ASC
     </select>
-    
-    <!-- 시장별 조회 -->
-    <select id="selectStocksByMarketType" parameterType="string" resultMap="StockResultMap">
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         시장별 조회
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <select id="selectByMarket" parameterType="string" resultMap="StockResultMap">
         SELECT 
-            stock_id, stock_code, stock_name, market_type,
-            country, industry, current_price, price_change,
-            price_change_rate, volume, created_at, updated_at
+            stock_id,
+            stock_code,
+            stock_name,
+            country,
+            market_type,
+            industry,
+            current_price,
+            change_rate,
+            volume,
+            market_cap,
+            updated_at
         FROM stock
         WHERE market_type = #{marketType}
-        ORDER BY stock_name
+        ORDER BY stock_name ASC
     </select>
-    
-    <!-- 업종별 조회 -->
-    <select id="selectStocksByIndustry" parameterType="string" resultMap="StockResultMap">
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         ✅ 국가 + 시장별 조회 (신규 추가)
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         
+         파라미터:
+         - country: 국가 코드 (KR, US)
+         - market: 시장 코드 (KOSPI, KOSDAQ, NASDAQ, NYSE)
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <select id="selectByCountryAndMarket" resultMap="StockResultMap">
         SELECT 
-            stock_id, stock_code, stock_name, market_type,
-            country, industry, current_price, price_change,
-            price_change_rate, volume, created_at, updated_at
+            stock_id,
+            stock_code,
+            stock_name,
+            country,
+            market_type,
+            industry,
+            current_price,
+            change_rate,
+            volume,
+            market_cap,
+            updated_at
         FROM stock
-        WHERE industry = #{industry}
-        ORDER BY stock_name
+        WHERE country = #{country}
+          AND market_type = #{market}
+        ORDER BY stock_name ASC
     </select>
-    
-    <!-- 검색 (종목명 또는 종목코드) -->
-    <select id="searchStocks" parameterType="string" resultMap="StockResultMap">
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         주식 검색
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <select id="search" parameterType="string" resultMap="StockResultMap">
         SELECT 
-            stock_id, stock_code, stock_name, market_type,
-            country, industry, current_price, price_change,
-            price_change_rate, volume, created_at, updated_at
+            stock_id,
+            stock_code,
+            stock_name,
+            country,
+            market_type,
+            industry,
+            current_price,
+            change_rate,
+            volume,
+            market_cap,
+            updated_at
         FROM stock
         WHERE stock_name LIKE CONCAT('%', #{keyword}, '%')
            OR stock_code LIKE CONCAT('%', #{keyword}, '%')
-        ORDER BY stock_name
-        LIMIT 50
+        ORDER BY stock_name ASC
     </select>
 
-    <!-- ========================================
-         정렬 쿼리
-         ======================================== -->
-    
-    <!-- 거래량 상위 종목 -->
-    <select id="selectStocksOrderByVolume" parameterType="int" resultMap="StockResultMap">
-        SELECT 
-            stock_id, stock_code, stock_name, market_type,
-            country, industry, current_price, price_change,
-            price_change_rate, volume, created_at, updated_at
-        FROM stock
-        WHERE volume IS NOT NULL
-        ORDER BY volume DESC
-        LIMIT #{limit}
-    </select>
-    
-    <!-- 등락률 상위 종목 -->
-    <select id="selectStocksOrderByChangeRate" parameterType="int" resultMap="StockResultMap">
-        SELECT 
-            stock_id, stock_code, stock_name, market_type,
-            country, industry, current_price, price_change,
-            price_change_rate, volume, created_at, updated_at
-        FROM stock
-        WHERE price_change_rate IS NOT NULL
-        ORDER BY price_change_rate DESC
-        LIMIT #{limit}
-    </select>
-
-    <!-- ========================================
-         업종 목록
-         ======================================== -->
-    
-    <!-- 전체 업종 목록 조회 -->
-    <select id="selectAllIndustries" resultType="string">
-        SELECT DISTINCT industry
-        FROM stock
-        WHERE industry IS NOT NULL
-        ORDER BY industry
-    </select>
-
-    <!-- ========================================
-         데이터 수정
-         ======================================== -->
-    
-    <!-- 종목 정보 업데이트 -->
-    <update id="updateStock" parameterType="StockVO">
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         주식 정보 업데이트
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <update id="update" parameterType="com.portwatch.domain.StockVO">
         UPDATE stock
         SET stock_name = #{stockName},
-            market_type = #{marketType},
             country = #{country},
+            market_type = #{marketType},
             industry = #{industry},
             current_price = #{currentPrice},
-            price_change = #{priceChange},
-            price_change_rate = #{priceChangeRate},
+            change_rate = #{changeRate},
             volume = #{volume},
-            updated_at = NOW()
+            market_cap = #{marketCap},
+            updated_at = CURRENT_TIMESTAMP
         WHERE stock_code = #{stockCode}
     </update>
-    
-    <!-- 가격 정보만 업데이트 -->
-    <update id="updateStockPrice" parameterType="map">
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         주식 가격 업데이트
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <update id="updatePrice">
         UPDATE stock
         SET current_price = #{currentPrice},
-            price_change = #{priceChange},
-            price_change_rate = #{priceChangeRate},
-            volume = #{volume},
-            updated_at = NOW()
+            change_rate = #{changeRate},
+            updated_at = CURRENT_TIMESTAMP
         WHERE stock_code = #{stockCode}
     </update>
 
-    <!-- ========================================
-         데이터 삽입
-         ======================================== -->
-    
-    <!-- 새 종목 추가 -->
-    <insert id="insertStock" parameterType="StockVO">
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         주식 등록
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <insert id="insert" parameterType="com.portwatch.domain.StockVO">
         INSERT INTO stock (
-            stock_code, stock_name, market_type, country,
-            industry, current_price, price_change,
-            price_change_rate, volume, created_at, updated_at
+            stock_code,
+            stock_name,
+            country,
+            market_type,
+            industry,
+            current_price,
+            change_rate,
+            volume,
+            market_cap
         ) VALUES (
-            #{stockCode}, #{stockName}, #{marketType}, #{country},
-            #{industry}, #{currentPrice}, #{priceChange},
-            #{priceChangeRate}, #{volume}, NOW(), NOW()
+            #{stockCode},
+            #{stockName},
+            #{country},
+            #{marketType},
+            #{industry},
+            #{currentPrice},
+            #{changeRate},
+            #{volume},
+            #{marketCap}
         )
     </insert>
-
-    <!-- ========================================
-         통계 쿼리
-         ======================================== -->
-    
-    <!-- 전체 종목 수 -->
-    <select id="countAllStocks" resultType="int">
-        SELECT COUNT(*) FROM stock
-    </select>
-    
-    <!-- 나라별 종목 수 -->
-    <select id="countStocksByCountry" parameterType="string" resultType="int">
-        SELECT COUNT(*) FROM stock WHERE country = #{country}
-    </select>
-  <!-- ========================================
-         ✅ 추가 메서드 (누락된 메서드들)
-         ======================================== -->
-    
-    <!-- 종목 ID로 조회 (selectById - 별칭) -->
-    <select id="selectById" parameterType="int" resultMap="StockResultMap">
-        SELECT 
-            stock_id, stock_code, stock_name, market_type,
-            country, industry, current_price, price_change,
-            price_change_rate, volume, created_at, updated_at
-        FROM stock 
-        WHERE stock_id = #{stockId}
-    </select>
-    
-    <!-- 전체 종목 조회 (selectAll - 별칭) -->
-    <select id="selectAll" resultMap="StockResultMap">
-        SELECT 
-            stock_id, stock_code, stock_name, market_type,
-            country, industry, current_price, price_change,
-            price_change_rate, volume, created_at, updated_at
-        FROM stock
-        ORDER BY stock_id
-    </select>
-    
-    <!-- 국가별 종목 조회 (selectByCountry - 별칭) -->
-    <select id="selectByCountry" parameterType="string" resultMap="StockResultMap">
-        SELECT 
-            stock_id, stock_code, stock_name, market_type,
-            country, industry, current_price, price_change,
-            price_change_rate, volume, created_at, updated_at
-        FROM stock 
-        WHERE country = #{country}
-        ORDER BY stock_code
-    </select>
-    
-    <!-- 시장별 종목 조회 (selectByMarket - 별칭) -->
-    <select id="selectByMarket" parameterType="string" resultMap="StockResultMap">
-        SELECT 
-            stock_id, stock_code, stock_name, market_type,
-            country, industry, current_price, price_change,
-            price_change_rate, volume, created_at, updated_at
-        FROM stock 
-        WHERE market_type = #{marketType}
-        ORDER BY stock_code
-    </select>
-    
-    <!-- 업종별 종목 조회 (selectByIndustry - 별칭) -->
-    <select id="selectByIndustry" parameterType="string" resultMap="StockResultMap">
-        SELECT 
-            stock_id, stock_code, stock_name, market_type,
-            country, industry, current_price, price_change,
-            price_change_rate, volume, created_at, updated_at
-        FROM stock 
-        WHERE industry = #{industry}
-        ORDER BY stock_code
-    </select>
-    
-    <!-- 거래량 순 조회 (selectOrderByVolume - 별칭) -->
-    <select id="selectOrderByVolume" parameterType="int" resultMap="StockResultMap">
-        SELECT 
-            stock_id, stock_code, stock_name, market_type,
-            country, industry, current_price, price_change,
-            price_change_rate, volume, created_at, updated_at
-        FROM stock 
-        WHERE volume IS NOT NULL AND volume > 0
-        ORDER BY volume DESC
-        LIMIT #{limit}
-    </select>
-    
-    <!-- 등락률 순 조회 (selectOrderByChangeRate - 별칭) -->
-    <select id="selectOrderByChangeRate" parameterType="int" resultMap="StockResultMap">
-        SELECT 
-            stock_id, stock_code, stock_name, market_type,
-            country, industry, current_price, price_change,
-            price_change_rate, volume, created_at, updated_at
-        FROM stock 
-        WHERE price_change_rate IS NOT NULL
-        ORDER BY price_change_rate DESC
-        LIMIT #{limit}
-    </select>
-    
-    <!-- 종목 검색 (search - 별칭) -->
-    <select id="search" parameterType="string" resultMap="StockResultMap">
-        SELECT 
-            stock_id, stock_code, stock_name, market_type,
-            country, industry, current_price, price_change,
-            price_change_rate, volume, created_at, updated_at
-        FROM stock 
-        WHERE stock_code LIKE CONCAT('%', #{keyword}, '%')
-           OR stock_name LIKE CONCAT('%', #{keyword}, '%')
-        ORDER BY 
-            CASE 
-                WHEN stock_code = #{keyword} THEN 0
-                WHEN stock_code LIKE CONCAT(#{keyword}, '%') THEN 1
-                WHEN stock_name LIKE CONCAT(#{keyword}, '%') THEN 2
-                ELSE 3
-            END,
-            stock_code
-    </select>
-    
-    <!-- 종목 추가 (insert - 별칭) -->
-    <insert id="insert" parameterType="StockVO">
-        INSERT INTO stock (
-            stock_code, stock_name, market_type, country,
-            industry, current_price, price_change,
-            price_change_rate, volume, created_at, updated_at
-        ) VALUES (
-            #{stockCode}, #{stockName}, #{marketType}, #{country},
-            #{industry}, #{currentPrice}, #{priceChange},
-            #{priceChangeRate}, #{volume}, NOW(), NOW()
-        )
-    </insert>
-    
-    <!-- 종목 정보 수정 (update - 별칭) -->
-    <update id="update" parameterType="StockVO">
-        UPDATE stock 
-        SET 
-            stock_name = #{stockName},
-            market_type = #{marketType},
-            country = #{country},
-            industry = #{industry},
-            current_price = #{currentPrice},
-            price_change = #{priceChange},
-            price_change_rate = #{priceChangeRate},
-            volume = #{volume},
-            updated_at = NOW()
-        WHERE stock_id = #{stockId}
-    </update>
-    
-    <!-- ✅ 종목 삭제 (delete - 새로 추가) -->
-    <delete id="delete" parameterType="int">
-        DELETE FROM stock
-        WHERE stock_id = #{stockId}
-    </delete>
 
 </mapper>

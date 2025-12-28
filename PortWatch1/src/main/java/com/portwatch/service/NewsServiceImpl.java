@@ -357,4 +357,74 @@ public class NewsServiceImpl implements NewsService {
             throw new Exception("뉴스 조회 실패: " + e.getMessage(), e);
         }
     }
+
+	/**
+	 * ✅ 카테고리별 뉴스 조회 (완전 구현)
+	 * 
+	 * @param category 카테고리 (예: 증시, 경제, 산업)
+	 * @param limit 조회 개수
+	 * @return List<NewsVO> 뉴스 목록
+	 * @throws Exception
+	 */
+	@Override
+	public List<NewsVO> getNewsByCategory(String category, int limit) throws Exception {
+		System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+		System.out.println("📂 카테고리별 뉴스 조회");
+		System.out.println("  - 카테고리: " + category);
+		System.out.println("  - 조회 개수: " + limit);
+		
+		try {
+			List<NewsVO> newsList = newsDAO.selectByCategory(category, limit);
+			
+			if (newsList == null) {
+				newsList = new ArrayList<>();
+			}
+			
+			System.out.println("  - 조회 결과: " + newsList.size() + "건");
+			System.out.println("✅ 카테고리별 뉴스 조회 완료");
+			System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+			
+			return newsList;
+			
+		} catch (Exception e) {
+			System.err.println("❌ 카테고리별 뉴스 조회 실패: " + e.getMessage());
+			System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+			throw new Exception("카테고리별 뉴스 조회 실패: " + e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * ✅ 뉴스 검색 (완전 구현)
+	 * 
+	 * @param keyword 검색 키워드
+	 * @param limit 조회 개수
+	 * @return List<NewsVO> 검색 결과 뉴스 목록
+	 * @throws Exception
+	 */
+	@Override
+	public List<NewsVO> searchNews(String keyword, int limit) throws Exception {
+		System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+		System.out.println("🔍 뉴스 검색");
+		System.out.println("  - 검색어: " + keyword);
+		System.out.println("  - 조회 개수: " + limit);
+		
+		try {
+			List<NewsVO> newsList = newsDAO.search(keyword, limit);
+			
+			if (newsList == null) {
+				newsList = new ArrayList<>();
+			}
+			
+			System.out.println("  - 검색 결과: " + newsList.size() + "건");
+			System.out.println("✅ 뉴스 검색 완료");
+			System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+			
+			return newsList;
+			
+		} catch (Exception e) {
+			System.err.println("❌ 뉴스 검색 실패: " + e.getMessage());
+			System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+			throw new Exception("뉴스 검색 실패: " + e.getMessage(), e);
+		}
+	}
 }

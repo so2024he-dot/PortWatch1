@@ -123,5 +123,6 @@
     <context:component-scan base-package="com.portwatch.service"/>
     <context:component-scan base-package="com.portwatch.persistence"/>
     <context:component-scan base-package="com.portwatch.scheduler"/>
-    
+    <context:component-scan base-package="com.portwatch">
+	
 </beans>
