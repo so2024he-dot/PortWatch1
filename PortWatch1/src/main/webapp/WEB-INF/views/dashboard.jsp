@@ -471,7 +471,7 @@
                 html += `
                     <div class="col-md-6 col-lg-4 mb-4">
                         <div class="card portfolio-card" 
-                             onclick="location.href='${this.contextPath}/portfolio/detail/${portfolio.portfolioId}'">
+                             onclick="location.href='${pageContext.request.contextPath}/portfolio/detail/${portfolio.portfolioId}'">
                             <div class="card-body">
                                 <h5 class="card-title">${portfolio.portfolioName}</h5>
                                 <p class="text-muted">${portfolio.stockName} (${portfolio.stockCode})</p>

@@ -342,7 +342,7 @@
                 html += `
                     <div class="col-md-6 mb-4">
                         <div class="card news-card h-100" 
-                             onclick="location.href='${this.contextPath}/news/detail/${news.newsId}'">
+                             onclick="location.href='${pageContext.request.contextPath}/news/detail/${news.newsId}'">
                             <div class="card-body">
                                 <h5 class="card-title">
                                     ${news.title}
