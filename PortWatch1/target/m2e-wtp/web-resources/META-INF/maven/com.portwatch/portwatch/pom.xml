@@ -229,12 +229,9 @@
 			<artifactId>junit</artifactId>
 			<version>4.12</version>
 			<scope>test</scope>
-			</dependency>
-		<dependency>
-			<groupId>com.itwillbs</groupId>
-			<artifactId>web</artifactId>
-			<version>1.0.0-BUILD-SNAPSHOT</version>
 		</dependency>
+
+		
     </dependencies>
 	<build>
 		<plugins>

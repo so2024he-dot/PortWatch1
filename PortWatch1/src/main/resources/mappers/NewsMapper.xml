@@ -5,125 +5,190 @@
 
 <!--
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-NewsMapper - 뉴스 SQL 매퍼 (실제 DB 스키마 기준)
+NewsMapper.xml - Spring 5.0.7 + MySQL 8.0.33 완전 최적화
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✅ 실제 news 테이블에 있는 컬럼만 사용
-✅ stock_id, stock_code, stock_name 제거 (테이블에 없음)
-✅ 기본 컬럼만 사용하여 안전성 확보
+✅ 실제 news 테이블 스키마에 맞춤
+✅ stock 테이블과 LEFT JOIN으로 stock_name 가져오기
+✅ MySQL 8.0.33 최적화
 
-2025-12-29: 실제 DB 스키마에 맞춰 수정
+수정일: 2025-12-30
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 -->
 
 <mapper namespace="com.portwatch.persistence.NewsDAO">
 
-    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-         ResultMap 정의 - 실제 DB 테이블 컬럼만 사용
-         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <resultMap id="NewsResultMap" type="com.portwatch.domain.NewsVO">
         <id property="newsId" column="news_id"/>
+        <result property="stockId" column="stock_id"/>
+        <result property="stockCode" column="stock_code"/>
+        <result property="stockName" column="stock_name"/>
         <result property="title" column="title"/>
         <result property="link" column="link"/>
         <result property="content" column="content"/>
         <result property="source" column="source"/>
+        <result property="country" column="country"/>
         <result property="publishedAt" column="published_at"/>
         <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
     </resultMap>
 
-    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-         최근 뉴스 조회
-         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-         
-         파라미터:
-         - limit: 조회할 뉴스 개수
-         
-         ✅ selectRecentNews - DAO 메서드명과 일치
-         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <!-- 최근 뉴스 조회 (stock 테이블과 JOIN) -->
     <select id="selectRecentNews" parameterType="int" resultMap="NewsResultMap">
         SELECT 
-            news_id,
-            title,
-            link,
-            content,
-            source,
-            published_at,
-            created_at
-        FROM news
-        ORDER BY created_at DESC
+            n.news_id,
+            n.stock_id,
+            n.stock_code,
+            s.name as stock_name,
+            n.title,
+            n.link,
+            n.content,
+            n.source,
+            n.country,
+            n.published_at,
+            n.created_at,
+            n.updated_at
+        FROM news n
+        LEFT JOIN stock s ON n.stock_code = s.stock_code
+        ORDER BY n.created_at DESC
         LIMIT #{limit}
     </select>
 
-    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-         뉴스 검색
-         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-         
-         파라미터:
-         - keyword: 검색 키워드
-         - limit: 조회할 뉴스 개수
-         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <!-- 검색 (stock 테이블과 JOIN) -->
     <select id="search" resultMap="NewsResultMap">
         SELECT 
-            news_id,
-            title,
-            link,
-            content,
-            source,
-            published_at,
-            created_at
-        FROM news
-        WHERE title LIKE CONCAT('%', #{keyword}, '%')
-           OR content LIKE CONCAT('%', #{keyword}, '%')
-        ORDER BY created_at DESC
+            n.news_id,
+            n.stock_id,
+            n.stock_code,
+            s.name as stock_name,
+            n.title,
+            n.link,
+            n.content,
+            n.source,
+            n.country,
+            n.published_at,
+            n.created_at,
+            n.updated_at
+        FROM news n
+        LEFT JOIN stock s ON n.stock_code = s.stock_code
+        WHERE 
+            n.title LIKE CONCAT('%', #{keyword}, '%')
+            OR n.content LIKE CONCAT('%', #{keyword}, '%')
+            OR s.name LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY n.created_at DESC
         LIMIT #{limit}
     </select>
 
-    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-         뉴스 상세 조회
-         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-    <select id="selectById" parameterType="long" resultMap="NewsResultMap">
+    <!-- 국가별 조회 (stock 테이블과 JOIN) -->
+    <select id="selectByCountry" parameterType="string" resultMap="NewsResultMap">
         SELECT 
-            news_id,
-            title,
-            link,
-            content,
-            source,
-            published_at,
-            created_at
-        FROM news
-        WHERE news_id = #{newsId}
+            n.news_id,
+            n.stock_id,
+            n.stock_code,
+            s.name as stock_name,
+            n.title,
+            n.link,
+            n.content,
+            n.source,
+            n.country,
+            n.published_at,
+            n.created_at,
+            n.updated_at
+        FROM news n
+        LEFT JOIN stock s ON n.stock_code = s.stock_code
+        WHERE n.country = #{country}
+        ORDER BY n.created_at DESC
+        LIMIT 100
     </select>
 
-    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-         뉴스 등록
-         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-    <insert id="insert" parameterType="com.portwatch.domain.NewsVO">
+    <!-- 종목 코드별 조회 (stock 테이블과 JOIN) -->
+    <select id="selectByStockCode" parameterType="string" resultMap="NewsResultMap">
+        SELECT 
+            n.news_id,
+            n.stock_id,
+            n.stock_code,
+            s.name as stock_name,
+            n.title,
+            n.link,
+            n.content,
+            n.source,
+            n.country,
+            n.published_at,
+            n.created_at,
+            n.updated_at
+        FROM news n
+        LEFT JOIN stock s ON n.stock_code = s.stock_code
+        WHERE n.stock_code = #{stockCode}
+        ORDER BY n.created_at DESC
+        LIMIT 50
+    </select>
+
+    <!-- ID로 조회 (stock 테이블과 JOIN) -->
+    <select id="selectById" parameterType="long" resultMap="NewsResultMap">
+        SELECT 
+            n.news_id,
+            n.stock_id,
+            n.stock_code,
+            s.name as stock_name,
+            n.title,
+            n.link,
+            n.content,
+            n.source,
+            n.country,
+            n.published_at,
+            n.created_at,
+            n.updated_at
+        FROM news n
+        LEFT JOIN stock s ON n.stock_code = s.stock_code
+        WHERE n.news_id = #{newsId}
+    </select>
+
+    <!-- 뉴스 삽입 (stock_name 제외) -->
+    <insert id="insert" parameterType="com.portwatch.domain.NewsVO" 
+            useGeneratedKeys="true" keyProperty="newsId">
         INSERT INTO news (
+            stock_id,
+            stock_code,
             title,
             link,
             content,
             source,
+            country,
             published_at
         ) VALUES (
+            #{stockId},
+            #{stockCode},
             #{title},
             #{link},
             #{content},
             #{source},
+            #{country},
             #{publishedAt}
         )
     </insert>
 
-    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-         뉴스 삭제
-         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <!-- 뉴스 업데이트 (stock_name 제외) -->
+    <update id="update" parameterType="com.portwatch.domain.NewsVO">
+        UPDATE news
+        SET
+            stock_id = #{stockId},
+            stock_code = #{stockCode},
+            title = #{title},
+            link = #{link},
+            content = #{content},
+            source = #{source},
+            country = #{country},
+            published_at = #{publishedAt}
+        WHERE news_id = #{newsId}
+    </update>
+
+    <!-- 뉴스 삭제 -->
     <delete id="delete" parameterType="long">
         DELETE FROM news
         WHERE news_id = #{newsId}
     </delete>
 
-    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-         전체 뉴스 개수 조회
-         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <!-- 뉴스 개수 조회 -->
     <select id="count" resultType="int">
         SELECT COUNT(*) FROM news
     </select>

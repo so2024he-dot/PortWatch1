@@ -74,8 +74,15 @@
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
+            
+             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
+                    <!-- ⭐ 홈 버튼 추가! -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="${pageContext.request.contextPath}/">
+                            <i class="fas fa-home"></i> 홈
+                        </a>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link active" href="${pageContext.request.contextPath}/dashboard">
                             <i class="fas fa-th-large"></i> 대시보드
@@ -94,6 +101,11 @@
                     <li class="nav-item">
                         <a class="nav-link" href="${pageContext.request.contextPath}/news/list">
                             <i class="fas fa-newspaper"></i> 뉴스
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="${pageContext.request.contextPath}/portfolio/list">
+                            <i class="fas fa-briefcase"></i> 포트폴리오
                         </a>
                     </li>
                     <li class="nav-item dropdown">
@@ -117,6 +129,8 @@
                     </li>
                 </ul>
             </div>
+            
+          
         </div>
     </nav>
     
