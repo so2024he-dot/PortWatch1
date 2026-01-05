@@ -301,9 +301,9 @@
     
     const StockFilter = {
         // ✅ 올바른 방법: Controller에서 전달받은 값 직접 사용
-        contextPath: '${pageContext.request.contextPath}',  // ❌ ${this.contextPath} 아님!
-        currentCountry: '${selectedCountry}' || 'ALL',      // ❌ ${this.currentCountry} 아님!
-        currentMarket: '${selectedMarket}' || 'ALL',        // ❌ ${this.currentMarket} 아님!
+        contextPath: '${pageContext.request.contextPath}',
+	    currentCountry: '${selectedCountry}' || 'ALL',
+	    currentMarket: '${selectedMarket}' || 'ALL',
         
         /**
          * 초기화

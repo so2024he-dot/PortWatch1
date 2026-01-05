@@ -1,64 +1,44 @@
 package com.portwatch.controller;
 
-import javax.servlet.http.HttpSession;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
-import com.portwatch.domain.MemberVO;
-import com.portwatch.service.StockService;
-
 /**
- * 홈 컨트롤러
- * 
- * @author PortWatch Team
- * @version 2.0
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * HomeController - 메인 페이지 컨트롤러
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
 @Controller
 public class HomeController {
     
-    @Autowired(required = false)
-    private StockService stockService;
+    private static final Logger log = LoggerFactory.getLogger(HomeController.class);
     
     /**
-     * 메인 페이지
+     * ✅ 메인 홈 페이지
+     * URL: http://localhost:8088/
      */
     @GetMapping("/")
-    public String home(HttpSession session, Model model) {
+    public String home() {
+        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        log.info("🏠 메인 홈 페이지 접속");
+        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         
-        try {
-            // 로그인 여부 확인
-            MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
-            
-            if (loginMember != null) {
-                model.addAttribute("loginMember", loginMember);
-            }
-            
-        } catch (Exception e) {
-            System.err.println("홈 페이지 로딩 중 오류: " + e.getMessage());
-            e.printStackTrace();
-        }
-        
-        return "home";
+        // dashboard로 리다이렉트
+        return "redirect:/dashboard";
     }
     
     /**
-     * 대시보드 페이지 (로그인 필요)
+     * ✅ 대시보드 페이지
+     * URL: http://localhost:8088/dashboard
      */
     @GetMapping("/dashboard")
-    public String dashboard(HttpSession session, Model model) {
+    public String dashboard() {
+        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        log.info("📊 대시보드 페이지");
+        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         
-        // 로그인 체크
-        MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
-        
-        if (loginMember == null) {
-            return "redirect:/member/login";
-        }
-        
-        model.addAttribute("loginMember", loginMember);
-        
-        return "dashboard/index";
+        return "dashboard";
     }
 }

@@ -1,410 +1,287 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="PortWatch - 스마트한 주식 포트폴리오 관리 시스템">
-    <title>PortWatch - 포트폴리오 관리</title>
-    
-    <!-- Bootstrap 5.3 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    
-    <!-- Custom CSS -->
-    <style>
-        :root {
-            --primary-color: #667eea;
-            --secondary-color: #764ba2;
-            --success-color: #10b981;
-            --danger-color: #ef4444;
-            --warning-color: #f59e0b;
-            --info-color: #3b82f6;
-            --dark-color: #1f2937;
-            --light-color: #f9fafb;
-            --border-radius: 12px;
-            --box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --transition: all 0.3s ease;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #333;
-        }
-        
-        /* Navbar Styles */
-        .navbar {
-            background: rgba(255, 255, 255, 0.98) !important;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 1rem 0;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-        
-        .navbar-brand {
-            font-size: 1.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .navbar-brand i {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        .nav-link {
-            font-weight: 500;
-            color: #4b5563 !important;
-            transition: var(--transition);
-            padding: 0.5rem 1rem !important;
-            border-radius: 8px;
-            margin: 0 0.25rem;
-        }
-        
-        .nav-link:hover {
-            background: rgba(102, 126, 234, 0.1);
-            color: var(--primary-color) !important;
-        }
-        
-        .nav-link.active {
-            background: rgba(102, 126, 234, 0.15);
-            color: var(--primary-color) !important;
-        }
-        
-        .navbar-text {
-            color: #6b7280;
-            font-weight: 500;
-        }
-        
-        .navbar-text strong {
-            color: var(--primary-color);
-        }
-        
-        /* Main Container */
-        .main-container {
-            max-width: 1400px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-        
-        /* Card Styles */
-        .card {
-            border: none;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            transition: var(--transition);
-            background: white;
-            overflow: hidden;
-        }
-        
-        .card:hover {
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-            transform: translateY(-2px);
-        }
-        
-        .card-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 1.25rem;
-            font-weight: 600;
-        }
-        
-        /* Button Styles */
-        .btn {
-            border-radius: 8px;
-            padding: 0.625rem 1.25rem;
-            font-weight: 500;
-            transition: var(--transition);
-            border: none;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-        
-        .btn-outline-primary {
-            border: 2px solid var(--primary-color);
-            color: var(--primary-color);
-        }
-        
-        .btn-outline-primary:hover {
-            background: var(--primary-color);
-            color: white;
-        }
-        
-        /* Summary Cards */
-        .summary-card {
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
-            color: white;
-            transition: var(--transition);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .summary-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 100px;
-            height: 100px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            transform: translate(30%, -30%);
-        }
-        
-        .summary-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-        }
-        
-        .summary-card h6 {
-            font-size: 0.875rem;
-            opacity: 0.9;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-        }
-        
-        .summary-card h3 {
-            font-size: 1.75rem;
-            font-weight: 700;
-            margin: 0;
-        }
-        
-        .summary-card .icon {
-            position: absolute;
-            right: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 2.5rem;
-            opacity: 0.3;
-        }
-        
-        /* Table Styles */
-        .table {
-            margin-bottom: 0;
-        }
-        
-        .table thead th {
-            background: #f9fafb;
-            color: #4b5563;
-            font-weight: 600;
-            border-bottom: 2px solid #e5e7eb;
-            padding: 1rem;
-        }
-        
-        .table tbody tr {
-            transition: var(--transition);
-        }
-        
-        .table tbody tr:hover {
-            background: #f9fafb;
-        }
-        
-        .table td {
-            vertical-align: middle;
-            padding: 1rem;
-        }
-        
-        /* Badge Styles */
-        .badge {
-            padding: 0.375rem 0.75rem;
-            border-radius: 6px;
-            font-weight: 500;
-        }
-        
-        /* Alert Styles */
-        .alert {
-            border-radius: var(--border-radius);
-            border: none;
-            padding: 1rem 1.25rem;
-        }
-        
-        /* Loading Spinner */
-        .spinner-border-sm {
-            width: 1rem;
-            height: 1rem;
-        }
-        
-        /* Responsive Styles */
-        @media (max-width: 768px) {
-            .navbar-brand {
-                font-size: 1.25rem;
-            }
-            
-            .nav-link {
-                padding: 0.5rem !important;
-            }
-            
-            .main-container {
-                padding: 0 0.5rem;
-            }
-            
-            .summary-card h3 {
-                font-size: 1.5rem;
-            }
-            
-            .table-responsive {
-                font-size: 0.875rem;
-            }
-            
-            .btn {
-                padding: 0.5rem 1rem;
-                font-size: 0.875rem;
-            }
-        }
-        
-        @media (max-width: 576px) {
-            .navbar {
-                padding: 0.75rem 0;
-            }
-            
-            .navbar-brand {
-                font-size: 1.125rem;
-            }
-            
-            .summary-card {
-                padding: 1rem;
-            }
-            
-            .summary-card h3 {
-                font-size: 1.25rem;
-            }
-            
-            .summary-card h6 {
-                font-size: 0.75rem;
-            }
-            
-            .card-header {
-                padding: 1rem;
-                font-size: 0.9rem;
-            }
-        }
-        
-        /* Animation */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .animate-fade-in {
-            animation: fadeInUp 0.5s ease-out;
-        }
-    </style>
-</head>
-<body>
-    <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-light">
-        <div class="container-fluid px-3 px-lg-5">
-            <a class="navbar-brand" href="${pageContext.request.contextPath}/">
-                <i class="bi bi-graph-up-arrow"></i> PortWatch
+<!-- ========================================
+     ✅ 수정된 Header - 홈버튼 추가
+     ======================================== -->
+<header class="main-header">
+    <div class="header-container">
+        <!-- 왼쪽: 로고 & 홈버튼 -->
+        <div class="header-left">
+            <a href="${pageContext.request.contextPath}/" class="logo">
+                <i class="fas fa-chart-line"></i>
+                <span>PortWatch</span>
             </a>
             
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
-                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link" href="${pageContext.request.contextPath}/">
-                            <i class="bi bi-house-door"></i> 홈
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="${pageContext.request.contextPath}/portfolio/list">
-                            <i class="bi bi-briefcase"></i> 포트폴리오
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="${pageContext.request.contextPath}/stock/list">
-                            <i class="bi bi-graph-up"></i> 종목
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="${pageContext.request.contextPath}/watchlist/list">
-                            <i class="bi bi-star"></i> 관심종목
-                        </a>
-                    </li>
-                </ul>
-                
-                <ul class="navbar-nav">
-                    <c:choose>
-                        <c:when test="${not empty sessionScope.member}">
-                            <li class="nav-item">
-                                <span class="navbar-text me-3">
-                                    <i class="bi bi-person-circle"></i> 
-                                    <strong>${sessionScope.member.memberName}</strong>님
-                                </span>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="${pageContext.request.contextPath}/member/mypage">
-                                    <i class="bi bi-gear"></i> 설정
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="${pageContext.request.contextPath}/member/logout">
-                                    <i class="bi bi-box-arrow-right"></i> 로그아웃
-                                </a>
-                            </li>
-                        </c:when>
-                        <c:otherwise>
-                            <li class="nav-item">
-                                <a class="nav-link" href="${pageContext.request.contextPath}/member/login">
-                                    <i class="bi bi-box-arrow-in-right"></i> 로그인
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="btn btn-primary ms-2" href="${pageContext.request.contextPath}/member/signup">
-                                    회원가입
-                                </a>
-                            </li>
-                        </c:otherwise>
-                    </c:choose>
-                </ul>
-            </div>
+            <!-- ✅ 새로 추가된 홈버튼 -->
+            <a href="${pageContext.request.contextPath}/" class="home-btn" title="홈으로">
+                <i class="fas fa-home"></i>
+                <span>홈</span>
+            </a>
         </div>
-    </nav>
-    
-    <!-- Main Content Container -->
-    <div class="main-container">
 
+        <!-- 가운데: 네비게이션 메뉴 -->
+        <nav class="main-nav">
+            <a href="${pageContext.request.contextPath}/stock/list" 
+               class="${currentMenu == 'stock' ? 'active' : ''}">
+                <i class="fas fa-building"></i>
+                <span>종목</span>
+            </a>
+            <a href="${pageContext.request.contextPath}/watchlist/list" 
+               class="${currentMenu == 'watchlist' ? 'active' : ''}">
+                <i class="fas fa-star"></i>
+                <span>관심종목</span>
+            </a>
+            <a href="${pageContext.request.contextPath}/portfolio/list" 
+               class="${currentMenu == 'portfolio' ? 'active' : ''}">
+                <i class="fas fa-briefcase"></i>
+                <span>포트폴리오</span>
+            </a>
+            <a href="${pageContext.request.contextPath}/news/list" 
+               class="${currentMenu == 'news' ? 'active' : ''}">
+                <i class="fas fa-newspaper"></i>
+                <span>뉴스</span>
+            </a>
+            <a href="${pageContext.request.contextPath}/dashboard" 
+               class="${currentMenu == 'dashboard' ? 'active' : ''}">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>대시보드</span>
+            </a>
+        </nav>
+
+        <!-- 오른쪽: 사용자 메뉴 -->
+        <div class="header-right">
+            <c:choose>
+                <c:when test="${not empty sessionScope.member}">
+                    <!-- 로그인 상태 -->
+                    <div class="user-menu">
+                        <button class="user-btn" onclick="toggleUserMenu()">
+                            <i class="fas fa-user-circle"></i>
+                            <span>${sessionScope.member.name}</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="user-dropdown" id="userDropdown">
+                            <a href="${pageContext.request.contextPath}/member/profile">
+                                <i class="fas fa-user"></i>
+                                내 정보
+                            </a>
+                            <a href="${pageContext.request.contextPath}/member/settings">
+                                <i class="fas fa-cog"></i>
+                                설정
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="${pageContext.request.contextPath}/member/logout" class="logout">
+                                <i class="fas fa-sign-out-alt"></i>
+                                로그아웃
+                            </a>
+                        </div>
+                    </div>
+                </c:when>
+                <c:otherwise>
+                    <!-- 로그아웃 상태 -->
+                    <a href="${pageContext.request.contextPath}/member/login" class="login-btn">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>로그인</span>
+                    </a>
+                </c:otherwise>
+            </c:choose>
+        </div>
+    </div>
+</header>
+
+<!-- ========================================
+     ✅ 홈버튼 스타일 추가
+     ======================================== -->
+<style>
+/* 홈버튼 스타일 */
+.home-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    margin-left: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white !important;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.home-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.home-btn i {
+    font-size: 18px;
+}
+
+.home-btn span {
+    font-size: 14px;
+}
+
+/* 기존 헤더 스타일 */
+.main-header {
+    background: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.header-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: #2c3e50;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.logo i {
+    color: #667eea;
+    font-size: 28px;
+}
+
+.main-nav {
+    display: flex;
+    gap: 5px;
+}
+
+.main-nav a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    color: #555;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.main-nav a:hover {
+    background: #f0f0f0;
+    color: #667eea;
+}
+
+.main-nav a.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.user-menu {
+    position: relative;
+}
+
+.user-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.user-btn:hover {
+    border-color: #667eea;
+    background: #f8f9ff;
+}
+
+.user-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 10px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    min-width: 200px;
+    display: none;
+}
+
+.user-dropdown.show {
+    display: block;
+}
+
+.user-dropdown a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    color: #333;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.user-dropdown a:hover {
+    background: #f8f9ff;
+    color: #667eea;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: #e0e0e0;
+    margin: 5px 0;
+}
+
+.login-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white !important;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+</style>
+
+<!-- ========================================
+     JavaScript
+     ======================================== -->
+<script>
+function toggleUserMenu() {
+    const dropdown = document.getElementById('userDropdown');
+    dropdown.classList.toggle('show');
+}
+
+// 외부 클릭 시 드롭다운 닫기
+document.addEventListener('click', function(event) {
+    const userMenu = document.querySelector('.user-menu');
+    const dropdown = document.getElementById('userDropdown');
     
+    if (dropdown && !userMenu.contains(event.target)) {
+        dropdown.classList.remove('show');
+    }
+});
+</script>
