@@ -248,4 +248,9 @@ public class PortfolioVO {
                 + ", totalValue=" + totalValue + ", profitLoss=" + profitLoss + ", profitLossRate=" + profitLossRate
                 + ", marketType=" + marketType + "]";
     }
+
+	public Object getPortfolioName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

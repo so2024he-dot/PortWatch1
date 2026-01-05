@@ -77,7 +77,6 @@
             
              <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <!-- ⭐ 홈 버튼 추가! -->
                     <li class="nav-item">
                         <a class="nav-link" href="${pageContext.request.contextPath}/">
                             <i class="fas fa-home"></i> 홈
@@ -129,8 +128,6 @@
                     </li>
                 </ul>
             </div>
-            
-          
         </div>
     </nav>
     
@@ -142,7 +139,6 @@
                 <i class="fas fa-th-large"></i> 대시보드
             </h2>
             <div>
-                <!-- ✅ 수정: onclick 제거, id 추가 -->
                 <button id="newPortfolioBtn" class="btn btn-primary">
                     <i class="fas fa-plus"></i> 새 포트폴리오
                 </button>
@@ -213,71 +209,53 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="createPortfolioForm">
+                    <form id="portfolioForm">
                         <div class="mb-3">
                             <label for="portfolioName" class="form-label">포트폴리오 이름</label>
                             <input type="text" class="form-control" id="portfolioName" 
-                                   placeholder="예: 성장주 포트폴리오" required>
+                                   placeholder="예: 나의 첫 포트폴리오" required>
                         </div>
                         
                         <div class="mb-3">
                             <label for="stockCode" class="form-label">종목 코드</label>
                             <input type="text" class="form-control" id="stockCode" 
-                                   placeholder="예: 005930" required>
+                                   placeholder="예: 005930 (삼성전자)" required>
                             <small class="text-muted">종목 코드를 입력하세요</small>
                         </div>
                         
                         <div class="mb-3">
                             <label for="quantity" class="form-label">수량</label>
                             <input type="number" class="form-control" id="quantity" 
-                                   placeholder="예: 10" step="0.0001" min="0.0001" required>
-                            <small class="text-muted">미국 주식은 소수점 가능 (예: 0.5주)</small>
+                                   placeholder="보유 수량" min="1" required>
                         </div>
                         
                         <div class="mb-3">
                             <label for="purchasePrice" class="form-label">매수 단가</label>
                             <input type="number" class="form-control" id="purchasePrice" 
-                                   placeholder="예: 75000" step="0.01" min="0.01" required>
+                                   placeholder="매수 가격" min="0" step="0.01" required>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        취소
-                    </button>
-                    <!-- ✅ 수정: onclick 제거, id 추가 -->
-                    <button type="button" id="savePortfolioBtn" class="btn btn-primary">
-                        <i class="fas fa-save"></i> 저장
-                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" id="savePortfolioBtn">생성</button>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Bootstrap 5 JS -->
+    <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-         ✅ 수정된 JavaScript - 느슨한 결합 구조
-         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <script>
-    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     * PortfolioManager 객체 - 포트폴리오 관리
+    /**
      * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     * 
-     * 핵심 수정:
-     * ❌ 잘못된 방법: onclick="showCreateModal()"
-     * ✅ 올바른 방법: addEventListener('click', handler)
-     * 
-     * 장점:
-     * - HTML과 JavaScript 분리 (느슨한 결합)
-     * - 유지보수 용이
-     * - 이벤트 관리 일원화
-     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-    
-    const PortfolioManager = {
-        // ✅ 올바른 방법: Controller에서 전달받은 값 직접 사용
-        contextPath: '${pageContext.request.contextPath}',  // ❌ ${this.contextPath} 아님!
+     * PortfolioManager - 포트폴리오 관리 객체
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     */
+    var PortfolioManager = {
+        // ✅ 수정: JSP EL로 contextPath를 문자열로 직접 할당
+        contextPath: '${pageContext.request.contextPath}',
         chart: null,
         
         /**
@@ -285,83 +263,37 @@
          */
         init: function() {
             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            console.log('📊 포트폴리오 매니저 초기화');
-            console.log('  - contextPath:', this.contextPath);
+            console.log('🚀 PortfolioManager 초기화');
+            console.log('📍 contextPath:', PortfolioManager.contextPath);
             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             
-            this.bindEvents();
-            this.loadPortfolios();
-            this.initChart();
-        },
-        
-        /**
-         * 이벤트 리스너 바인딩
-         */
-        bindEvents: function() {
-            console.log('🔗 이벤트 리스너 바인딩');
-            
-            // ✅ 새 포트폴리오 버튼
-            const newPortfolioBtn = document.getElementById('newPortfolioBtn');
-            if (newPortfolioBtn) {
-                newPortfolioBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    console.log('📝 새 포트폴리오 버튼 클릭!');
-                    this.showCreateModal();
-                });
-                console.log('✅ 새 포트폴리오 버튼 이벤트 등록 완료');
-            } else {
-                console.error('❌ 새 포트폴리오 버튼을 찾을 수 없습니다!');
-            }
-            
-            // ✅ 포트폴리오 저장 버튼
-            const savePortfolioBtn = document.getElementById('savePortfolioBtn');
-            if (savePortfolioBtn) {
-                savePortfolioBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    console.log('💾 포트폴리오 저장 버튼 클릭!');
-                    this.createPortfolio();
-                });
-                console.log('✅ 저장 버튼 이벤트 등록 완료');
-            } else {
-                console.error('❌ 저장 버튼을 찾을 수 없습니다!');
-            }
-            
-            // Enter 키로 폼 제출
-            const form = document.getElementById('createPortfolioForm');
-            if (form) {
-                form.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    this.createPortfolio();
-                });
-            }
-        },
-        
-        /**
-         * 모달창 표시
-         */
-        showCreateModal: function() {
-            console.log('📋 모달창 표시');
-            const modalElement = document.getElementById('createPortfolioModal');
-            if (modalElement) {
-                const modal = new bootstrap.Modal(modalElement);
+            // 이벤트 리스너 등록
+            document.getElementById('newPortfolioBtn').addEventListener('click', function() {
+                var modal = new bootstrap.Modal(document.getElementById('createPortfolioModal'));
                 modal.show();
-                console.log('✅ 모달창 열림');
-            } else {
-                console.error('❌ 모달 요소를 찾을 수 없습니다!');
-                alert('모달창을 열 수 없습니다.');
-            }
+            });
+            
+            document.getElementById('savePortfolioBtn').addEventListener('click', function() {
+                PortfolioManager.createPortfolio();
+            });
+            
+            // 포트폴리오 목록 로드
+            PortfolioManager.loadPortfolios();
+            
+            // 차트 초기화
+            PortfolioManager.initChart();
         },
         
         /**
          * 포트폴리오 생성
          */
         createPortfolio: function() {
-            console.log('💼 포트폴리오 생성 시작');
+            console.log('📝 포트폴리오 생성 시작');
             
-            const portfolioName = document.getElementById('portfolioName').value.trim();
-            const stockCode = document.getElementById('stockCode').value.trim();
-            const quantity = document.getElementById('quantity').value.trim();
-            const purchasePrice = document.getElementById('purchasePrice').value.trim();
+            var portfolioName = document.getElementById('portfolioName').value.trim();
+            var stockCode = document.getElementById('stockCode').value.trim();
+            var quantity = document.getElementById('quantity').value;
+            var purchasePrice = document.getElementById('purchasePrice').value;
             
             // 유효성 검사
             if (!portfolioName) {
@@ -389,14 +321,14 @@
             }
             
             console.log('📝 포트폴리오 정보:', {
-                portfolioName,
-                stockCode,
-                quantity,
-                purchasePrice
+                portfolioName: portfolioName,
+                stockCode: stockCode,
+                quantity: quantity,
+                purchasePrice: purchasePrice
             });
             
-            // Fetch API로 AJAX 요청
-            fetch(this.contextPath + '/portfolio/create', {
+            // ✅ 수정: this 대신 PortfolioManager 사용
+            fetch(PortfolioManager.contextPath + '/portfolio/create', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
@@ -406,18 +338,18 @@
                       '&quantity=' + encodeURIComponent(quantity) +
                       '&purchasePrice=' + encodeURIComponent(purchasePrice)
             })
-            .then(response => {
+            .then(function(response) {
                 console.log('📡 서버 응답:', response.status);
                 if (!response.ok) {
                     throw new Error('포트폴리오 생성 실패');
                 }
                 return response.text();
             })
-            .then(data => {
+            .then(function(data) {
                 console.log('✅ 포트폴리오 생성 완료!');
                 
                 // 모달 닫기
-                const modal = bootstrap.Modal.getInstance(
+                var modal = bootstrap.Modal.getInstance(
                     document.getElementById('createPortfolioModal')
                 );
                 if (modal) {
@@ -431,11 +363,11 @@
                 document.getElementById('purchasePrice').value = '';
                 
                 // 목록 새로고침
-                this.loadPortfolios();
+                PortfolioManager.loadPortfolios();
                 
                 alert('포트폴리오가 생성되었습니다!');
             })
-            .catch(error => {
+            .catch(function(error) {
                 console.error('❌ 포트폴리오 생성 실패:', error);
                 alert('포트폴리오 생성에 실패했습니다.');
             });
@@ -447,16 +379,19 @@
         loadPortfolios: function() {
             console.log('📋 포트폴리오 목록 로드');
             
-            fetch(this.contextPath + '/api/portfolio/list')
-                .then(response => response.json())
-                .then(data => {
-                    console.log('✅ 포트폴리오 로드 완료:', data);
-                    this.renderPortfolios(data.portfolios || []);
-                    this.updateSummary(data.summary || {});
+            // ✅ 수정: this 대신 PortfolioManager 사용
+            fetch(PortfolioManager.contextPath + '/api/portfolio/list')
+                .then(function(response) { 
+                    return response.json(); 
                 })
-                .catch(error => {
+                .then(function(data) {
+                    console.log('✅ 포트폴리오 로드 완료:', data);
+                    PortfolioManager.renderPortfolios(data.portfolios || []);
+                    PortfolioManager.updateSummary(data.summary || {});
+                })
+                .catch(function(error) {
                     console.error('❌ 포트폴리오 로드 실패:', error);
-                    this.showError();
+                    PortfolioManager.showError();
                 });
         },
         
@@ -464,51 +399,46 @@
          * 포트폴리오 목록 렌더링
          */
         renderPortfolios: function(portfolios) {
-            const container = document.getElementById('portfolioListContainer');
+            var container = document.getElementById('portfolioListContainer');
             
             if (!portfolios || portfolios.length === 0) {
-                container.innerHTML = `
-                    <div class="alert alert-info text-center">
-                        <i class="fas fa-info-circle"></i>
-                        포트폴리오가 없습니다. 새 포트폴리오를 만들어보세요!
-                    </div>
-                `;
+                container.innerHTML = 
+                    '<div class="alert alert-info text-center">' +
+                    '<i class="fas fa-info-circle"></i> ' +
+                    '포트폴리오가 없습니다. 새 포트폴리오를 만들어보세요!' +
+                    '</div>';
                 return;
             }
             
-            let html = '<div class="row">';
+            var html = '<div class="row">';
             
-            portfolios.forEach(portfolio => {
-                const profitClass = portfolio.profitLoss >= 0 ? 'profit-positive' : 'profit-negative';
-                const profitIcon = portfolio.profitLoss >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+            portfolios.forEach(function(portfolio) {
+                var profitClass = portfolio.profitLoss >= 0 ? 'profit-positive' : 'profit-negative';
+                var profitIcon = portfolio.profitLoss >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
                 
-                html += `
-                    <div class="col-md-6 col-lg-4 mb-4">
-                        <div class="card portfolio-card" 
-                             onclick="location.href='${pageContext.request.contextPath}/portfolio/detail/${portfolio.portfolioId}'">
-                            <div class="card-body">
-                                <h5 class="card-title">${portfolio.portfolioName}</h5>
-                                <p class="text-muted">${portfolio.stockName} (${portfolio.stockCode})</p>
-                                
-                                <div class="mb-2">
-                                    <small>보유 수량</small>
-                                    <div class="fw-bold">${portfolio.quantity}주</div>
-                                </div>
-                                
-                                <div class="mb-2">
-                                    <small>평가 금액</small>
-                                    <div class="fw-bold">${portfolio.totalValue.toLocaleString()}원</div>
-                                </div>
-                                
-                                <div class="${profitClass}">
-                                    <i class="fas ${profitIcon}"></i>
-                                    ${portfolio.profitLoss.toLocaleString()}원
-                                    (${portfolio.profitRate.toFixed(2)}%)
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                html += 
+                    '<div class="col-md-6 col-lg-4 mb-4">' +
+                    '<div class="card portfolio-card" ' +
+                    'onclick="location.href=\'' + PortfolioManager.contextPath + '/portfolio/detail/' + portfolio.portfolioId + '\'">' +
+                    '<div class="card-body">' +
+                    '<h5 class="card-title">' + portfolio.portfolioName + '</h5>' +
+                    '<p class="text-muted">' + portfolio.stockName + ' (' + portfolio.stockCode + ')</p>' +
+                    '<div class="mb-2">' +
+                    '<small>보유 수량</small>' +
+                    '<div class="fw-bold">' + portfolio.quantity + '주</div>' +
+                    '</div>' +
+                    '<div class="mb-2">' +
+                    '<small>평가 금액</small>' +
+                    '<div class="fw-bold">' + portfolio.totalValue.toLocaleString() + '원</div>' +
+                    '</div>' +
+                    '<div class="' + profitClass + '">' +
+                    '<i class="fas ' + profitIcon + '"></i> ' +
+                    portfolio.profitLoss.toLocaleString() + '원 ' +
+                    '(' + portfolio.profitRate.toFixed(2) + '%)' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>';
             });
             
             html += '</div>';
@@ -533,22 +463,21 @@
          * 에러 표시
          */
         showError: function() {
-            const container = document.getElementById('portfolioListContainer');
-            container.innerHTML = `
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    포트폴리오를 불러오는데 실패했습니다.
-                </div>
-            `;
+            var container = document.getElementById('portfolioListContainer');
+            container.innerHTML = 
+                '<div class="alert alert-danger">' +
+                '<i class="fas fa-exclamation-triangle"></i> ' +
+                '포트폴리오를 불러오는데 실패했습니다.' +
+                '</div>';
         },
         
         /**
          * 차트 초기화
          */
         initChart: function() {
-            const ctx = document.getElementById('profitChart');
+            var ctx = document.getElementById('profitChart');
             if (ctx) {
-                this.chart = new Chart(ctx, {
+                PortfolioManager.chart = new Chart(ctx, {
                     type: 'line',
                     data: {
                         labels: [],
