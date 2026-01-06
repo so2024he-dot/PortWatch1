@@ -290,7 +290,7 @@
      * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      * 
      * 핵심 수정:
-     * ❌ 잘못된 방법: currentCountry: '${this.currentCountry}',
+     * ❌ 잘못된 방법: currentCountry: '${StockFilter.currentCountry}',
      * ✅ 올바른 방법: currentCountry: '${selectedCountry}' || 'ALL',
      * 
      * 설명:
@@ -311,13 +311,13 @@
         init: function() {
             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             console.log('📊 주식 필터 초기화');
-            console.log('  - contextPath:', this.contextPath);
-            console.log('  - 현재 국가:', this.currentCountry);
-            console.log('  - 현재 시장:', this.currentMarket);
+            console.log('  - contextPath:', StockFilter.contextPath);
+            console.log('  - 현재 국가:', StockFilter.currentCountry);
+            console.log('  - 현재 시장:', StockFilter.currentMarket);
             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             
-            this.bindEvents();
-            this.updateButtonStates();
+            StockFilter.bindEvents();
+            StockFilter.updateButtonStates();
         },
         
         /**
@@ -332,7 +332,7 @@
                     e.preventDefault();
                     const country = btn.getAttribute('data-country');
                     console.log('🌍 국가 필터 변경:', country);
-                    this.filterByCountry(country);
+                    StockFilter.filterByCountry(country);
                 });
             });
             
@@ -342,7 +342,7 @@
                     e.preventDefault();
                     const market = btn.getAttribute('data-market');
                     console.log('📈 시장 필터 변경:', market);
-                    this.filterByMarket(market);
+                    StockFilter.filterByMarket(market);
                 });
             });
             
@@ -362,22 +362,22 @@
             });
             
             // 현재 선택된 국가 버튼 활성화
-            if (this.currentCountry && this.currentCountry !== 'ALL') {
-                const countryBtn = document.querySelector('[data-country="' + this.currentCountry + '"]');
+            if (StockFilter.currentCountry && StockFilter.currentCountry !== 'ALL') {
+                const countryBtn = document.querySelector('[data-country="' + StockFilter.currentCountry + '"]');
                 if (countryBtn) {
                     countryBtn.classList.remove('btn-outline-primary');
                     countryBtn.classList.add('active', 'btn-primary');
-                    console.log('✅ 국가 버튼 활성화:', this.currentCountry);
+                    console.log('✅ 국가 버튼 활성화:', StockFilter.currentCountry);
                 }
             }
             
             // 현재 선택된 시장 버튼 활성화
-            if (this.currentMarket && this.currentMarket !== 'ALL') {
-                const marketBtn = document.querySelector('[data-market="' + this.currentMarket + '"]');
+            if (StockFilter.currentMarket && StockFilter.currentMarket !== 'ALL') {
+                const marketBtn = document.querySelector('[data-market="' + StockFilter.currentMarket + '"]');
                 if (marketBtn) {
                     marketBtn.classList.remove('btn-outline-primary');
                     marketBtn.classList.add('active', 'btn-primary');
-                    console.log('✅ 시장 버튼 활성화:', this.currentMarket);
+                    console.log('✅ 시장 버튼 활성화:', StockFilter.currentMarket);
                 }
             }
         },
@@ -386,13 +386,13 @@
          * 국가별 필터링
          */
         filterByCountry: function(country) {
-            this.currentCountry = country;
-            this.currentMarket = 'ALL';  // 시장 필터 초기화
+            StockFilter.currentCountry = country;
+            StockFilter.currentMarket = 'ALL';  // 시장 필터 초기화
             
             // URL 생성
             const url = country === 'ALL' 
-                ? this.contextPath + '/stock/list'
-                : this.contextPath + '/stock/list?country=' + country;
+                ? StockFilter.contextPath + '/stock/list'
+                : StockFilter.contextPath + '/stock/list?country=' + country;
             
             console.log('🔗 이동:', url);
             window.location.href = url;
@@ -402,16 +402,16 @@
          * 시장별 필터링
          */
         filterByMarket: function(market) {
-            this.currentMarket = market;
+            StockFilter.currentMarket = market;
             
             // 국가가 선택되지 않은 경우 한국으로 기본 설정
-            if (this.currentCountry === 'ALL' || !this.currentCountry) {
-                this.currentCountry = 'KR';
+            if (StockFilter.currentCountry === 'ALL' || !StockFilter.currentCountry) {
+                StockFilter.currentCountry = 'KR';
             }
             
             // URL 생성
-            const url = this.contextPath + '/stock/list?country=' + 
-                        this.currentCountry + '&market=' + market;
+            const url = StockFilter.contextPath + '/stock/list?country=' + 
+                        StockFilter.currentCountry + '&market=' + market;
             
             console.log('🔗 이동:', url);
             window.location.href = url;

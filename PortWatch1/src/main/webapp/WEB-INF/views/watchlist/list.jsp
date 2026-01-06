@@ -225,13 +225,13 @@
      * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      * 
      * 핵심 수정:
-     * ❌ 잘못된 방법: contextPath: '${this.contextPath}',
+     * ❌ 잘못된 방법: contextPath: '${WatchlistManager.contextPath}',
      * ✅ 올바른 방법: contextPath: '${pageContext.request.contextPath}',
      * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     
     const WatchlistManager = {
         // ✅ 올바른 방법: Controller에서 전달받은 값 직접 사용
-        contextPath: '${pageContext.request.contextPath}',  // ❌ ${this.contextPath} 아님!
+        contextPath: '${pageContext.request.contextPath}',  // ❌ ${WatchlistManager.contextPath} 아님!
         
         /**
          * 초기화
@@ -239,7 +239,7 @@
         init: function() {
             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             console.log('⭐ 관심종목 매니저 초기화');
-            console.log('  - contextPath:', this.contextPath);
+            console.log('  - contextPath:', WatchlistManager.contextPath);
             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         }
     };

@@ -1,583 +1,435 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-
-<jsp:include page="../common/header.jsp" />
-
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
-<style>
-    .portfolio-container {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 20px;
-    }
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>증권 뉴스 - PortWatch</title>
     
-    /* 헤더 */
-    .page-header {
-        background: white;
-        border-radius: 20px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    }
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     
-    .page-title {
-        font-size: 2rem;
-        font-weight: 700;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin: 0;
-    }
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-    /* ✅ 필터 탭 */
-    .filter-section {
-        background: white;
-        border-radius: 15px;
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    }
-    
-    .filter-tabs {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-    
-    .filter-btn {
-        padding: 10px 20px;
-        border: 2px solid #e5e7eb;
-        background: white;
-        color: #6b7280;
-        border-radius: 10px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s;
-    }
-    
-    .filter-btn:hover {
-        border-color: #667eea;
-        color: #667eea;
-    }
-    
-    .filter-btn.active {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-color: transparent;
-    }
-    
-    /* 요약 카드 */
-    .summary-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2rem;
-    }
-    
-    .summary-card {
-        background: white;
-        border-radius: 15px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    }
-    
-    .summary-label {
-        font-size: 0.9rem;
-        color: #6b7280;
-        margin-bottom: 0.5rem;
-    }
-    
-    .summary-value {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #1f2937;
-    }
-    
-    .summary-value.positive {
-        color: #dc2626;
-    }
-    
-    .summary-value.negative {
-        color: #2563eb;
-    }
-    
-    /* 포트폴리오 테이블 */
-    .portfolio-table {
-        background: white;
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    }
-    
-    .portfolio-table table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    
-    .portfolio-table th {
-        background: #f9fafb;
-        padding: 1rem;
-        text-align: left;
-        font-weight: 600;
-        color: #374151;
-        border-bottom: 2px solid #e5e7eb;
-    }
-    
-    .portfolio-table td {
-        padding: 1rem;
-        border-bottom: 1px solid #f3f4f6;
-        color: #1f2937;
-    }
-    
-    .portfolio-table tr:hover {
-        background: #f9fafb;
-    }
-    
-    .stock-info {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .country-flag {
-        font-size: 1.3rem;
-    }
-    
-    .stock-name {
-        font-weight: 600;
-    }
-    
-    .stock-code {
-        color: #6b7280;
-        font-size: 0.9rem;
-    }
-    
-    .quantity {
-        font-weight: 600;
-    }
-    
-    .price {
-        font-weight: 600;
-    }
-    
-    .profit-positive {
-        color: #dc2626;
-        font-weight: 600;
-    }
-    
-    .profit-negative {
-        color: #2563eb;
-        font-weight: 600;
-    }
-    
-    .action-btns {
-        display: flex;
-        gap: 0.5rem;
-    }
-    
-    .action-btn {
-        padding: 6px 12px;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.85rem;
-        cursor: pointer;
-        transition: all 0.3s;
-    }
-    
-    .btn-edit {
-        background: #667eea;
-        color: white;
-    }
-    
-    .btn-delete {
-        background: #ef4444;
-        color: white;
-    }
-    
-    .action-btn:hover {
-        transform: translateY(-2px);
-    }
-    
-    /* 추가 버튼 */
-    .add-btn {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        font-size: 2rem;
-        cursor: pointer;
-        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-        transition: all 0.3s;
-    }
-    
-    .add-btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 12px 30px rgba(102, 126, 234, 0.6);
-    }
-    
-    /* 빈 상태 */
-    .empty-state {
-        text-align: center;
-        padding: 60px 20px;
-        color: #6b7280;
-    }
-    
-    .empty-state i {
-        font-size: 4rem;
-        color: #d1d5db;
-        margin-bottom: 1rem;
-    }
-</style>
-
-<div class="portfolio-container">
-    
-    <!-- 헤더 -->
-    <div class="page-header">
-        <h1 class="page-title">💼 내 포트폴리오</h1>
-        <p style="color: #6b7280; margin: 0.5rem 0 0 0;">
-            보유 종목 관리 및 수익률 분석
-        </p>
-    </div>
-    
-    <!-- ✅ 필터 섹션 -->
-    <div class="filter-section">
-        <div class="filter-tabs">
-            <button class="filter-btn active" onclick="filterPortfolio('all')">
-                🌐 전체
+    <style>
+        .news-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            height: 100%;
+        }
+        
+        .news-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .news-meta {
+            font-size: 0.85em;
+            color: #6c757d;
+        }
+        
+        .news-category {
+            display: inline-block;
+            padding: 3px 10px;
+            background: #e9ecef;
+            border-radius: 15px;
+            font-size: 0.75em;
+            margin-right: 5px;
+        }
+        
+        .news-source {
+            color: #6c757d;
+        }
+        
+        .refresh-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 네비게이션 바 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="${pageContext.request.contextPath}/">
+                <i class="fas fa-chart-line"></i> PortWatch
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
             </button>
-            <button class="filter-btn" onclick="filterPortfolio('KR')">
-                🇰🇷 한국
-            </button>
-            <button class="filter-btn" onclick="filterPortfolio('US')">
-                🇺🇸 미국
-            </button>
-            <button class="filter-btn" onclick="filterPortfolio('KOSPI')">
-                📊 KOSPI
-            </button>
-            <button class="filter-btn" onclick="filterPortfolio('KOSDAQ')">
-                📈 KOSDAQ
-            </button>
-            <button class="filter-btn" onclick="filterPortfolio('NASDAQ')">
-                🚀 NASDAQ
-            </button>
-            <button class="filter-btn" onclick="filterPortfolio('NYSE')">
-                🏛️ NYSE
-            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="${pageContext.request.contextPath}/dashboard">
+                            <i class="fas fa-th-large"></i> 대시보드
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="${pageContext.request.contextPath}/stock/list">
+                            <i class="fas fa-chart-bar"></i> 주식
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="${pageContext.request.contextPath}/watchlist/list">
+                            <i class="fas fa-star"></i> 관심종목
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="${pageContext.request.contextPath}/news/list">
+                            <i class="fas fa-newspaper"></i> 뉴스
+                        </a>
+                    </li>
+                    <c:choose>
+                        <c:when test="${not empty loginMember}">
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" 
+                                   role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user"></i> ${loginMember.name}
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                                    <li>
+                                        <a class="dropdown-item" href="${pageContext.request.contextPath}/member/mypage">
+                                            <i class="fas fa-user-circle"></i> 마이페이지
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="${pageContext.request.contextPath}/member/logout">
+                                            <i class="fas fa-sign-out-alt"></i> 로그아웃
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        </c:when>
+                        <c:otherwise>
+                            <li class="nav-item">
+                                <a class="nav-link" href="${pageContext.request.contextPath}/member/login">
+                                    <i class="fas fa-sign-in-alt"></i> 로그인
+                                </a>
+                            </li>
+                        </c:otherwise>
+                    </c:choose>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- 메인 컨텐츠 -->
+    <div class="container mt-4">
+        <!-- 페이지 헤더 -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="fas fa-newspaper"></i> 실시간 증권 뉴스
+            </h2>
+            <div>
+                <!-- ✅ 수정: onclick 제거, id 추가 -->
+                <button id="refreshNewsBtn" class="btn btn-primary">
+                    <i class="fas fa-sync-alt"></i> 새로고침
+                </button>
+            </div>
+        </div>
+        
+        <!-- 자동 새로고침 안내 -->
+        <div class="refresh-info">
+            <i class="fas fa-info-circle"></i>
+            <strong>자동 새로고침:</strong> 5분마다 최신 뉴스가 자동으로 업데이트됩니다.
+        </div>
+        
+        <!-- 뉴스 목록 -->
+        <div id="newsContainer">
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">로딩중...</span>
+                </div>
+                <p class="mt-3">뉴스를 불러오는 중입니다...</p>
+            </div>
         </div>
     </div>
     
-    <!-- 요약 통계 -->
-    <div class="summary-grid">
-        <div class="summary-card">
-            <div class="summary-label">📊 보유 종목 수</div>
-            <div class="summary-value" id="stockCount">-</div>
-        </div>
-        <div class="summary-card">
-            <div class="summary-label">💰 총 투자금액</div>
-            <div class="summary-value" id="totalInvestment">-</div>
-        </div>
-        <div class="summary-card">
-            <div class="summary-label">📈 총 평가금액</div>
-            <div class="summary-value" id="totalValue">-</div>
-        </div>
-        <div class="summary-card">
-            <div class="summary-label">💵 총 손익</div>
-            <div class="summary-value" id="totalProfit">-</div>
-        </div>
-    </div>
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- 포트폴리오 테이블 -->
-    <div class="portfolio-table">
-        <table>
-            <thead>
-                <tr>
-                    <th>종목</th>
-                    <th>수량</th>
-                    <th>평균 매입가</th>
-                    <th>현재가</th>
-                    <th>평가금액</th>
-                    <th>손익</th>
-                    <th>수익률</th>
-                    <th>액션</th>
-                </tr>
-            </thead>
-            <tbody id="portfolioTableBody">
-                <tr>
-                    <td colspan="8" style="text-align: center; padding: 3rem;">
-                        포트폴리오를 불러오는 중...
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         ✅ 수정된 JavaScript - API 엔드포인트 수정
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <script>
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * NewsManager 객체 - 뉴스 관리
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * 
+     * 핵심 수정:
+     * ❌ 잘못된 API: /portwatch/api/news/all
+     * ✅ 올바른 API: /api/news/recent?limit=50
+     * 
+     * 기능:
+     * - 실시간 뉴스 로드
+     * - 수동 새로고침 (크롤링)
+     * - 자동 새로고침 (5분 간격)
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     
-</div>
-
-<!-- ✅ 추가 버튼 -->
-<button class="add-btn" onclick="location.href='/portwatch/portfolio/create'">
-    +
-</button>
-
-<script>
-    // ✅ 전역 변수
-    let allPortfolio = [];
-    let currentFilter = 'all';
-    
-    // ✅ 포트폴리오 로드
-    async function loadPortfolio() {
-        try {
-            console.log('포트폴리오 로드 시작...');
+    const NewsManager = {
+        // ✅ 올바른 방법: Controller에서 전달받은 값 직접 사용
+        contextPath: '${pageContext.request.contextPath}',
+        autoRefreshInterval: null,
+        
+        /**
+         * 초기화
+         */
+        init: function() {
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            console.log('📰 뉴스 매니저 초기화');
+            console.log('  - contextPath:', NewsManager.contextPath);
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             
-            const response = await fetch('/portwatch/portfolio/list');
-            const data = await response.json();
+            NewsManager.bindEvents();
+            NewsManager.loadNews();
+            this.startAutoRefresh();  // 5분마다 자동 새로고침
+        },
+        
+        /**
+         * 이벤트 리스너 바인딩
+         */
+        bindEvents: function() {
+            console.log('🔗 이벤트 리스너 바인딩');
             
-            if (data.success && data.portfolioList) {
-                allPortfolio = data.portfolioList;
-                console.log('포트폴리오 로드 완료:', allPortfolio.length + '개');
+            // ✅ 새로고침 버튼
+            const refreshBtn = document.getElementById('refreshNewsBtn');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    console.log('🔄 뉴스 새로고침 버튼 클릭!');
+                    NewsManager.refreshNews();
+                });
+                console.log('✅ 새로고침 버튼 이벤트 등록 완료');
+            } else {
+                console.error('❌ 새로고침 버튼을 찾을 수 없습니다!');
+            }
+        },
+        
+        /**
+         * 뉴스 로드
+         */
+        loadNews: function() {
+            console.log('📰 뉴스 로드 시작');
+            NewsManager.showLoading();
+            
+            // ✅ 올바른 API 엔드포인트
+            const apiUrl = NewsManager.contextPath + '/api/news/recent?limit=50';
+            console.log('🔗 API 호출:', apiUrl);
+            
+            fetch(apiUrl)
+                .then(response => {
+                    console.log('📡 서버 응답:', response.status);
+                    if (!response.ok) {
+                        throw new Error('뉴스 로드 실패: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('✅ 뉴스 로드 완료:', data);
+                    
+                    // 응답 데이터 파싱
+                    const newsList = Array.isArray(data) ? data : (data.news || data.newsList || []);
+                    
+                    console.log('📋 뉴스 개수:', newsList.length);
+                    
+                    // 뉴스 렌더링
+                    NewsManager.renderNews(newsList);
+                    NewsManager.hideLoading();
+                })
+                .catch(error => {
+                    console.error('❌ 뉴스 로드 실패:', error);
+                    NewsManager.showError('뉴스를 불러오는데 실패했습니다: ' + error.message);
+                });
+        },
+        
+        /**
+         * 뉴스 새로고침 (크롤링)
+         */
+        refreshNews: function() {
+            console.log('🔄 뉴스 크롤링 시작');
+            
+            const refreshBtn = document.getElementById('refreshNewsBtn');
+            const originalHtml = refreshBtn.innerHTML;
+            
+            // 버튼 비활성화
+            refreshBtn.disabled = true;
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 크롤링 중...';
+            
+            fetch(NewsManager.contextPath + '/api/news/crawl', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('✅ 크롤링 완료:', data);
                 
-                displayPortfolio(allPortfolio);
-                updateSummary(data.summary);
-            } else {
-                showEmptyState();
+                // 버튼 복원
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = originalHtml;
+                
+                // 뉴스 목록 새로고침
+                NewsManager.loadNews();
+                
+                const count = data.count || data.newCount || 0;
+                alert(count + '개의 새로운 뉴스를 불러왔습니다!');
+            })
+            .catch(error => {
+                console.error('❌ 뉴스 새로고침 실패:', error);
+                
+                // 버튼 복원
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = originalHtml;
+                
+                alert('뉴스 새로고침에 실패했습니다.');
+            });
+        },
+        
+        /**
+         * 자동 새로고침 시작
+         */
+        startAutoRefresh: function() {
+            console.log('⏰ 자동 새로고침 시작 (5분 간격)');
+            
+            // 기존 인터벌 제거
+            if (NewsManager.autoRefreshInterval) {
+                clearInterval(NewsManager.autoRefreshInterval);
             }
             
-        } catch (error) {
-            console.error('포트폴리오 로드 실패:', error);
-            showErrorState();
-        }
-    }
-    
-    // ✅ 포트폴리오 표시
-    function displayPortfolio(portfolio) {
-        const tbody = document.getElementById('portfolioTableBody');
+            // 5분마다 자동 새로고침
+            NewsManager.autoRefreshInterval = setInterval(() => {
+                const now = new Date();
+                console.log('🔄 자동 새로고침 실행:', now.toLocaleTimeString());
+                NewsManager.loadNews();
+            }, 5 * 60 * 1000);  // 5분 = 300,000ms
+            
+            console.log('✅ 자동 새로고침 설정 완료');
+        },
         
-        if (!portfolio || portfolio.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="8">
-                        <div class="empty-state">
-                            <i class="bi bi-inbox"></i>
-                            <h3>포트폴리오가 비어있습니다</h3>
-                            <p>첫 번째 종목을 추가해보세요!</p>
-                        </div>
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-        
-        tbody.innerHTML = '';
-        
-        portfolio.forEach(item => {
-            const row = createPortfolioRow(item);
-            tbody.appendChild(row);
-        });
-    }
-    
-    // ✅ 포트폴리오 행 생성
-    function createPortfolioRow(item) {
-        const tr = document.createElement('tr');
-        
-        // 국가 판단
-        const isKorean = item.marketType === 'KOSPI' || item.marketType === 'KOSDAQ';
-        const countryFlag = isKorean ? '🇰🇷' : '🇺🇸';
-        const currencySymbol = isKorean ? '원' : '$';
-        
-        // 가격 계산
-        const avgPrice = item.avgPurchasePrice || 0;
-        const currentPrice = item.currentPrice || 0;
-        const quantity = item.quantity || 0;
-        const totalValue = currentPrice * quantity;
-        const totalInvestment = avgPrice * quantity;
-        const profit = totalValue - totalInvestment;
-        const profitRate = totalInvestment > 0 ? ((profit / totalInvestment) * 100) : 0;
-        
-        // 가격 포맷
-        const formatPrice = (price) => {
-            return isKorean 
-                ? price.toLocaleString() + currencySymbol
-                : currencySymbol + price.toFixed(2);
-        };
-        
-        // 손익 클래스
-        const profitClass = profit >= 0 ? 'profit-positive' : 'profit-negative';
-        const profitSign = profit >= 0 ? '+' : '';
-        
-        tr.innerHTML = `
-            <td>
-                <div class="stock-info">
-                    <span class="country-flag">${countryFlag}</span>
-                    <div>
-                        <div class="stock-name">${item.stockName}</div>
-                        <div class="stock-code">${item.stockCode}</div>
+        /**
+         * 뉴스 렌더링
+         */
+        renderNews: function(newsList) {
+            console.log('🎨 뉴스 렌더링');
+            
+            const container = document.getElementById('newsContainer');
+            
+            if (!newsList || newsList.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-info text-center">
+                        <i class="fas fa-info-circle"></i>
+                        뉴스가 없습니다. 새로고침 버튼을 눌러 뉴스를 불러오세요.
                     </div>
-                </div>
-            </td>
-            <td>
-                <span class="quantity">${quantity.toLocaleString()}</span>
-            </td>
-            <td>
-                <span class="price">${formatPrice(avgPrice)}</span>
-            </td>
-            <td>
-                <span class="price">${formatPrice(currentPrice)}</span>
-            </td>
-            <td>
-                <span class="price">${formatPrice(totalValue)}</span>
-            </td>
-            <td>
-                <span class="${profitClass}">${profitSign}${formatPrice(profit)}</span>
-            </td>
-            <td>
-                <span class="${profitClass}">${profitSign}${profitRate.toFixed(2)}%</span>
-            </td>
-            <td>
-                <div class="action-btns">
-                    <button class="action-btn btn-edit" onclick="editPortfolio(${item.portfolioId})">
-                        ✏️ 수정
-                    </button>
-                    <button class="action-btn btn-delete" onclick="deletePortfolio(${item.portfolioId})">
-                        🗑️ 삭제
-                    </button>
-                </div>
-            </td>
-        `;
-        
-        return tr;
-    }
-    
-    // ✅ 요약 통계 업데이트
-    function updateSummary(summary) {
-        if (!summary) {
-            summary = {
-                stockCount: 0,
-                totalInvestment: 0,
-                totalValue: 0,
-                totalProfit: 0
-            };
-        }
-        
-        document.getElementById('stockCount').textContent = (summary.stockCount || 0) + '개';
-        document.getElementById('totalInvestment').textContent = (summary.totalInvestment || 0).toLocaleString() + '원';
-        document.getElementById('totalValue').textContent = (summary.totalValue || 0).toLocaleString() + '원';
-        
-        const profit = summary.totalProfit || 0;
-        const profitElement = document.getElementById('totalProfit');
-        profitElement.textContent = (profit >= 0 ? '+' : '') + profit.toLocaleString() + '원';
-        profitElement.className = 'summary-value ' + (profit >= 0 ? 'positive' : 'negative');
-    }
-    
-    // ✅ 필터링
-    function filterPortfolio(filter) {
-        currentFilter = filter;
-        
-        // 버튼 상태 변경
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        event.target.classList.add('active');
-        
-        // 필터링
-        let filtered = allPortfolio;
-        
-        if (filter !== 'all') {
-            filtered = allPortfolio.filter(item => {
-                if (filter === 'KR') {
-                    return item.marketType === 'KOSPI' || item.marketType === 'KOSDAQ';
-                } else if (filter === 'US') {
-                    return item.marketType === 'NASDAQ' || item.marketType === 'NYSE' || item.marketType === 'AMEX';
-                } else {
-                    return item.marketType === filter;
+                `;
+                return;
+            }
+            
+            let html = '<div class="row">';
+            
+            newsList.forEach(news => {
+                // 날짜 포맷팅
+                let dateStr = '';
+                if (news.publishedAt) {
+                    dateStr = news.publishedAt;
+                } else if (news.createdAt) {
+                    dateStr = news.createdAt;
                 }
-            });
-        }
-        
-        console.log('필터링 결과:', filter, filtered.length + '개');
-        displayPortfolio(filtered);
-    }
-    
-    // ✅ 포트폴리오 수정
-    async function editPortfolio(portfolioId) {
-        // TODO: 수정 모달 또는 페이지로 이동
-        location.href = '/portwatch/portfolio/edit/' + portfolioId;
-    }
-    
-    // ✅ 포트폴리오 삭제
-    async function deletePortfolio(portfolioId) {
-        if (!confirm('정말 삭제하시겠습니까?')) {
-            return;
-        }
-        
-        try {
-            const response = await fetch('/portwatch/portfolio/delete/' + portfolioId, {
-                method: 'DELETE'
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                alert('삭제되었습니다.');
-                loadPortfolio(); // 새로고침
-            } else {
-                alert(data.message || '삭제 중 오류가 발생했습니다.');
-            }
-            
-        } catch (error) {
-            console.error('삭제 실패:', error);
-            alert('삭제 중 오류가 발생했습니다.');
-        }
-    }
-    
-    // ✅ 빈 상태
-    function showEmptyState() {
-        const tbody = document.getElementById('portfolioTableBody');
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="8">
-                    <div class="empty-state">
-                        <i class="bi bi-inbox"></i>
-                        <h3>포트폴리오가 비어있습니다</h3>
-                        <p>첫 번째 종목을 추가해보세요!</p>
+                
+                html += `
+                    <div class="col-md-6 mb-4">
+                        <div class="card news-card h-100" 
+                             onclick="location.href='${pageContext.request.contextPath}/news/detail/${news.newsId}'">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    ${news.title}
+                                </h5>
+                                
+                                ${news.category ? `
+                                    <div class="mb-2">
+                                        <span class="news-category">${news.category}</span>
+                                    </div>
+                                ` : ''}
+                                
+                                <p class="card-text text-muted">
+                                    ${news.summary || news.content || ''}
+                                </p>
+                                
+                                <div class="news-meta mt-3">
+                                    <small>
+                                        <i class="fas fa-calendar"></i>
+                                        ${dateStr}
+                                    </small>
+                                    ${news.source ? `
+                                        <small class="ms-3">
+                                            <i class="fas fa-newspaper"></i>
+                                            ${news.source}
+                                        </small>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </td>
-            </tr>
-        `;
-        updateSummary(null);
-    }
-    
-    // ✅ 에러 상태
-    function showErrorState() {
-        const tbody = document.getElementById('portfolioTableBody');
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="8">
-                    <div class="empty-state">
-                        <i class="bi bi-exclamation-triangle"></i>
-                        <h3>포트폴리오를 불러올 수 없습니다</h3>
-                        <button class="filter-btn" onclick="loadPortfolio()" style="margin-top: 20px;">
-                            다시 시도
-                        </button>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+            
+            console.log('✅ 뉴스 렌더링 완료');
+        },
+        
+        /**
+         * 로딩 표시
+         */
+        showLoading: function() {
+            const container = document.getElementById('newsContainer');
+            container.innerHTML = `
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">로딩중...</span>
                     </div>
-                </td>
-            </tr>
-        `;
-    }
+                    <p class="mt-3">뉴스를 불러오는 중입니다...</p>
+                </div>
+            `;
+        },
+        
+        /**
+         * 로딩 숨김
+         */
+        hideLoading: function() {
+            // 렌더링으로 자동 제거됨
+        },
+        
+        /**
+         * 에러 표시
+         */
+        showError: function(message) {
+            const container = document.getElementById('newsContainer');
+            container.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    ${message}
+                </div>
+            `;
+        }
+    };
     
-    // ✅ 페이지 로드 시 포트폴리오 로드
-    document.addEventListener('DOMContentLoaded', () => {
-        console.log('페이지 로드 완료');
-        loadPortfolio();
+    // ✅ 페이지 로드 시 초기화
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('📄 News List 페이지 로드 완료');
+        NewsManager.init();
     });
-</script>
-
-<jsp:include page="../common/footer.jsp" />
+    
+    // 페이지 종료 시 인터벌 정리
+    window.addEventListener('beforeunload', function() {
+        if (NewsManager.autoRefreshInterval) {
+            clearInterval(NewsManager.autoRefreshInterval);
+        }
+    });
+    </script>
+</body>
+</html>
