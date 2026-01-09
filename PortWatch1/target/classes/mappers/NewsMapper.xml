@@ -5,7 +5,7 @@
 <mapper namespace="com.portwatch.persistence.NewsDAO">
 
     <!-- ========================================
-         ResultMap 정의
+         ResultMap 정의 - 실제 테이블 컬럼만 사용
          ======================================== -->
     <resultMap id="NewsResultMap" type="com.portwatch.domain.NewsVO">
         <id property="newsId" column="news_id"/>
@@ -13,7 +13,6 @@
         <result property="stockCode" column="stock_code"/>
         <result property="stockName" column="stock_name"/>
         <result property="title" column="title"/>
-        <result property="link" column="link"/>
         <result property="content" column="content"/>
         <result property="source" column="source"/>
         <result property="country" column="country"/>
@@ -23,19 +22,18 @@
     </resultMap>
 
     <!-- ========================================
-         ✅ 최근 뉴스 조회 (수정됨 - stock_name을 subquery로 조회)
+         ✅ 최근 뉴스 조회 (완전 수정 - link 컬럼 제거)
          ======================================== -->
     <select id="selectRecentNews" resultMap="NewsResultMap">
         SELECT 
             n.news_id,
             n.stock_id,
             n.stock_code,
-            (SELECT COALESCE(stock_name, name_ko, name_en, ticker, symbol, stock_code) 
+            (SELECT COALESCE(s.stock_name, n.stock_code) 
              FROM stock s 
              WHERE s.stock_code = n.stock_code 
              LIMIT 1) as stock_name,
             n.title,
-            n.link,
             n.content,
             n.source,
             n.country,
@@ -55,12 +53,11 @@
             n.news_id,
             n.stock_id,
             n.stock_code,
-            (SELECT COALESCE(stock_name, name_ko, name_en, ticker, symbol, stock_code) 
+            (SELECT COALESCE(s.stock_name, n.stock_code) 
              FROM stock s 
              WHERE s.stock_code = n.stock_code 
              LIMIT 1) as stock_name,
             n.title,
-            n.link,
             n.content,
             n.source,
             n.country,
@@ -88,12 +85,11 @@
             n.news_id,
             n.stock_id,
             n.stock_code,
-            (SELECT COALESCE(stock_name, name_ko, name_en, ticker, symbol, stock_code) 
+            (SELECT COALESCE(s.stock_name, n.stock_code) 
              FROM stock s 
              WHERE s.stock_code = n.stock_code 
              LIMIT 1) as stock_name,
             n.title,
-            n.link,
             n.content,
             n.source,
             n.country,
@@ -114,12 +110,11 @@
             n.news_id,
             n.stock_id,
             n.stock_code,
-            (SELECT COALESCE(stock_name, name_ko, name_en, ticker, symbol, stock_code) 
+            (SELECT COALESCE(s.stock_name, n.stock_code) 
              FROM stock s 
              WHERE s.stock_code = n.stock_code 
              LIMIT 1) as stock_name,
             n.title,
-            n.link,
             n.content,
             n.source,
             n.country,
@@ -139,12 +134,11 @@
             n.news_id,
             n.stock_id,
             n.stock_code,
-            (SELECT COALESCE(stock_name, name_ko, name_en, ticker, symbol, stock_code) 
+            (SELECT COALESCE(s.stock_name, n.stock_code) 
              FROM stock s 
              WHERE s.stock_code = n.stock_code 
              LIMIT 1) as stock_name,
             n.title,
-            n.link,
             n.content,
             n.source,
             n.country,
@@ -163,7 +157,6 @@
             stock_id,
             stock_code,
             title,
-            link,
             content,
             source,
             country,
@@ -173,7 +166,6 @@
             #{stockId},
             #{stockCode},
             #{title},
-            #{link},
             #{content},
             #{source},
             #{country},
@@ -190,7 +182,6 @@
         SET
             title = #{title},
             content = #{content},
-            link = #{link},
             updated_at = NOW()
         WHERE news_id = #{newsId}
     </update>

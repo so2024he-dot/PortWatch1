@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>대시보드 - PortWatch</title>
+    <title>포트폴리오 대시보드 - PortWatch</title>
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -15,504 +15,494 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     
     <style>
-        .portfolio-card {
-            transition: transform 0.2s, box-shadow 0.2s;
-            cursor: pointer;
-            height: 100%;
+        body {
+            background: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         
-        .portfolio-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-        
-        .profit-positive {
-            color: #dc3545;
-        }
-        
-        .profit-negative {
-            color: #0d6efd;
-        }
-        
-        .summary-card {
+        .dashboard-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 30px;
-            border-radius: 15px;
+            padding: 40px 0;
             margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         
-        .stat-box {
-            text-align: center;
-            padding: 20px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-            margin: 10px 0;
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
         }
         
         .stat-value {
-            font-size: 2em;
+            font-size: 2.5rem;
             font-weight: bold;
+            margin: 10px 0;
         }
         
         .stat-label {
-            font-size: 0.9em;
-            opacity: 0.9;
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .profit {
+            color: #28a745;
+        }
+        
+        .loss {
+            color: #dc3545;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        
+        .chart-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .portfolio-table {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        
+        .table-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .btn-action {
+            padding: 10px 25px;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+        }
+        
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .loading-spinner {
+            text-align: center;
+            padding: 50px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        canvas {
+            max-height: 400px;
         }
     </style>
 </head>
 <body>
-    <!-- 네비게이션 바 -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="${pageContext.request.contextPath}/">
-                <i class="fas fa-chart-line"></i> PortWatch
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="container">
+            <h1><i class="fas fa-chart-line"></i> 포트폴리오 대시보드</h1>
+            <p class="mb-0">실시간 자산 현황 및 수익률 분석</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Summary Cards -->
+        <div class="row" id="summaryCards">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-label">
+                        <i class="fas fa-wallet"></i> 총 자산
+                    </div>
+                    <div class="stat-value" id="totalAsset">-</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-label">
+                        <i class="fas fa-dollar-sign"></i> 투자원금
+                    </div>
+                    <div class="stat-value" id="totalCost">-</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-label">
+                        <i class="fas fa-chart-line"></i> 평가손익
+                    </div>
+                    <div class="stat-value" id="totalProfit">-</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-label">
+                        <i class="fas fa-percent"></i> 수익률
+                    </div>
+                    <div class="stat-value" id="returnRate">-</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="row">
+            <!-- Pie Chart - 자산 구성 -->
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-chart-pie"></i> 자산 구성 비율
+                    </div>
+                    <canvas id="assetPieChart"></canvas>
+                </div>
+            </div>
             
-             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="${pageContext.request.contextPath}/">
-                            <i class="fas fa-home"></i> 홈
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="${pageContext.request.contextPath}/dashboard">
-                            <i class="fas fa-th-large"></i> 대시보드
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="${pageContext.request.contextPath}/stock/list">
-                            <i class="fas fa-chart-bar"></i> 주식
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="${pageContext.request.contextPath}/watchlist/list">
-                            <i class="fas fa-star"></i> 관심종목
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="${pageContext.request.contextPath}/news/list">
-                            <i class="fas fa-newspaper"></i> 뉴스
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="${pageContext.request.contextPath}/portfolio/list">
-                            <i class="fas fa-briefcase"></i> 포트폴리오
-                        </a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" 
-                           role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user"></i> ${loginMember.name}
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="userDropdown">
-                            <li>
-                                <a class="dropdown-item" href="${pageContext.request.contextPath}/member/mypage">
-                                    <i class="fas fa-user-circle"></i> 마이페이지
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item" href="${pageContext.request.contextPath}/member/logout">
-                                    <i class="fas fa-sign-out-alt"></i> 로그아웃
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-    
-    <!-- 메인 컨텐츠 -->
-    <div class="container mt-4">
-        <!-- 페이지 헤더 -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>
-                <i class="fas fa-th-large"></i> 대시보드
-            </h2>
-            <div>
-                <button id="newPortfolioBtn" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> 새 포트폴리오
-                </button>
-            </div>
-        </div>
-        
-        <!-- 요약 카드 -->
-        <div class="summary-card">
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="stat-box">
-                        <div class="stat-label">총 자산</div>
-                        <div class="stat-value" id="totalAssets">0원</div>
+            <!-- Bar Chart - 종목별 수익률 -->
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-chart-bar"></i> 종목별 수익률
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="stat-box">
-                        <div class="stat-label">총 수익</div>
-                        <div class="stat-value" id="totalProfit">0원</div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="stat-box">
-                        <div class="stat-label">수익률</div>
-                        <div class="stat-value" id="profitRate">0%</div>
-                    </div>
+                    <canvas id="profitBarChart"></canvas>
                 </div>
             </div>
         </div>
-        
-        <!-- 포트폴리오 목록 -->
-        <h4 class="mb-3">
-            <i class="fas fa-briefcase"></i> 나의 포트폴리오
-        </h4>
-        
-        <div id="portfolioListContainer">
-            <div class="text-center py-5">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">로딩중...</span>
+
+        <!-- Portfolio Table -->
+        <div class="portfolio-table">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="table-title">
+                    <i class="fas fa-list"></i> 보유 종목 상세
                 </div>
-                <p class="mt-3">포트폴리오를 불러오는 중입니다...</p>
+                <a href="${pageContext.request.contextPath}/portfolio/create" 
+                   class="btn btn-primary-custom btn-action">
+                    <i class="fas fa-plus"></i> 종목 추가
+                </a>
             </div>
-        </div>
-        
-        <!-- 차트 -->
-        <div class="row mt-5">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">
-                            <i class="fas fa-chart-line"></i> 포트폴리오 수익률 추이
-                        </h5>
-                        <canvas id="profitChart"></canvas>
+            
+            <div id="portfolioTableContainer">
+                <div class="loading-spinner">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
                     </div>
+                    <p class="mt-2">데이터를 불러오는 중...</p>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- 포트폴리오 생성 모달 -->
-    <div class="modal fade" id="createPortfolioModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-plus"></i> 새 포트폴리오 만들기
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="portfolioForm">
-                        <div class="mb-3">
-                            <label for="portfolioName" class="form-label">포트폴리오 이름</label>
-                            <input type="text" class="form-control" id="portfolioName" 
-                                   placeholder="예: 나의 첫 포트폴리오" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="stockCode" class="form-label">종목 코드</label>
-                            <input type="text" class="form-control" id="stockCode" 
-                                   placeholder="예: 005930 (삼성전자)" required>
-                            <small class="text-muted">종목 코드를 입력하세요</small>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="quantity" class="form-label">수량</label>
-                            <input type="number" class="form-control" id="quantity" 
-                                   placeholder="보유 수량" min="1" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="purchasePrice" class="form-label">매수 단가</label>
-                            <input type="number" class="form-control" id="purchasePrice" 
-                                   placeholder="매수 가격" min="0" step="0.01" required>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
-                    <button type="button" class="btn btn-primary" id="savePortfolioBtn">생성</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Bootstrap 5 JS Bundle -->
+
+    <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-    /**
-     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     * PortfolioManager - 포트폴리오 관리 객체
-     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     */
-    var PortfolioManager = {
-        // ✅ 수정: JSP EL로 contextPath를 문자열로 직접 할당
-        contextPath: '${pageContext.request.contextPath}',
-        chart: null,
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Portfolio Dashboard Manager
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         
-        /**
-         * 초기화
-         */
-        init: function() {
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            console.log('🚀 PortfolioManager 초기화');
-            console.log('📍 contextPath:', PortfolioManager.contextPath);
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        const PortfolioDashboard = {
+            contextPath: '${pageContext.request.contextPath}',
+            assetPieChart: null,
+            profitBarChart: null,
             
-            // 이벤트 리스너 등록
-            document.getElementById('newPortfolioBtn').addEventListener('click', function() {
-                var modal = new bootstrap.Modal(document.getElementById('createPortfolioModal'));
-                modal.show();
-            });
-            
-            document.getElementById('savePortfolioBtn').addEventListener('click', function() {
-                PortfolioManager.createPortfolio();
-            });
-            
-            // 포트폴리오 목록 로드
-            PortfolioManager.loadPortfolios();
-            
-            // 차트 초기화
-            PortfolioManager.initChart();
-        },
-        
-        /**
-         * 포트폴리오 생성
-         */
-        createPortfolio: function() {
-            console.log('📝 포트폴리오 생성 시작');
-            
-            var portfolioName = document.getElementById('portfolioName').value.trim();
-            var stockCode = document.getElementById('stockCode').value.trim();
-            var quantity = document.getElementById('quantity').value;
-            var purchasePrice = document.getElementById('purchasePrice').value;
-            
-            // 유효성 검사
-            if (!portfolioName) {
-                alert('포트폴리오 이름을 입력해주세요.');
-                document.getElementById('portfolioName').focus();
-                return;
-            }
-            
-            if (!stockCode) {
-                alert('종목 코드를 입력해주세요.');
-                document.getElementById('stockCode').focus();
-                return;
-            }
-            
-            if (!quantity || parseFloat(quantity) <= 0) {
-                alert('수량을 입력해주세요.');
-                document.getElementById('quantity').focus();
-                return;
-            }
-            
-            if (!purchasePrice || parseFloat(purchasePrice) <= 0) {
-                alert('매수 단가를 입력해주세요.');
-                document.getElementById('purchasePrice').focus();
-                return;
-            }
-            
-            console.log('📝 포트폴리오 정보:', {
-                portfolioName: portfolioName,
-                stockCode: stockCode,
-                quantity: quantity,
-                purchasePrice: purchasePrice
-            });
-            
-            // ✅ 수정: this 대신 PortfolioManager 사용
-            fetch(PortfolioManager.contextPath + '/portfolio/create', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: 'portfolioName=' + encodeURIComponent(portfolioName) +
-                      '&stockCode=' + encodeURIComponent(stockCode) +
-                      '&quantity=' + encodeURIComponent(quantity) +
-                      '&purchasePrice=' + encodeURIComponent(purchasePrice)
-            })
-            .then(function(response) {
-                console.log('📡 서버 응답:', response.status);
-                if (!response.ok) {
-                    throw new Error('포트폴리오 생성 실패');
-                }
-                return response.text();
-            })
-            .then(function(data) {
-                console.log('✅ 포트폴리오 생성 완료!');
+            /**
+             * 초기화
+             */
+            init: function() {
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                console.log('📊 Portfolio Dashboard 초기화');
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 
-                // 모달 닫기
-                var modal = bootstrap.Modal.getInstance(
-                    document.getElementById('createPortfolioModal')
-                );
-                if (modal) {
-                    modal.hide();
-                }
-                
-                // 폼 초기화
-                document.getElementById('portfolioName').value = '';
-                document.getElementById('stockCode').value = '';
-                document.getElementById('quantity').value = '';
-                document.getElementById('purchasePrice').value = '';
-                
-                // 목록 새로고침
-                PortfolioManager.loadPortfolios();
-                
-                alert('포트폴리오가 생성되었습니다!');
-            })
-            .catch(function(error) {
-                console.error('❌ 포트폴리오 생성 실패:', error);
-                alert('포트폴리오 생성에 실패했습니다.');
-            });
-        },
-        
-        /**
-         * 포트폴리오 목록 로드
-         */
-        loadPortfolios: function() {
-            console.log('📋 포트폴리오 목록 로드');
+                PortfolioDashboard.loadPortfolioData();
+            },
             
-            // ✅ 수정: this 대신 PortfolioManager 사용
-            fetch(PortfolioManager.contextPath + '/api/portfolio/list')
-                .then(function(response) { 
-                    return response.json(); 
-                })
-                .then(function(data) {
-                    console.log('✅ 포트폴리오 로드 완료:', data);
-                    PortfolioManager.renderPortfolios(data.portfolios || []);
-                    PortfolioManager.updateSummary(data.summary || {});
-                })
-                .catch(function(error) {
-                    console.error('❌ 포트폴리오 로드 실패:', error);
-                    PortfolioManager.showError();
+            /**
+             * 포트폴리오 데이터 로드
+             */
+            loadPortfolioData: function() {
+                console.log('📊 포트폴리오 데이터 로딩...');
+                
+                fetch(PortfolioDashboard.contextPath + '/api/portfolio/list')
+                    .then(function(response) {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(function(data) {
+                        console.log('✅ 데이터 로드 완료:', data);
+                        
+                        if (data.success && data.portfolios && data.portfolios.length > 0) {
+                            PortfolioDashboard.updateSummary(data.summary);
+                            PortfolioDashboard.renderCharts(data.portfolios);
+                            PortfolioDashboard.renderTable(data.portfolios);
+                        } else {
+                            PortfolioDashboard.showEmptyState();
+                        }
+                    })
+                    .catch(function(error) {
+                        console.error('❌ 데이터 로드 실패:', error);
+                        PortfolioDashboard.showEmptyState();
+                    });
+            },
+            
+            /**
+             * 요약 정보 업데이트
+             */
+            updateSummary: function(summary) {
+                if (!summary) return;
+                
+                const formatNumber = function(num) {
+                    return new Intl.NumberFormat('ko-KR').format(Math.round(num));
+                };
+                
+                const formatPercent = function(num) {
+                    return (num >= 0 ? '+' : '') + num.toFixed(2) + '%';
+                };
+                
+                document.getElementById('totalAsset').textContent = '₩' + formatNumber(summary.totalValue || 0);
+                document.getElementById('totalCost').textContent = '₩' + formatNumber(summary.totalCost || 0);
+                
+                const profitElement = document.getElementById('totalProfit');
+                const profitValue = summary.totalProfit || 0;
+                profitElement.textContent = '₩' + formatNumber(profitValue);
+                profitElement.className = 'stat-value ' + (profitValue >= 0 ? 'profit' : 'loss');
+                
+                const rateElement = document.getElementById('returnRate');
+                const rateValue = summary.returnRate || 0;
+                rateElement.textContent = formatPercent(rateValue);
+                rateElement.className = 'stat-value ' + (rateValue >= 0 ? 'profit' : 'loss');
+            },
+            
+            /**
+             * 차트 렌더링
+             */
+            renderCharts: function(portfolios) {
+                PortfolioDashboard.renderAssetPieChart(portfolios);
+                PortfolioDashboard.renderProfitBarChart(portfolios);
+            },
+            
+            /**
+             * 자산 구성 원형 차트
+             */
+            renderAssetPieChart: function(portfolios) {
+                const labels = [];
+                const data = [];
+                const colors = [
+                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+                    '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'
+                ];
+                
+                portfolios.forEach(function(item) {
+                    labels.push(item.stockName || item.stockCode);
+                    data.push(item.totalValue || 0);
                 });
-        },
-        
-        /**
-         * 포트폴리오 목록 렌더링
-         */
-        renderPortfolios: function(portfolios) {
-            var container = document.getElementById('portfolioListContainer');
-            
-            if (!portfolios || portfolios.length === 0) {
-                container.innerHTML = 
-                    '<div class="alert alert-info text-center">' +
-                    '<i class="fas fa-info-circle"></i> ' +
-                    '포트폴리오가 없습니다. 새 포트폴리오를 만들어보세요!' +
-                    '</div>';
-                return;
-            }
-            
-            var html = '<div class="row">';
-            
-            portfolios.forEach(function(portfolio) {
-                var profitClass = portfolio.profitLoss >= 0 ? 'profit-positive' : 'profit-negative';
-                var profitIcon = portfolio.profitLoss >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
                 
-                html += 
-                    '<div class="col-md-6 col-lg-4 mb-4">' +
-                    '<div class="card portfolio-card" ' +
-                    'onclick="location.href=\'' + PortfolioManager.contextPath + '/portfolio/detail/' + portfolio.portfolioId + '\'">' +
-                    '<div class="card-body">' +
-                    '<h5 class="card-title">' + portfolio.portfolioName + '</h5>' +
-                    '<p class="text-muted">' + portfolio.stockName + ' (' + portfolio.stockCode + ')</p>' +
-                    '<div class="mb-2">' +
-                    '<small>보유 수량</small>' +
-                    '<div class="fw-bold">' + portfolio.quantity + '주</div>' +
-                    '</div>' +
-                    '<div class="mb-2">' +
-                    '<small>평가 금액</small>' +
-                    '<div class="fw-bold">' + portfolio.totalValue.toLocaleString() + '원</div>' +
-                    '</div>' +
-                    '<div class="' + profitClass + '">' +
-                    '<i class="fas ' + profitIcon + '"></i> ' +
-                    portfolio.profitLoss.toLocaleString() + '원 ' +
-                    '(' + portfolio.profitRate.toFixed(2) + '%)' +
-                    '</div>' +
-                    '</div>' +
-                    '</div>' +
-                    '</div>';
-            });
-            
-            html += '</div>';
-            container.innerHTML = html;
-        },
-        
-        /**
-         * 요약 정보 업데이트
-         */
-        updateSummary: function(summary) {
-            document.getElementById('totalAssets').textContent = 
-                (summary.totalAssets || 0).toLocaleString() + '원';
-            
-            document.getElementById('totalProfit').textContent = 
-                (summary.totalProfit || 0).toLocaleString() + '원';
-            
-            document.getElementById('profitRate').textContent = 
-                (summary.profitRate || 0).toFixed(2) + '%';
-        },
-        
-        /**
-         * 에러 표시
-         */
-        showError: function() {
-            var container = document.getElementById('portfolioListContainer');
-            container.innerHTML = 
-                '<div class="alert alert-danger">' +
-                '<i class="fas fa-exclamation-triangle"></i> ' +
-                '포트폴리오를 불러오는데 실패했습니다.' +
-                '</div>';
-        },
-        
-        /**
-         * 차트 초기화
-         */
-        initChart: function() {
-            var ctx = document.getElementById('profitChart');
-            if (ctx) {
-                PortfolioManager.chart = new Chart(ctx, {
-                    type: 'line',
+                const ctx = document.getElementById('assetPieChart').getContext('2d');
+                
+                if (PortfolioDashboard.assetPieChart) {
+                    PortfolioDashboard.assetPieChart.destroy();
+                }
+                
+                PortfolioDashboard.assetPieChart = new Chart(ctx, {
+                    type: 'pie',
                     data: {
-                        labels: [],
+                        labels: labels,
                         datasets: [{
-                            label: '수익률 (%)',
-                            data: [],
-                            borderColor: '#667eea',
-                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                            tension: 0.4
+                            data: data,
+                            backgroundColor: colors,
+                            borderWidth: 2,
+                            borderColor: '#fff'
                         }]
                     },
                     options: {
                         responsive: true,
+                        maintainAspectRatio: true,
                         plugins: {
                             legend: {
-                                display: true,
-                                position: 'top'
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true
+                                position: 'bottom',
+                                labels: {
+                                    padding: 15,
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.parsed || 0;
+                                        const formatted = new Intl.NumberFormat('ko-KR').format(value);
+                                        return label + ': ₩' + formatted;
+                                    }
+                                }
                             }
                         }
                     }
                 });
+            },
+            
+            /**
+             * 종목별 수익률 막대 차트
+             */
+            renderProfitBarChart: function(portfolios) {
+                const labels = [];
+                const data = [];
+                const colors = [];
+                
+                portfolios.forEach(function(item) {
+                    labels.push(item.stockName || item.stockCode);
+                    const profitRate = item.profitRate || 0;
+                    data.push(profitRate);
+                    colors.push(profitRate >= 0 ? '#28a745' : '#dc3545');
+                });
+                
+                const ctx = document.getElementById('profitBarChart').getContext('2d');
+                
+                if (PortfolioDashboard.profitBarChart) {
+                    PortfolioDashboard.profitBarChart.destroy();
+                }
+                
+                PortfolioDashboard.profitBarChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: '수익률 (%)',
+                            data: data,
+                            backgroundColor: colors,
+                            borderColor: colors,
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return '수익률: ' + context.parsed.y.toFixed(2) + '%';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            },
+            
+            /**
+             * 테이블 렌더링
+             */
+            renderTable: function(portfolios) {
+                let html = '<div class="table-responsive"><table class="table table-hover align-middle">';
+                html += '<thead class="table-light"><tr>';
+                html += '<th>종목명</th>';
+                html += '<th class="text-end">보유수량</th>';
+                html += '<th class="text-end">평균단가</th>';
+                html += '<th class="text-end">현재가</th>';
+                html += '<th class="text-end">평가금액</th>';
+                html += '<th class="text-end">손익</th>';
+                html += '<th class="text-end">수익률</th>';
+                html += '</tr></thead><tbody>';
+                
+                portfolios.forEach(function(item) {
+                    const profitClass = (item.profit || 0) >= 0 ? 'text-success' : 'text-danger';
+                    const profitRateClass = (item.profitRate || 0) >= 0 ? 'text-success' : 'text-danger';
+                    
+                    html += '<tr>';
+                    html += '<td><strong>' + (item.stockName || item.stockCode) + '</strong><br>';
+                    html += '<small class="text-muted">' + item.stockCode + '</small></td>';
+                    html += '<td class="text-end">' + (item.quantity || 0).toLocaleString() + '</td>';
+                    html += '<td class="text-end">₩' + (item.purchasePrice || 0).toLocaleString() + '</td>';
+                    html += '<td class="text-end">₩' + (item.currentPrice || 0).toLocaleString() + '</td>';
+                    html += '<td class="text-end">₩' + (item.totalValue || 0).toLocaleString() + '</td>';
+                    html += '<td class="text-end ' + profitClass + '">₩' + (item.profit || 0).toLocaleString() + '</td>';
+                    html += '<td class="text-end ' + profitRateClass + '">' + 
+                            ((item.profitRate || 0) >= 0 ? '+' : '') + 
+                            (item.profitRate || 0).toFixed(2) + '%</td>';
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table></div>';
+                
+                document.getElementById('portfolioTableContainer').innerHTML = html;
+            },
+            
+            /**
+             * 빈 상태 표시
+             */
+            showEmptyState: function() {
+                const emptyHtml = '<div class="empty-state">' +
+                    '<i class="fas fa-inbox"></i>' +
+                    '<h3>보유 종목이 없습니다</h3>' +
+                    '<p class="text-muted">첫 번째 종목을 추가해보세요!</p>' +
+                    '<a href="' + PortfolioDashboard.contextPath + '/portfolio/create" ' +
+                    'class="btn btn-primary-custom btn-action mt-3">' +
+                    '<i class="fas fa-plus"></i> 종목 추가하기</a>' +
+                    '</div>';
+                
+                document.getElementById('portfolioTableContainer').innerHTML = emptyHtml;
+                document.getElementById('totalAsset').textContent = '₩0';
+                document.getElementById('totalCost').textContent = '₩0';
+                document.getElementById('totalProfit').textContent = '₩0';
+                document.getElementById('returnRate').textContent = '0.00%';
             }
-        }
-    };
-    
-    // ✅ 페이지 로드 시 초기화
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('📄 Dashboard 페이지 로드 완료');
-        PortfolioManager.init();
-    });
+        };
+        
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            PortfolioDashboard.init();
+        });
     </script>
 </body>
 </html>
