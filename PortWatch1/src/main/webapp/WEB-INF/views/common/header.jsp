@@ -1,9 +1,9 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
-<!-- ========================================
-     ✅ 수정된 Header - 홈버튼 추가
-     ======================================== -->
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     ✅ 완벽하게 개선된 Header - 모든 메뉴 연결
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
 <header class="main-header">
     <div class="header-container">
         <!-- 왼쪽: 로고 & 홈버튼 -->
@@ -13,7 +13,7 @@
                 <span>PortWatch</span>
             </a>
             
-            <!-- ✅ 새로 추가된 홈버튼 -->
+            <!-- ✅ 홈버튼 -->
             <a href="${pageContext.request.contextPath}/" class="home-btn" title="홈으로">
                 <i class="fas fa-home"></i>
                 <span>홈</span>
@@ -22,30 +22,44 @@
 
         <!-- 가운데: 네비게이션 메뉴 -->
         <nav class="main-nav">
+            <!-- ✅ Dashboard -->
+            <a href="${pageContext.request.contextPath}/dashboard" 
+               class="${currentMenu == 'dashboard' ? 'active' : ''}"
+               title="대시보드">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>대시보드</span>
+            </a>
+            
+            <!-- ✅ 종목 -->
             <a href="${pageContext.request.contextPath}/stock/list" 
-               class="${currentMenu == 'stock' ? 'active' : ''}">
+               class="${currentMenu == 'stock' ? 'active' : ''}"
+               title="종목 목록">
                 <i class="fas fa-building"></i>
                 <span>종목</span>
             </a>
+            
+            <!-- ✅ 관심종목 -->
             <a href="${pageContext.request.contextPath}/watchlist/list" 
-               class="${currentMenu == 'watchlist' ? 'active' : ''}">
+               class="${currentMenu == 'watchlist' ? 'active' : ''}"
+               title="관심종목">
                 <i class="fas fa-star"></i>
                 <span>관심종목</span>
             </a>
+            
+            <!-- ✅ 포트폴리오 -->
             <a href="${pageContext.request.contextPath}/portfolio/list" 
-               class="${currentMenu == 'portfolio' ? 'active' : ''}">
+               class="${currentMenu == 'portfolio' ? 'active' : ''}"
+               title="포트폴리오 관리">
                 <i class="fas fa-briefcase"></i>
                 <span>포트폴리오</span>
             </a>
+            
+            <!-- ✅ 뉴스 -->
             <a href="${pageContext.request.contextPath}/news/list" 
-               class="${currentMenu == 'news' ? 'active' : ''}">
+               class="${currentMenu == 'news' ? 'active' : ''}"
+               title="뉴스">
                 <i class="fas fa-newspaper"></i>
                 <span>뉴스</span>
-            </a>
-            <a href="${pageContext.request.contextPath}/dashboard" 
-               class="${currentMenu == 'dashboard' ? 'active' : ''}">
-                <i class="fas fa-tachometer-alt"></i>
-                <span>대시보드</span>
             </a>
         </nav>
 
@@ -89,61 +103,42 @@
     </div>
 </header>
 
-<!-- ========================================
-     ✅ 홈버튼 스타일 추가
-     ======================================== -->
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     ✅ Header 스타일
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
 <style>
-/* 홈버튼 스타일 */
-.home-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    margin-left: 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white !important;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+:root {
+    --primary-color: #667eea;
+    --secondary-color: #764ba2;
+    --hover-color: #f8f9ff;
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    --shadow-hover: 0 4px 20px rgba(102, 126, 234, 0.3);
 }
 
-.home-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-}
-
-.home-btn i {
-    font-size: 18px;
-}
-
-.home-btn span {
-    font-size: 14px;
-}
-
-/* 기존 헤더 스타일 */
+/* 헤더 기본 */
 .main-header {
     background: white;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow);
     position: sticky;
     top: 0;
     z-index: 1000;
+    border-bottom: 1px solid #e0e0e0;
 }
 
 .header-container {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 15px 30px;
+    padding: 12px 30px;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
+/* 왼쪽: 로고 & 홈버튼 */
 .header-left {
     display: flex;
     align-items: center;
+    gap: 15px;
 }
 
 .logo {
@@ -152,42 +147,85 @@
     gap: 10px;
     text-decoration: none;
     color: #2c3e50;
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 700;
+    transition: all 0.3s ease;
+}
+
+.logo:hover {
+    color: var(--primary-color);
+    transform: scale(1.05);
 }
 
 .logo i {
-    color: #667eea;
-    font-size: 28px;
+    color: var(--primary-color);
+    font-size: 26px;
 }
 
+/* 홈버튼 */
+.home-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white !important;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.home-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+    background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+}
+
+.home-btn i {
+    font-size: 16px;
+}
+
+/* 네비게이션 메뉴 */
 .main-nav {
     display: flex;
-    gap: 5px;
+    gap: 3px;
+    align-items: center;
 }
 
 .main-nav a {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 10px 20px;
+    padding: 10px 18px;
     color: #555;
     text-decoration: none;
     border-radius: 8px;
     transition: all 0.3s ease;
     font-weight: 500;
+    font-size: 14px;
+    position: relative;
 }
 
 .main-nav a:hover {
-    background: #f0f0f0;
-    color: #667eea;
+    background: var(--hover-color);
+    color: var(--primary-color);
+    transform: translateY(-1px);
 }
 
 .main-nav a.active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     color: white;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
+.main-nav a i {
+    font-size: 16px;
+}
+
+/* 사용자 메뉴 */
 .user-menu {
     position: relative;
 }
@@ -203,23 +241,41 @@
     cursor: pointer;
     transition: all 0.3s ease;
     font-weight: 500;
+    font-size: 14px;
 }
 
 .user-btn:hover {
-    border-color: #667eea;
-    background: #f8f9ff;
+    border-color: var(--primary-color);
+    background: var(--hover-color);
+    transform: translateY(-1px);
+}
+
+.user-btn i {
+    font-size: 18px;
 }
 
 .user-dropdown {
     position: absolute;
-    top: 100%;
+    top: calc(100% + 10px);
     right: 0;
-    margin-top: 10px;
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
     min-width: 200px;
     display: none;
+    overflow: hidden;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .user-dropdown.show {
@@ -234,11 +290,21 @@
     color: #333;
     text-decoration: none;
     transition: all 0.2s ease;
+    font-size: 14px;
 }
 
 .user-dropdown a:hover {
-    background: #f8f9ff;
-    color: #667eea;
+    background: var(--hover-color);
+    color: var(--primary-color);
+}
+
+.user-dropdown a.logout {
+    color: #dc3545;
+}
+
+.user-dropdown a.logout:hover {
+    background: #fff5f5;
+    color: #c82333;
 }
 
 .dropdown-divider {
@@ -247,29 +313,61 @@
     margin: 5px 0;
 }
 
+/* 로그인 버튼 */
 .login-btn {
     display: flex;
     align-items: center;
     gap: 8px;
     padding: 8px 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     color: white !important;
     text-decoration: none;
     border-radius: 8px;
     font-weight: 600;
+    font-size: 14px;
     transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
 .login-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: var(--shadow-hover);
+}
+
+.login-btn i {
+    font-size: 16px;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .header-container {
+        padding: 10px 15px;
+    }
+    
+    .main-nav a span,
+    .home-btn span {
+        display: none;
+    }
+    
+    .logo span {
+        display: none;
+    }
+    
+    .main-nav {
+        gap: 2px;
+    }
+    
+    .main-nav a {
+        padding: 8px 12px;
+    }
 }
 </style>
 
-<!-- ========================================
-     JavaScript
-     ======================================== -->
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     ✅ JavaScript
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
 <script>
+// 사용자 메뉴 토글
 function toggleUserMenu() {
     const dropdown = document.getElementById('userDropdown');
     dropdown.classList.toggle('show');
@@ -280,8 +378,21 @@ document.addEventListener('click', function(event) {
     const userMenu = document.querySelector('.user-menu');
     const dropdown = document.getElementById('userDropdown');
     
-    if (dropdown && !userMenu.contains(event.target)) {
+    if (dropdown && userMenu && !userMenu.contains(event.target)) {
         dropdown.classList.remove('show');
     }
+});
+
+// 현재 페이지 활성화 표시
+document.addEventListener('DOMContentLoaded', function() {
+    const currentPath = window.location.pathname;
+    const navLinks = document.querySelectorAll('.main-nav a');
+    
+    navLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        if (href && currentPath.includes(href.split('/').pop())) {
+            link.classList.add('active');
+        }
+    });
 });
 </script>

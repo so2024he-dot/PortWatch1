@@ -16,27 +16,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.portwatch.domain.MemberVO;
+import com.portwatch.domain.PortfolioVO;
 import com.portwatch.domain.StockVO;
 import com.portwatch.service.StockService;
 
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * StockController - 주식 관리 컨트롤러
+ * StockController - 완전 수정 버전
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * 
- * 주요 기능:
- * - 주식 목록 조회 (국가별, 시장별 필터링)
- * - 주식 상세 정보
- * - 주식 검색
- * - 매수 페이지
+ * 수정 사항:
+ * 1. ✅ 세션 키 통일: loginMember → member
+ * 2. ✅ 매수 버튼 완벽 연동
+ * 3. ✅ portfolio/create로 이동 시 portfolioVO 제공
  * 
- * 수정 내역:
- * - 2025-12-29: URL 매핑 수정 (/stocks, /stock/buy)
- * - 슬래시 제거로 올바른 경로 매핑
- * 
- * @author PortWatch Team
- * @version 1.0
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * @version 2.0
  */
 @Controller
 @RequestMapping("/stock")
@@ -48,108 +42,49 @@ public class StockController {
     private StockService stockService;
 
     /**
-     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     * /stocks → /stock/list 리다이렉트
-     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     * 
-     * URL: GET /stocks
-     * 매핑: @GetMapping("/stocks") → /stocks (절대 경로)
-     * 
-     * 설명: 
-     * - 슬래시로 시작하면 절대 경로 (클래스 레벨 @RequestMapping 무시)
-     * - /stocks로 직접 접근 가능
-     * - /stock/list로 리다이렉트
-     * 
-     * @return redirect:/stock/list
-     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     */
-    @GetMapping("/stocks")
-    public String redirectStocks() {
-        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        log.info("🔀 /stocks 리다이렉트");
-        log.info("  - 대상: /stock/list");
-        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        return "redirect:/stock/list";
-    }
-
-    /**
-     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     * 주식 목록 조회 (필터링)
-     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     * 
+     * ✅ 주식 목록 조회
      * URL: GET /stock/list
-     * 파라미터:
-     * - country: KR, US, ALL (선택)
-     * - market: KOSPI, KOSDAQ, NASDAQ, NYSE, ALL (선택)
-     * 
-     * Model 속성:
-     * - selectedCountry: 선택된 국가 (기본값: ALL)
-     * - selectedMarket: 선택된 시장 (기본값: ALL)
-     * - stocks: 주식 목록
-     * 
-     * JSP에서 사용:
-     * ${selectedCountry} → JavaScript 변수 초기화
-     * ${selectedMarket} → 필터 버튼 상태 관리
-     * 
-     * @param country 국가 코드
-     * @param market 시장 코드
-     * @param model Model 객체
-     * @return stock/list.jsp
-     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      */
     @GetMapping("/list")
-    public String list(@RequestParam(value = "country", required = false) String country,
-                      @RequestParam(value = "market", required = false) String market,
-                      Model model) {
+    public String list(@RequestParam(value = "country", required = false, defaultValue = "ALL") String country,
+                      @RequestParam(value = "market", required = false, defaultValue = "ALL") String market,
+                      Model model, HttpSession session) {
         
         log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        log.info("📊 주식 목록 조회");
-        log.info("  - country: " + (country != null ? country : "전체"));
-        log.info("  - market: " + (market != null ? market : "전체"));
-        
-        // 필터 로그
-        if (country != null && !country.equals("ALL")) {
-            log.info("  - 필터: country=" + country);
-        }
-        if (market != null && !market.equals("ALL")) {
-            log.info("  - 필터: market=" + market);
-        }
-        if ((country == null || country.equals("ALL")) && 
-            (market == null || market.equals("ALL"))) {
-            log.info("  - 필터: 없음 (전체)");
-        }
-        
-        // Model에 필터 정보 추가 (JSP에서 사용)
-        model.addAttribute("selectedCountry", country != null ? country : "ALL");
-        model.addAttribute("selectedMarket", market != null ? market : "ALL");
-        
-        // 주식 목록 조회
-        List<StockVO> stocks = null;
+        log.info("📈 주식 목록 조회");
+        log.info("  - 국가: " + country);
+        log.info("  - 시장: " + market);
         
         try {
-            if (country != null && !country.equals("ALL") && 
-                market != null && !market.equals("ALL")) {
-                // 국가 + 시장 필터
-                stocks = stockService.getStocksByCountryAndMarket(country, market);
-                log.info("✅ 필터링된 주식 조회: " + stocks.size() + "건");
-            } else if (country != null && !country.equals("ALL")) {
-                // 국가 필터만
-                stocks = stockService.getStocksByCountry(country);
-                log.info("✅ 국가별 주식 조회: " + stocks.size() + "건");
-            } else if (market != null && !market.equals("ALL")) {
-                // 시장 필터만
-                stocks = stockService.getStocksByMarket(market);
-                log.info("✅ 시장별 주식 조회: " + stocks.size() + "건");
-            } else {
-                // 전체 조회
+            // ✅ 세션 체크 (선택사항)
+            MemberVO member = (MemberVO) session.getAttribute("member");
+            if (member != null) {
+                model.addAttribute("loginMember", member);  // JSP 호환성
+                log.info("  - 회원: " + member.getMemberId());
+            }
+            
+            List<StockVO> stocks = null;
+            
+            // 필터링 로직
+            if ("ALL".equals(country) && "ALL".equals(market)) {
                 stocks = stockService.getAllStocks();
-                log.info("✅ 전체 주식 조회: " + stocks.size() + "건");
+            } else if (!"ALL".equals(country) && "ALL".equals(market)) {
+                stocks = stockService.getStocksByCountry(country);
+            } else if ("ALL".equals(country) && !"ALL".equals(market)) {
+                stocks = stockService.getStocksByMarket(market);
+            } else {
+                stocks = stockService.getStocksByCountryAndMarket(country, market);
             }
             
             model.addAttribute("stocks", stocks);
+            model.addAttribute("selectedCountry", country);
+            model.addAttribute("selectedMarket", market);
+            
+            log.info("✅ 주식 목록 조회 완료: " + (stocks != null ? stocks.size() : 0) + "개");
             
         } catch (Exception e) {
             log.error("❌ 주식 목록 조회 실패", e);
+            model.addAttribute("stocks", List.of());
             model.addAttribute("error", "주식 목록을 불러오는데 실패했습니다.");
         }
         
@@ -159,40 +94,36 @@ public class StockController {
     }
 
     /**
-     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     * 주식 상세 정보
-     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     * 
+     * ✅ 주식 상세 조회
      * URL: GET /stock/detail
-     * 파라미터: stockCode (종목 코드)
-     * 
-     * @param stockCode 종목 코드
-     * @param model Model 객체
-     * @return stock/detail.jsp
-     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      */
     @GetMapping("/detail")
-    public String detail(@RequestParam("stockCode") String stockCode, Model model) {
+    public String detail(@RequestParam("stockCode") String stockCode,
+                        Model model, HttpSession session) {
         
         log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        log.info("📈 주식 상세 정보 조회");
+        log.info("📊 주식 상세 조회");
         log.info("  - stockCode: " + stockCode);
         
         try {
+            // ✅ 세션 체크
+            MemberVO member = (MemberVO) session.getAttribute("member");
+            if (member != null) {
+                model.addAttribute("loginMember", member);
+            }
+            
             StockVO stock = stockService.getStockByCode(stockCode);
             
             if (stock == null) {
                 log.warn("⚠️ 주식을 찾을 수 없음");
-                model.addAttribute("error", "주식 정보를 찾을 수 없습니다.");
                 return "redirect:/stock/list";
             }
             
             model.addAttribute("stock", stock);
-            log.info("✅ 주식 상세 정보 조회 완료");
+            log.info("✅ 주식 상세 조회 완료: " + stock.getStockName());
             
         } catch (Exception e) {
             log.error("❌ 주식 상세 조회 실패", e);
-            model.addAttribute("error", "주식 정보를 불러오는데 실패했습니다.");
             return "redirect:/stock/list";
         }
         
@@ -202,27 +133,15 @@ public class StockController {
     }
 
     /**
-     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     * 주식 매수 페이지
-     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     * 
+     * ✅ 주식 매수 페이지 (완전 수정!)
      * URL: GET /stock/buy
-     * 매핑: @GetMapping("buy") → /stock/buy (O)
      * 
-     * 파라미터: stockCode (종목 코드)
-     * 
-     * 기능:
-     * 1. 로그인 체크
-     * 2. 주식 정보 조회
-     * 3. 포트폴리오 등록 페이지로 이동
-     * 
-     * @param stockCode 종목 코드
-     * @param session HttpSession
-     * @param model Model 객체
-     * @return portfolio/create.jsp
-     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * 수정 내용:
+     * 1. loginMember → member로 통일
+     * 2. portfolioVO 추가 (BindingResult 에러 방지)
+     * 3. stock 정보 제공
      */
-    @GetMapping("buy")
+    @GetMapping("/buy")
     public String buyStock(@RequestParam("stockCode") String stockCode,
                           HttpSession session, Model model) {
         
@@ -230,8 +149,8 @@ public class StockController {
         log.info("💰 주식 매수 페이지");
         log.info("  - stockCode: " + stockCode);
         
-        // 로그인 체크
-        MemberVO member = (MemberVO) session.getAttribute("loginMember");
+        // ✅ 세션 체크 (member로 통일!)
+        MemberVO member = (MemberVO) session.getAttribute("member");
         if (member == null) {
             log.info("❌ 로그인 필요");
             log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -250,12 +169,26 @@ public class StockController {
                 return "redirect:/stock/list";
             }
             
+            // ✅ portfolioVO 생성 및 초기값 설정
+            PortfolioVO portfolioVO = new PortfolioVO();
+            portfolioVO.setStockId(stock.getStockId());
+            portfolioVO.setStockCode(stock.getStockCode());
+            portfolioVO.setMemberId(member.getMemberId());
+            
+            // ✅ Model에 추가 (BindingResult 에러 방지)
+            model.addAttribute("portfolioVO", portfolioVO);
             model.addAttribute("stock", stock);
             model.addAttribute("member", member);
+            model.addAttribute("loginMember", member);  // JSP 호환성
+            
+            // ✅ 전체 종목 리스트 제공 (선택 변경 가능하도록)
+            List<StockVO> stockList = stockService.getAllStocks();
+            model.addAttribute("stockList", stockList);
             
             log.info("✅ 매수 페이지 데이터 준비 완료");
             log.info("  - 종목명: " + stock.getStockName());
             log.info("  - 현재가: " + stock.getCurrentPrice());
+            log.info("  - portfolioVO 추가 완료");
             
         } catch (Exception e) {
             log.error("❌ 주식 정보 조회 실패", e);
@@ -269,25 +202,22 @@ public class StockController {
     }
 
     /**
-     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     * 주식 검색 페이지
-     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     * 
+     * ✅ 주식 검색
      * URL: GET /stock/search
-     * 파라미터: keyword (검색어)
-     * 
-     * @param keyword 검색어
-     * @param model Model 객체
-     * @return stock/search.jsp
-     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      */
     @GetMapping("/search")
     public String search(@RequestParam(value = "keyword", required = false) String keyword,
-                        Model model) {
+                        Model model, HttpSession session) {
         
         log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         log.info("🔍 주식 검색");
         log.info("  - 검색어: " + keyword);
+        
+        // 세션 체크
+        MemberVO member = (MemberVO) session.getAttribute("member");
+        if (member != null) {
+            model.addAttribute("loginMember", member);
+        }
         
         if (keyword != null && !keyword.trim().isEmpty()) {
             try {
