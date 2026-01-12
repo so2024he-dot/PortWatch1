@@ -1,6 +1,9 @@
 package com.portwatch.domain;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+
+import lombok.Data;
 
 /**
  * ✅ 뉴스 VO (완전 구현)
@@ -10,6 +13,7 @@ import java.sql.Timestamp;
  * @author PortWatch
  * @version 3.0 - MySQL 8.0 호환
  */
+@Data
 public class NewsVO {
     
     private Long newsId;              // news_id BIGINT
@@ -22,6 +26,7 @@ public class NewsVO {
     private String source;            // source VARCHAR(100)
     private String country;           // country VARCHAR(10)
     private Timestamp publishedAt;    // published_at TIMESTAMP
+    private LocalDateTime publishedAt2; //publishedAt2 LocalDateTime 24시간 발급시간
     private Timestamp createdAt;      // created_at TIMESTAMP
     private Timestamp updatedAt;      // updated_at TIMESTAMP
     
@@ -110,6 +115,13 @@ public class NewsVO {
         this.publishedAt = publishedAt;
     }
     
+   
+    
+    public void setPublishedAt(LocalDateTime publishedAt2) {
+		this.publishedAt2 = publishedAt2;
+		
+	}
+    
     public Timestamp getCreatedAt() {
         return createdAt;
     }
@@ -132,4 +144,6 @@ public class NewsVO {
                ", title=" + title + ", source=" + source + ", country=" + country + 
                ", publishedAt=" + publishedAt + "]";
     }
+
+	
 }

@@ -1,32 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
+<!-- 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NEWS MAPPER - 완벽 수정 (country 제거!)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ 핵심 수정:
+1. n.country 제거 (테이블에 존재하지 않음!)
+2. content 제거 (이전 수정)
+3. 모든 쿼리에서 country 완전 제거
+
+실제 NEWS 테이블 구조:
+- news_id
+- stock_id (nullable)
+- stock_code
+- title
+- source
+- link (nullable)
+- published_at
+- created_at
+- updated_at
+
+❌ 없는 컬럼: content, country
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-->
+
 <mapper namespace="com.portwatch.persistence.NewsDAO">
-
-    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-         ✅ 완전히 수정된 NewsMapper
-         - content 컬럼 제거 (테이블에 없음)
-         - 실제 존재하는 컬럼만 사용
-         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-
-    <!-- ResultMap 정의 -->
-    <resultMap id="NewsResultMap" type="com.portwatch.domain.NewsVO">
-        <id property="newsId" column="news_id"/>
-        <result property="stockId" column="stock_id"/>
-        <result property="stockCode" column="stock_code"/>
-        <result property="stockName" column="stock_name"/>
-        <result property="title" column="title"/>
-        <!-- content 컬럼 제거 - 테이블에 존재하지 않음 -->
-        <result property="source" column="source"/>
-        <result property="country" column="country"/>
-        <result property="publishedAt" column="published_at"/>
-        <result property="createdAt" column="created_at"/>
-        <result property="updatedAt" column="updated_at"/>
-    </resultMap>
-
-    <!-- ✅ 최근 뉴스 조회 -->
-    <select id="selectRecentNews" resultMap="NewsResultMap">
+    
+    <!-- ✅ 전체 뉴스 조회 (country 제거!) -->
+    <select id="selectAllNews" resultType="NewsVO">
         SELECT 
             n.news_id,
             n.stock_id,
@@ -37,7 +42,25 @@
              LIMIT 1) as stock_name,
             n.title,
             n.source,
-            n.country,
+            n.published_at,
+            n.created_at,
+            n.updated_at
+        FROM news n
+        ORDER BY n.created_at DESC
+    </select>
+    
+    <!-- ✅ 최근 뉴스 조회 (country 제거!) -->
+    <select id="selectRecentNews" parameterType="int" resultType="NewsVO">
+        SELECT 
+            n.news_id,
+            n.stock_id,
+            n.stock_code,
+            (SELECT COALESCE(s.stock_name, n.stock_code) 
+             FROM stock s 
+             WHERE s.stock_code = n.stock_code 
+             LIMIT 1) as stock_name,
+            n.title,
+            n.source,
             n.published_at,
             n.created_at,
             n.updated_at
@@ -45,9 +68,9 @@
         ORDER BY n.created_at DESC
         LIMIT #{limit}
     </select>
-
-    <!-- ✅ 검색 (키워드) -->
-    <select id="search" resultMap="NewsResultMap">
+    
+    <!-- ✅ 종목별 뉴스 조회 (country 제거!) -->
+    <select id="selectNewsByStock" parameterType="map" resultType="NewsVO">
         SELECT 
             n.news_id,
             n.stock_id,
@@ -58,67 +81,59 @@
              LIMIT 1) as stock_name,
             n.title,
             n.source,
-            n.country,
-            n.published_at,
-            n.created_at,
-            n.updated_at
-        FROM news n
-        WHERE 1=1
-        <if test="keyword != null and keyword != ''">
-            AND (
-                n.title LIKE CONCAT('%', #{keyword}, '%')
-                OR n.stock_code LIKE CONCAT('%', #{keyword}, '%')
-            )
-        </if>
-        ORDER BY n.created_at DESC
-        LIMIT #{limit}
-    </select>
-
-    <!-- ✅ 국가별 뉴스 조회 -->
-    <select id="selectByCountry" resultMap="NewsResultMap">
-        SELECT 
-            n.news_id,
-            n.stock_id,
-            n.stock_code,
-            (SELECT COALESCE(s.stock_name, n.stock_code) 
-             FROM stock s 
-             WHERE s.stock_code = n.stock_code 
-             LIMIT 1) as stock_name,
-            n.title,
-            n.source,
-            n.country,
-            n.published_at,
-            n.created_at,
-            n.updated_at
-        FROM news n
-        WHERE n.country = #{country}
-        ORDER BY n.created_at DESC
-        LIMIT #{limit}
-    </select>
-
-    <!-- ✅ 종목별 뉴스 조회 -->
-    <select id="selectByStockCode" resultMap="NewsResultMap">
-        SELECT 
-            n.news_id,
-            n.stock_id,
-            n.stock_code,
-            (SELECT COALESCE(s.stock_name, n.stock_code) 
-             FROM stock s 
-             WHERE s.stock_code = n.stock_code 
-             LIMIT 1) as stock_name,
-            n.title,
-            n.source,
-            n.country,
             n.published_at,
             n.created_at,
             n.updated_at
         FROM news n
         WHERE n.stock_code = #{stockCode}
         ORDER BY n.created_at DESC
+        LIMIT #{limit}
     </select>
-
-    <!-- ✅ 뉴스 상세 조회 -->
-    <select id="selectById" resultMap="NewsResultMap">
+    
+    <!-- ✅ 국가별 뉴스 조회 (stock 테이블의 country 사용!) -->
+    <select id="selectNewsByCountry" parameterType="map" resultType="NewsVO">
+        SELECT 
+            n.news_id,
+            n.stock_id,
+            n.stock_code,
+            s.stock_name,
+            n.title,
+            n.source,
+            n.published_at,
+            n.created_at,
+            n.updated_at
+        FROM news n
+        INNER JOIN stock s ON n.stock_code = s.stock_code
+        WHERE s.country = #{country}
+        ORDER BY n.created_at DESC
+        LIMIT #{limit}
+    </select>
+    
+    <!-- ✅ 뉴스 추가 -->
+    <insert id="insertNews" parameterType="NewsVO" useGeneratedKeys="true" keyProperty="newsId">
+        INSERT INTO news (
+            stock_id,
+            stock_code,
+            title,
+            source,
+            link,
+            published_at,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{stockId},
+            #{stockCode},
+            #{title},
+            #{source},
+            #{link},
+            #{publishedAt},
+            NOW(),
+            NOW()
+        )
+    </insert>
+    
+    <!-- ✅ 뉴스 ID로 조회 -->
+    <select id="selectNewsById" parameterType="long" resultType="NewsVO">
         SELECT 
             n.news_id,
             n.stock_id,
@@ -129,54 +144,79 @@
              LIMIT 1) as stock_name,
             n.title,
             n.source,
-            n.country,
+            n.link,
             n.published_at,
             n.created_at,
             n.updated_at
         FROM news n
         WHERE n.news_id = #{newsId}
     </select>
-
-    <!-- ✅ 뉴스 등록 -->
-    <insert id="insert" parameterType="com.portwatch.domain.NewsVO">
-        INSERT INTO news (
-            stock_id,
-            stock_code,
-            title,
-            source,
-            country,
-            published_at,
-            created_at
-        ) VALUES (
-            #{stockId},
-            #{stockCode},
-            #{title},
-            #{source},
-            #{country},
-            #{publishedAt},
-            NOW()
-        )
-    </insert>
-
+    
+    <!-- ✅ 카테고리별 뉴스 조회 (country 제거!) -->
+    <select id="selectByCategory" parameterType="map" resultType="NewsVO">
+        SELECT 
+            n.news_id,
+            n.stock_id,
+            n.stock_code,
+            (SELECT COALESCE(s.stock_name, n.stock_code) 
+             FROM stock s 
+             WHERE s.stock_code = n.stock_code 
+             LIMIT 1) as stock_name,
+            n.title,
+            n.source,
+            n.published_at,
+            n.created_at,
+            n.updated_at
+        FROM news n
+        WHERE n.title LIKE CONCAT('%', #{category}, '%')
+        ORDER BY n.created_at DESC
+        LIMIT #{limit}
+    </select>
+    
+    <!-- ✅ 뉴스 검색 (country 제거!) -->
+    <select id="search" parameterType="map" resultType="NewsVO">
+        SELECT 
+            n.news_id,
+            n.stock_id,
+            n.stock_code,
+            (SELECT COALESCE(s.stock_name, n.stock_code) 
+             FROM stock s 
+             WHERE s.stock_code = n.stock_code 
+             LIMIT 1) as stock_name,
+            n.title,
+            n.source,
+            n.published_at,
+            n.created_at,
+            n.updated_at
+        FROM news n
+        WHERE n.title LIKE CONCAT('%', #{keyword}, '%')
+           OR n.source LIKE CONCAT('%', #{keyword}, '%')
+           OR n.stock_code LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY n.created_at DESC
+        LIMIT #{limit}
+    </select>
+    
     <!-- ✅ 뉴스 수정 -->
-    <update id="update" parameterType="com.portwatch.domain.NewsVO">
+    <update id="updateNews" parameterType="NewsVO">
         UPDATE news
-        SET
+        SET 
             title = #{title},
+            source = #{source},
+            link = #{link},
             updated_at = NOW()
         WHERE news_id = #{newsId}
     </update>
-
+    
     <!-- ✅ 뉴스 삭제 -->
-    <delete id="delete">
+    <delete id="deleteNews" parameterType="long">
         DELETE FROM news
         WHERE news_id = #{newsId}
     </delete>
-
-    <!-- ✅ 전체 뉴스 개수 조회 -->
-    <select id="count" resultType="int">
+    
+    <!-- ✅ 뉴스 전체 개수 -->
+    <select id="countAllNews" resultType="int">
         SELECT COUNT(*)
         FROM news
     </select>
-
+    
 </mapper>

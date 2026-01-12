@@ -183,7 +183,7 @@ public class MemberController {
         
         try {
             // 최신 회원 정보 조회
-            MemberVO updatedMember = memberService.getMember(member.getMemberId());
+            MemberVO updatedMember = memberService.getMemberById(member.getMemberId());
             model.addAttribute("member", updatedMember);
             
             return "member/mypage";
@@ -218,7 +218,7 @@ public class MemberController {
             memberService.updateMember(member);
             
             // ✅ 세션 정보 갱신 - member로 통일!
-            MemberVO updatedMember = memberService.getMember(member.getMemberId());
+            MemberVO updatedMember = memberService.getMemberById(member.getMemberId());
             session.setAttribute("member", updatedMember);
             session.setAttribute("loginMember", updatedMember);  // JSP 호환성
             
@@ -276,7 +276,7 @@ public class MemberController {
             }
             
             // 비밀번호 변경
-            boolean success = memberService.changePassword(
+            boolean success = (boolean) memberService.changePassword(
                 member.getMemberId(),
                 currentPassword,
                 newPassword

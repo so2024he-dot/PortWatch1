@@ -37,8 +37,9 @@ public interface MemberService {
     
     /**
      * 비밀번호 변경
+     * @return 
      */
-    void changePassword(String memberId, String oldPassword, String newPassword) throws Exception;
+    boolean changePassword(String memberId, String oldPassword, String newPassword) throws Exception;
     
     /**
      * 회원 탈퇴 (논리 삭제)
