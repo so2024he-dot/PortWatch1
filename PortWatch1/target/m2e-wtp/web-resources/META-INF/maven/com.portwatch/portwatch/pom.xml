@@ -70,6 +70,7 @@
             <artifactId>mybatis-spring</artifactId>
             <version>1.3.2</version>
         </dependency> 
+    
         
           <!-- MySQL 8.0 드라이버 -->
         <dependency>
@@ -230,6 +231,7 @@
 			<version>4.12</version>
 			<scope>test</scope>
 		</dependency>
+		
 
 		
     </dependencies>
