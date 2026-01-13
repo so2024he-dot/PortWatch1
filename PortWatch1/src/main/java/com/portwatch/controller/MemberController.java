@@ -16,15 +16,14 @@ import com.portwatch.service.MemberService;
 
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * MemberController - 세션 키 통일 버전
+ * MemberController - changePassword 수정 버전
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * 
  * ✅ 핵심 수정:
- * 1. loginMember → member로 세션 키 통일
- * 2. 모든 컨트롤러와 일관성 유지
- * 3. 로그인, 회원가입, 로그아웃 완벽 작동
+ * 1. changePassword: (boolean) 캐스팅 제거
+ * 2. getMemberById 사용 (getMember 아님!)
  * 
- * @version 4.0 FINAL
+ * @version FINAL FIXED
  */
 @Controller
 @RequestMapping("/member")
@@ -35,27 +34,18 @@ public class MemberController {
     
     /**
      * ✅ 로그인 페이지
-     * URL: GET /member/login
      */
     @GetMapping("/login")
     public String loginForm(HttpSession session, Model model) {
-        
-        // ✅ 세션 키 통일: member
         MemberVO member = (MemberVO) session.getAttribute("member");
         if (member != null) {
             return "redirect:/dashboard";
         }
-        
         return "member/login";
     }
     
     /**
-     * ✅ 로그인 처리 (완전 수정!)
-     * URL: POST /member/login
-     * 
-     * 핵심 수정:
-     * - session.setAttribute("member", member);
-     * - loginMember 제거, member로 통일
+     * ✅ 로그인 처리
      */
     @PostMapping("/login")
     public String login(
@@ -65,22 +55,15 @@ public class MemberController {
             RedirectAttributes rttr) {
         
         try {
-            // 로그인 서비스 호출
             MemberVO member = memberService.login(memberEmail, memberPass);
             
             if (member != null) {
-                // ✅ 세션에 저장 - member로 통일!
                 session.setAttribute("member", member);
                 session.setAttribute("memberId", member.getMemberId());
-                
-                // ✅ JSP 호환성을 위해 loginMember도 추가 (선택)
                 session.setAttribute("loginMember", member);
                 
-                // 대시보드로 이동
                 return "redirect:/dashboard";
-                
             } else {
-                // 로그인 실패
                 rttr.addFlashAttribute("error", "이메일 또는 비밀번호가 올바르지 않습니다.");
                 return "redirect:/member/login";
             }
@@ -96,64 +79,47 @@ public class MemberController {
     
     /**
      * ✅ 로그아웃
-     * URL: GET /member/logout
      */
     @GetMapping("/logout")
     public String logout(HttpSession session, RedirectAttributes rttr) {
-        
         try {
-            // 세션 무효화
             session.invalidate();
-            
             rttr.addFlashAttribute("message", "로그아웃되었습니다.");
-            
         } catch (Exception e) {
             System.err.println("로그아웃 처리 중 오류: " + e.getMessage());
             e.printStackTrace();
         }
-        
         return "redirect:/";
     }
     
     /**
      * ✅ 회원가입 페이지
-     * URL: GET /member/signup
      */
     @GetMapping("/signup")
     public String signupForm(HttpSession session) {
-        
-        // ✅ 세션 키 통일: member
         MemberVO member = (MemberVO) session.getAttribute("member");
         if (member != null) {
             return "redirect:/dashboard";
         }
-        
         return "member/signup";
     }
     
     /**
      * ✅ 회원가입 처리
-     * URL: POST /member/signup
      */
     @PostMapping("/signup")
-    public String signup(
-            MemberVO member,
-            RedirectAttributes rttr) {
-        
+    public String signup(MemberVO member, RedirectAttributes rttr) {
         try {
-            // 이메일 중복 체크
             if (memberService.isEmailDuplicate(member.getMemberEmail())) {
                 rttr.addFlashAttribute("error", "이미 사용 중인 이메일입니다.");
                 return "redirect:/member/signup";
             }
             
-            // ID 중복 체크
             if (memberService.isIdDuplicate(member.getMemberId())) {
                 rttr.addFlashAttribute("error", "이미 사용 중인 아이디입니다.");
                 return "redirect:/member/signup";
             }
             
-            // 회원가입 처리
             memberService.signup(member);
             
             rttr.addFlashAttribute("message", "회원가입이 완료되었습니다. 로그인해주세요.");
@@ -170,19 +136,16 @@ public class MemberController {
     
     /**
      * ✅ 마이페이지
-     * URL: GET /member/mypage
      */
     @GetMapping("/mypage")
     public String mypage(HttpSession session, Model model) {
-        
-        // ✅ 세션 키 통일: member
         MemberVO member = (MemberVO) session.getAttribute("member");
         if (member == null) {
             return "redirect:/member/login";
         }
         
         try {
-            // 최신 회원 정보 조회
+            // ✅ getMemberById 사용!
             MemberVO updatedMember = memberService.getMemberById(member.getMemberId());
             model.addAttribute("member", updatedMember);
             
@@ -198,7 +161,6 @@ public class MemberController {
     
     /**
      * ✅ 회원정보 수정 처리
-     * URL: POST /member/update
      */
     @PostMapping("/update")
     public String update(
@@ -206,21 +168,19 @@ public class MemberController {
             HttpSession session,
             RedirectAttributes rttr) {
         
-        // ✅ 세션 키 통일: member
         MemberVO loginMember = (MemberVO) session.getAttribute("member");
         if (loginMember == null) {
             return "redirect:/member/login";
         }
         
         try {
-            // 회원정보 수정
             member.setMemberId(loginMember.getMemberId());
             memberService.updateMember(member);
             
-            // ✅ 세션 정보 갱신 - member로 통일!
+            // ✅ getMemberById 사용!
             MemberVO updatedMember = memberService.getMemberById(member.getMemberId());
             session.setAttribute("member", updatedMember);
-            session.setAttribute("loginMember", updatedMember);  // JSP 호환성
+            session.setAttribute("loginMember", updatedMember);
             
             rttr.addFlashAttribute("message", "회원정보가 수정되었습니다.");
             
@@ -236,23 +196,22 @@ public class MemberController {
     
     /**
      * ✅ 비밀번호 변경 페이지
-     * URL: GET /member/change-password
      */
     @GetMapping("/change-password")
     public String changePasswordForm(HttpSession session) {
-        
-        // ✅ 세션 키 통일: member
         MemberVO member = (MemberVO) session.getAttribute("member");
         if (member == null) {
             return "redirect:/member/login";
         }
-        
         return "member/change-password";
     }
     
     /**
-     * ✅ 비밀번호 변경 처리
-     * URL: POST /member/change-password
+     * ⭐ 비밀번호 변경 처리 (수정!)
+     * 
+     * ✅ 핵심 수정:
+     * - (boolean) 캐스팅 제거!
+     * - memberService.changePassword()는 boolean 반환
      */
     @PostMapping("/change-password")
     public String changePassword(
@@ -262,7 +221,6 @@ public class MemberController {
             HttpSession session,
             RedirectAttributes rttr) {
         
-        // ✅ 세션 키 통일: member
         MemberVO member = (MemberVO) session.getAttribute("member");
         if (member == null) {
             return "redirect:/member/login";
@@ -275,8 +233,8 @@ public class MemberController {
                 return "redirect:/member/change-password";
             }
             
-            // 비밀번호 변경
-            boolean success = (boolean) memberService.changePassword(
+            // ✅ 비밀번호 변경 - (boolean) 캐스팅 제거!
+            boolean success = memberService.changePassword(
                 member.getMemberId(),
                 currentPassword,
                 newPassword

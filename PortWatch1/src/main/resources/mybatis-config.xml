@@ -42,5 +42,41 @@
          <property name="mapperLocations" value="classpath:mappers/*.xml"/>
          <property name="typeAliasesPackage" value="com.portwatch.domain"/>
          ======================================== -->
+      
+    <!-- ✅ TypeAliases 설정 (필수!) -->
+    <typeAliases>
+        <!-- 
+            패키지 스캔 방식:
+            - com.portwatch.domain 패키지의 모든 클래스를 자동으로 alias 등록
+            - MemberVO → "MemberVO" alias 자동 생성
+            - StockVO → "StockVO" alias 자동 생성
+            - 등등...
+        -->
+        <package name="com.portwatch.domain"/>
+    </typeAliases>
+    
+    <!--  개별 등록 방식 (선택):   -->
+        
+        <typeAliases>
+            <typeAlias type="com.portwatch.domain.MemberVO" alias="MemberVO"/>
+            <typeAlias type="com.portwatch.domain.StockVO" alias="StockVO"/>
+            <typeAlias type="com.portwatch.domain.PortfolioVO" alias="PortfolioVO"/>
+            <typeAlias type="com.portwatch.domain.NewsVO" alias="NewsVO"/>
+            <typeAlias type="com.portwatch.domain.WatchlistVO" alias="WatchlistVO"/>
+        </typeAliases>
+ 
+   
+        <!-- ✅ 추가 설정 (선택) -->
+    <settings>
+        <!-- 카멜 케이스 자동 변환 (member_id → memberId) -->
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+        
+        <!-- NULL 값 처리 -->
+        <setting name="jdbcTypeForNull" value="NULL"/>
+        
+        <!-- 로그 설정 -->
+        <setting name="logImpl" value="LOG4J"/>
+    </settings>
+    
     
 </configuration>

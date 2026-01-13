@@ -1,5 +1,7 @@
 package com.portwatch.service;
 
+import java.util.List;
+
 import com.portwatch.domain.MemberVO;
 
 /**
@@ -84,4 +86,9 @@ public interface MemberService {
 	 * @param memberId 회원 ID
 	 */
 	void deleteMember(String memberId) throws Exception;
+
+	/**
+	 * ✅ 전체 회원 조회
+	 */
+	List<MemberVO> getAllMembers() throws Exception;
 }

@@ -1,6 +1,7 @@
 package com.portwatch.persistence;
 
 import java.lang.System.Logger;
+import java.util.List;
 
 import com.portwatch.domain.MemberVO;
 
@@ -68,6 +69,12 @@ public interface MemberDAO {
 	}
 
 	void updatePassword(String memberId, String newPassword);
+
+	int checkEmailDuplicate(String memberEmail);
+
+	int checkIdDuplicate(String memberId);
+
+	List<MemberVO> selectAllMembers();
 
 
 }

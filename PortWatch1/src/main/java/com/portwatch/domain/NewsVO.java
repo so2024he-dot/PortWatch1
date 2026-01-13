@@ -6,41 +6,67 @@ import java.time.LocalDateTime;
 import lombok.Data;
 
 /**
- * ✅ 뉴스 VO (완전 구현)
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * NewsVO - 실제 MySQL 테이블 구조에 맞춤
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * 
- * NEWS 테이블과 1:1 매핑
+ * ✅ 실제 NEWS 테이블 구조:
+ * 1. news_id (BIGINT, PK, AI)
+ * 2. title (VARCHAR(500))
+ * 3. stock_id (INT)
+ * 4. stock_code (VARCHAR(20))
+ * 5. news_code (VARCHAR(50))
+ * 6. news_title (VARCHAR(500))
+ * 7. news_url (VARCHAR(1000))
+ * 8. published_date (DATETIME)
+ * 9. created_at (TIMESTAMP)
+ * 10. newsCol (VARCHAR(45))
+ * 11. name (VARCHAR(100))
  * 
  * @author PortWatch
- * @version 3.0 - MySQL 8.0 호환
+ * @version 4.0 FINAL - MySQL 실제 테이블 반영
  */
 @Data
 public class NewsVO {
     
-    private Long newsId;              // news_id BIGINT
-    private Integer stockId;          // stock_id INT
-    private String stockCode;         // stock_code VARCHAR(20)
-    private String stockName;         // stock_name VARCHAR(100)
-    private String title;             // title VARCHAR(500)
-    private String link;              // link VARCHAR(1000)
-    private String content;           // content TEXT
-    private String source;            // source VARCHAR(100)
-    private String country;           // country VARCHAR(10)
-    private Timestamp publishedAt;    // published_at TIMESTAMP
-    private LocalDateTime publishedAt2; //publishedAt2 LocalDateTime 24시간 발급시간
-    private Timestamp createdAt;      // created_at TIMESTAMP
-    private Timestamp updatedAt;      // updated_at TIMESTAMP
+    // ✅ 실제 테이블 컬럼들
+    private Long newsId;                // news_id BIGINT
+    private String title;               // title VARCHAR(500)
+    private Integer stockId;            // stock_id INT
+    private String stockCode;           // stock_code VARCHAR(20)
+    private String newsCode;            // news_code VARCHAR(50)
+    private String newsTitle;           // news_title VARCHAR(500)
+    private String newsUrl;             // news_url VARCHAR(1000)
+    private LocalDateTime publishedDate; // published_date DATETIME
+    private Timestamp createdAt;        // created_at TIMESTAMP
+    private String newsCol;             // newsCol VARCHAR(45)
+    private String name;                // name VARCHAR(100)
+    
+    // ✅ 추가 필드 (JOIN으로 가져오는 값)
+    private String stockName;           // stock 테이블에서 JOIN
     
     // 기본 생성자
     public NewsVO() {
     }
     
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // Getter & Setter
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    
     public Long getNewsId() {
         return newsId;
     }
     
     public void setNewsId(Long newsId) {
         this.newsId = newsId;
+    }
+    
+    public String getTitle() {
+        return title;
+    }
+    
+    public void setTitle(String title) {
+        this.title = title;
     }
     
     public Integer getStockId() {
@@ -59,68 +85,37 @@ public class NewsVO {
         this.stockCode = stockCode;
     }
     
-    public String getStockName() {
-        return stockName;
+    public String getNewsCode() {
+        return newsCode;
     }
     
-    public void setStockName(String stockName) {
-        this.stockName = stockName;
+    public void setNewsCode(String newsCode) {
+        this.newsCode = newsCode;
     }
     
-    public String getTitle() {
-        return title;
+    public String getNewsTitle() {
+        return newsTitle;
     }
     
-    public void setTitle(String title) {
-        this.title = title;
+    public void setNewsTitle(String newsTitle) {
+        this.newsTitle = newsTitle;
     }
     
-    public String getLink() {
-        return link;
+    public String getNewsUrl() {
+        return newsUrl;
     }
     
-    public void setLink(String link) {
-        this.link = link;
+    public void setNewsUrl(String newsUrl) {
+        this.newsUrl = newsUrl;
     }
     
-    public String getContent() {
-        return content;
+    public LocalDateTime getPublishedDate() {
+        return publishedDate;
     }
     
-    public void setContent(String content) {
-        this.content = content;
+    public void setPublishedDate(LocalDateTime publishedDate) {
+        this.publishedDate = publishedDate;
     }
-    
-    public String getSource() {
-        return source;
-    }
-    
-    public void setSource(String source) {
-        this.source = source;
-    }
-    
-    public String getCountry() {
-        return country;
-    }
-    
-    public void setCountry(String country) {
-        this.country = country;
-    }
-    
-    public Timestamp getPublishedAt() {
-        return publishedAt;
-    }
-    
-    public void setPublishedAt(Timestamp publishedAt) {
-        this.publishedAt = publishedAt;
-    }
-    
-   
-    
-    public void setPublishedAt(LocalDateTime publishedAt2) {
-		this.publishedAt2 = publishedAt2;
-		
-	}
     
     public Timestamp getCreatedAt() {
         return createdAt;
@@ -130,20 +125,40 @@ public class NewsVO {
         this.createdAt = createdAt;
     }
     
-    public Timestamp getUpdatedAt() {
-        return updatedAt;
+    public String getNewsCol() {
+        return newsCol;
     }
     
-    public void setUpdatedAt(Timestamp updatedAt) {
-        this.updatedAt = updatedAt;
+    public void setNewsCol(String newsCol) {
+        this.newsCol = newsCol;
+    }
+    
+    public String getName() {
+        return name;
+    }
+    
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+    public String getStockName() {
+        return stockName;
+    }
+    
+    public void setStockName(String stockName) {
+        this.stockName = stockName;
     }
     
     @Override
     public String toString() {
-        return "NewsVO [newsId=" + newsId + ", stockCode=" + stockCode + ", stockName=" + stockName + 
-               ", title=" + title + ", source=" + source + ", country=" + country + 
-               ", publishedAt=" + publishedAt + "]";
+        return "NewsVO [newsId=" + newsId + 
+               ", title=" + title + 
+               ", stockCode=" + stockCode + 
+               ", stockName=" + stockName + 
+               ", newsTitle=" + newsTitle + 
+               ", newsUrl=" + newsUrl + 
+               ", publishedDate=" + publishedDate + 
+               ", name=" + name + 
+               ", newsCode=" + newsCode + "]";
     }
-
-	
 }

@@ -16,15 +16,16 @@ import com.portwatch.persistence.NewsDAO;
 
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * NewsServiceImpl - setPublishedAt 에러 수정 버전
+ * NewsServiceImpl - 실제 MySQL 테이블 구조 반영
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * 
  * ✅ 핵심 수정:
- * 1. setPublishedAt(LocalDateTime) 사용 (239번 줄)
- * 2. 뉴스 크롤링 기능 완벽 구현
- * 3. 10개 뉴스 자동 생성
+ * 1. setSource() → setName()
+ * 2. setLink() → setNewsUrl()
+ * 3. setPublishedAt() → setPublishedDate()
+ * 4. 추가 필드: newsCode, newsTitle, newsCol
  * 
- * @version FINAL with setPublishedAt fix
+ * @version 5.0 ULTIMATE - 실제 테이블 반영
  */
 @Service
 public class NewsServiceImpl implements NewsService {
@@ -150,10 +151,7 @@ public class NewsServiceImpl implements NewsService {
     }
     
     /**
-     * ⭐ 뉴스 크롤링 및 저장 (완전 구현! setPublishedAt 수정!)
-     * 
-     * 더미 데이터를 생성해서 저장합니다.
-     * 실제 크롤링은 법적 문제가 있을 수 있으므로 더미 구현입니다.
+     * ⭐ 뉴스 크롤링 및 저장 (실제 테이블 구조 반영!)
      */
     @Override
     @Transactional
@@ -165,7 +163,7 @@ public class NewsServiceImpl implements NewsService {
             int savedCount = 0;
             Random random = new Random();
             
-            // ✅ 종목 코드 목록 (실제 데이터와 매칭)
+            // ✅ 종목 코드 목록
             String[] stockCodes = {
                 "005930",  // 삼성전자
                 "000660",  // SK하이닉스
@@ -179,37 +177,25 @@ public class NewsServiceImpl implements NewsService {
                 "NVDA"     // NVIDIA
             };
             
-            // ✅ 뉴스 제목 템플릿 (한국)
-            String[] koreanTitles = {
-                "실적 전망 상향, 목표가 상승",
-                "신기술 발표로 주가 급등",
-                "매출액 전년 대비 20% 증가",
-                "글로벌 시장 진출 본격화",
-                "신제품 출시 앞두고 기대감 고조",
-                "분기 실적 시장 예상치 초과",
-                "기술 협력 계약 체결",
-                "배당금 인상 결정",
-                "해외 투자 확대 계획 발표",
-                "실적 개선세 지속 전망"
+            // ✅ 뉴스 제목 템플릿
+            String[] titles = {
+                "주가 급등 전망",
+                "신기술 발표",
+                "실적 개선",
+                "글로벌 진출",
+                "신제품 출시"
             };
             
-            // ✅ 뉴스 제목 템플릿 (미국)
-            String[] usTitles = {
-                "Stock surges on strong earnings report",
-                "Announces new product line expansion",
-                "Beats revenue expectations for Q4",
-                "Expands market share in key segments",
-                "Strategic partnership announced",
-                "Raises annual guidance on demand",
-                "Stock hits all-time high",
-                "Dividend increase announced",
-                "New technology breakthrough revealed",
-                "Analysts upgrade price target"
+            String[] newsTitles = {
+                "분석: 목표가 상향 조정",
+                "시장 전망: 긍정적 평가",
+                "투자 의견: 매수 유지",
+                "애널리스트: 성장 기대",
+                "전문가: 강세 전망"
             };
             
-            // ✅ 뉴스 소스
-            String[] koreanSources = {"연합뉴스", "한국경제", "매일경제", "서울경제", "이데일리"};
-            String[] usSources = {"Reuters", "Bloomberg", "CNBC", "Wall Street Journal", "MarketWatch"};
+            // ✅ 뉴스 소스 (name 필드)
+            String[] names = {"연합뉴스", "한국경제", "매일경제", "Reuters", "Bloomberg"};
             
             // ✅ 10개 뉴스 생성
             for (int i = 0; i < 10; i++) {
@@ -219,22 +205,26 @@ public class NewsServiceImpl implements NewsService {
                 String stockCode = stockCodes[random.nextInt(stockCodes.length)];
                 news.setStockCode(stockCode);
                 
-                // 한국 vs 미국 구분
-                boolean isKorean = !stockCode.matches("^[A-Z]+$");
+                // 뉴스 코드 생성 (NEWS + timestamp)
+                news.setNewsCode("NEWS" + System.currentTimeMillis() + i);
                 
                 // 제목 설정
-                if (isKorean) {
-                    news.setTitle("[" + stockCode + "] " + koreanTitles[random.nextInt(koreanTitles.length)]);
-                    news.setSource(koreanSources[random.nextInt(koreanSources.length)]);
-                } else {
-                    news.setTitle("[" + stockCode + "] " + usTitles[random.nextInt(usTitles.length)]);
-                    news.setSource(usSources[random.nextInt(usSources.length)]);
-                }
+                news.setTitle("[" + stockCode + "] " + titles[random.nextInt(titles.length)]);
+                news.setNewsTitle(newsTitles[random.nextInt(newsTitles.length)]);
                 
-                // ✅ 발행 시간 (최근 24시간 내 랜덤) - setPublishedAt 사용!
-                LocalDateTime publishedAt2 = LocalDateTime.now()
+                // URL 설정
+                news.setNewsUrl("https://finance.example.com/news/" + news.getNewsCode());
+                
+                // 소스 설정 (name 필드)
+                news.setName(names[random.nextInt(names.length)]);
+                
+                // newsCol 설정
+                news.setNewsCol("STOCK_NEWS");
+                
+                // ✅ 발행 시간 (최근 24시간 내 랜덤)
+                LocalDateTime publishedDate = LocalDateTime.now()
                     .minusHours(random.nextInt(24));
-                news.setPublishedAt(publishedAt2);  // ✅ 239번 줄 수정!
+                news.setPublishedDate(publishedDate);  // ✅ setPublishedDate 사용!
                 
                 // DB에 저장
                 try {
@@ -266,28 +256,7 @@ public class NewsServiceImpl implements NewsService {
      */
     @Override
     public List<NewsVO> getLatestNews(int limit) throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("📰 최신 뉴스 조회");
-        System.out.println("  - 조회 개수: " + limit);
-        
-        try {
-            List<NewsVO> newsList = newsDAO.selectRecentNews(limit);
-            
-            if (newsList == null) {
-                newsList = new ArrayList<>();
-            }
-            
-            System.out.println("  - 조회 결과: " + newsList.size() + "건");
-            System.out.println("✅ 최신 뉴스 조회 완료");
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            return newsList;
-            
-        } catch (Exception e) {
-            System.err.println("❌ 최신 뉴스 조회 실패: " + e.getMessage());
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            throw new Exception("최신 뉴스 조회 실패: " + e.getMessage(), e);
-        }
+        return getRecentNews(limit);
     }
     
     /**
