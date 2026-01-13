@@ -3,10 +3,33 @@
     PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
     "http://mybatis.org/dtd/mybatis-3-config.dtd">
 
+<!-- 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MyBatis Configuration - 순서 에러 수정
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ 핵심 수정:
+1. 설정 순서 엄격 준수 (DTD 규칙)
+2. 중복 제거 (settings 2개, typeAliases 2개 → 각 1개)
+3. 올바른 순서: settings → typeAliases
+
+❌ 기존 문제:
+- settings (11-32줄)
+- typeAliases (47-56줄)
+- typeAliases (60-66줄) ❌ 중복!
+- settings (70-79줄) ❌ 중복! 순서 틀림!
+
+✅ 새로운 구조:
+- settings (한 번만)
+- typeAliases (한 번만)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-->
+
 <configuration>
     
     <!-- ========================================
-         MyBatis 전역 설정
+         1. Settings (가장 먼저!)
          ======================================== -->
     <settings>
         <!-- 캐멀 케이스 자동 매핑 (예: member_id → memberId) -->
@@ -15,7 +38,7 @@
         <!-- NULL 값 허용 (JDBC 타입 지정 없이) -->
         <setting name="jdbcTypeForNull" value="NULL"/>
         
-        <!-- 로그 구현체 지정 (SLF4J 사용) -->
+        <!-- 로그 구현체 지정 -->
         <setting name="logImpl" value="SLF4J"/>
         
         <!-- 지연 로딩 활성화 -->
@@ -32,51 +55,33 @@
     </settings>
     
     <!-- ========================================
-         ✅ 중요: <mappers> 섹션 제거!
-         
-         이유:
-         - root-context.xml의 mapperLocations가 이미 모든 Mapper를 로드합니다
-         - 여기서 직접 등록하면 typeAliases보다 먼저 로드되어 에러 발생!
-         
-         root-context.xml 설정:
-         <property name="mapperLocations" value="classpath:mappers/*.xml"/>
-         <property name="typeAliasesPackage" value="com.portwatch.domain"/>
+         2. TypeAliases (settings 다음!)
          ======================================== -->
-      
-    <!-- ✅ TypeAliases 설정 (필수!) -->
     <typeAliases>
         <!-- 
-            패키지 스캔 방식:
+            ✅ 패키지 스캔 방식 (권장):
             - com.portwatch.domain 패키지의 모든 클래스를 자동으로 alias 등록
             - MemberVO → "MemberVO" alias 자동 생성
             - StockVO → "StockVO" alias 자동 생성
-            - 등등...
+            - PortfolioVO → "PortfolioVO" alias 자동 생성
+            - NewsVO → "NewsVO" alias 자동 생성
+            - WatchlistVO → "WatchlistVO" alias 자동 생성
         -->
         <package name="com.portwatch.domain"/>
     </typeAliases>
     
-    <!--  개별 등록 방식 (선택):   -->
-        
-        <typeAliases>
-            <typeAlias type="com.portwatch.domain.MemberVO" alias="MemberVO"/>
-            <typeAlias type="com.portwatch.domain.StockVO" alias="StockVO"/>
-            <typeAlias type="com.portwatch.domain.PortfolioVO" alias="PortfolioVO"/>
-            <typeAlias type="com.portwatch.domain.NewsVO" alias="NewsVO"/>
-            <typeAlias type="com.portwatch.domain.WatchlistVO" alias="WatchlistVO"/>
-        </typeAliases>
- 
-   
-        <!-- ✅ 추가 설정 (선택) -->
-    <settings>
-        <!-- 카멜 케이스 자동 변환 (member_id → memberId) -->
-        <setting name="mapUnderscoreToCamelCase" value="true"/>
-        
-        <!-- NULL 값 처리 -->
-        <setting name="jdbcTypeForNull" value="NULL"/>
-        
-        <!-- 로그 설정 -->
-        <setting name="logImpl" value="LOG4J"/>
-    </settings>
+    <!-- 
+    ========================================
+    ✅ 중요: <mappers> 섹션 제거!
     
+    이유:
+    - root-context.xml의 mapperLocations가 이미 모든 Mapper를 로드합니다
+    - 여기서 직접 등록하면 중복 로드 에러 발생!
+    
+    root-context.xml 설정:
+    <property name="mapperLocations" value="classpath:mappers/*.xml"/>
+    <property name="typeAliasesPackage" value="com.portwatch.domain"/>
+    ======================================== 
+    -->
     
 </configuration>

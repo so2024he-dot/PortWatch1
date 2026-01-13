@@ -13,24 +13,27 @@ import com.portwatch.persistence.StockDAO;
 
 import java.io.IOException;
 import java.net.URLEncoder;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * ✅ 최종 수정: NaverNewsCrawler.java
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * NaverNewsCrawler - 실제 MySQL 테이블 구조 반영
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * 
- * 수정 사항:
- * 1. getStockId() 메서드 - StockVO 타입으로 정확히 수정
- * 2. supports() 메서드 구현
- * 3. 느슨한 결합을 위한 인터페이스 구현
+ * ✅ 핵심 수정:
+ * 1. setLink → setNewsUrl (news_url 필드)
+ * 2. setSource → setName (name 필드)
+ * 3. setCountry → 제거 (테이블에 없음!)
+ * 4. setPublishedAt → setPublishedDate (published_date 필드, LocalDateTime)
+ * 5. newsCode, newsTitle, newsCol 추가
  * 
  * @author PortWatch
- * @version 10.0 - 타입 안정성 완료
- * @param <StockDAO>
+ * @version 11.0 FINAL - 실제 테이블 반영
  */
 @Component
-public class NaverNewsCrawler<StockDAO> implements NewsCrawler {
+public class NaverNewsCrawler implements NewsCrawler {
     
     @Autowired
     private StockDAO stockDAO;
@@ -60,13 +63,13 @@ public class NaverNewsCrawler<StockDAO> implements NewsCrawler {
             Elements newsItems = doc.select("table.type5 tr");
             
             if (newsItems.isEmpty()) {
-                // 대체 선택자
                 newsItems = doc.select("div.news_area");
             }
             
             System.out.println("  - 발견된 뉴스: " + newsItems.size() + "개");
             
             Integer stockId = getStockId(stockCode);
+            int newsIndex = 1;
             
             for (Element item : newsItems) {
                 if (newsList.size() >= maxCount) break;
@@ -76,21 +79,29 @@ public class NaverNewsCrawler<StockDAO> implements NewsCrawler {
                     
                     if (linkElement != null) {
                         String title = linkElement.text();
-                        String link = linkElement.attr("abs:href");
+                        String url = linkElement.attr("abs:href");
                         
-                        // 네이버 뉴스 링크만 처리
-                        if (!title.isEmpty() && !link.isEmpty() && link.contains("naver.com")) {
+                        if (!title.isEmpty() && !url.isEmpty() && url.contains("naver.com")) {
                             NewsVO news = new NewsVO();
                             news.setStockId(stockId);
                             news.setStockCode(stockCode);
                             news.setStockName(stockName);
-                            news.setTitle(title);
-                            news.setLink(link);
-                            news.setSource("네이버 금융");
-                            news.setCountry("KR");
-                            news.setPublishedAt(new Timestamp(System.currentTimeMillis()));
+                            
+                            // ✅ 실제 테이블 필드
+                            news.setTitle("[" + stockName + "] " + title);
+                            news.setNewsTitle(title);
+                            news.setNewsUrl(url);  // ✅ setLink → setNewsUrl
+                            news.setName("네이버 금융");  // ✅ setSource → setName
+                            news.setNewsCode("NAVER" + System.currentTimeMillis() + newsIndex);
+                            news.setNewsCol("STOCK_NEWS");
+                            
+                            // ❌ setCountry 제거! (테이블에 없음)
+                            
+                            // ✅ setPublishedAt → setPublishedDate (LocalDateTime)
+                            news.setPublishedDate(LocalDateTime.now());
                             
                             newsList.add(news);
+                            newsIndex++;
                         }
                     }
                 } catch (Exception e) {
@@ -100,7 +111,7 @@ public class NaverNewsCrawler<StockDAO> implements NewsCrawler {
             
             // 뉴스가 부족하면 검색 결과 추가
             if (newsList.size() < 5) {
-                List<NewsVO> searchNews = searchNaverNews(stockCode, stockName);
+                List<NewsVO> searchNews = searchNaverNews(stockCode, stockName, newsIndex);
                 newsList.addAll(searchNews);
             }
             
@@ -123,7 +134,7 @@ public class NaverNewsCrawler<StockDAO> implements NewsCrawler {
     /**
      * 네이버 뉴스 검색
      */
-    private List<NewsVO> searchNaverNews(String stockCode, String stockName) {
+    private List<NewsVO> searchNaverNews(String stockCode, String stockName, int startIndex) {
         List<NewsVO> newsList = new ArrayList<>();
         
         try {
@@ -139,6 +150,7 @@ public class NaverNewsCrawler<StockDAO> implements NewsCrawler {
             
             Elements newsItems = doc.select("div.news_area");
             Integer stockId = getStockId(stockCode);
+            int newsIndex = startIndex;
             
             for (Element item : newsItems) {
                 if (newsList.size() >= 5) break;
@@ -148,20 +160,29 @@ public class NaverNewsCrawler<StockDAO> implements NewsCrawler {
                     
                     if (titleElement != null) {
                         String title = titleElement.text();
-                        String link = titleElement.attr("abs:href");
+                        String url = titleElement.attr("abs:href");
                         
-                        if (!title.isEmpty() && !link.isEmpty()) {
+                        if (!title.isEmpty() && !url.isEmpty()) {
                             NewsVO news = new NewsVO();
                             news.setStockId(stockId);
                             news.setStockCode(stockCode);
                             news.setStockName(stockName);
-                            news.setTitle(title);
-                            news.setLink(link);
-                            news.setSource("네이버 뉴스");
-                            news.setCountry("KR");
-                            news.setPublishedAt(new Timestamp(System.currentTimeMillis()));
+                            
+                            // ✅ 실제 테이블 필드
+                            news.setTitle("[" + stockName + "] " + title);
+                            news.setNewsTitle(title);
+                            news.setNewsUrl(url);  // ✅ setLink → setNewsUrl
+                            news.setName("네이버 뉴스");  // ✅ setSource → setName
+                            news.setNewsCode("NAVER_SEARCH" + System.currentTimeMillis() + newsIndex);
+                            news.setNewsCol("STOCK_NEWS");
+                            
+                            // ❌ setCountry 제거!
+                            
+                            // ✅ setPublishedAt → setPublishedDate
+                            news.setPublishedDate(LocalDateTime.now());
                             
                             newsList.add(news);
+                            newsIndex++;
                         }
                     }
                 } catch (Exception e) {
@@ -179,14 +200,11 @@ public class NaverNewsCrawler<StockDAO> implements NewsCrawler {
     }
     
     /**
-     * ✅ 수정: 종목 ID 조회 메서드
-     * - StockVO 타입으로 정확히 받기
-     * - null 안정성 확보
+     * ✅ 종목 ID 조회 메서드
      */
     private Integer getStockId(String stockCode) {
         try {
-            // ✅ StockVO로 정확히 받기
-            StockVO stock = ((com.portwatch.persistence.StockDAO) stockDAO).selectStockByCode(stockCode);
+            StockVO stock = stockDAO.selectStockByCode(stockCode);
             
             if (stock != null) {
                 return stock.getStockId();
@@ -212,13 +230,7 @@ public class NaverNewsCrawler<StockDAO> implements NewsCrawler {
     }
     
     /**
-     * ✅ 추가: supports 메서드 구현
-     * 
-     * 한국 주식 종목 코드 패턴:
-     * - 숫자 6자리 (예: 005930, 000660)
-     * 
-     * @param stockCode 종목 코드
-     * @return 한국 주식이면 true
+     * ✅ supports 메서드 구현
      */
     @Override
     public boolean supports(String stockCode) {

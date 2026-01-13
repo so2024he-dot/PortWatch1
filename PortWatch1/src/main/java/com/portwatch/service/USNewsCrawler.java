@@ -7,17 +7,26 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * ✅ 미국 주식 뉴스 크롤러 (완전 구현)
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * USNewsCrawler - 실제 MySQL 테이블 구조 반영
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * 
+ * ✅ 핵심 수정:
+ * 1. setLink → setNewsUrl (news_url 필드)
+ * 2. setSource → setName (name 필드)
+ * 3. setCountry → 제거 (테이블에 없음!)
+ * 4. setPublishedAt → setPublishedDate (published_date 필드, LocalDateTime)
+ * 5. newsCode, newsTitle, newsCol 추가
  * 
  * 출처: Yahoo Finance, MarketWatch, Bloomberg
  * 
  * @author PortWatch
- * @version 3.0 - Spring 5.0.7 호환
+ * @version 4.0 FINAL - 실제 테이블 반영
  */
 @Component("usNewsCrawler")
 public class USNewsCrawler implements NewsCrawler {
@@ -40,12 +49,13 @@ public class USNewsCrawler implements NewsCrawler {
         
         try {
             // Yahoo Finance에서 뉴스 크롤링
-            List<NewsVO> yahooNews = crawlYahooFinance(stockCode, stockName);
+            List<NewsVO> yahooNews = crawlYahooFinance(stockCode, stockName, 1);
             newsList.addAll(yahooNews);
             
             // MarketWatch에서 뉴스 크롤링 (추가)
             if (newsList.size() < maxCount) {
-                List<NewsVO> marketWatchNews = crawlMarketWatch(stockCode, stockName);
+                int startIndex = newsList.size() + 1;
+                List<NewsVO> marketWatchNews = crawlMarketWatch(stockCode, stockName, startIndex);
                 newsList.addAll(marketWatchNews);
             }
             
@@ -63,7 +73,7 @@ public class USNewsCrawler implements NewsCrawler {
     /**
      * Yahoo Finance 뉴스 크롤링
      */
-    private List<NewsVO> crawlYahooFinance(String stockCode, String stockName) {
+    private List<NewsVO> crawlYahooFinance(String stockCode, String stockName, int startIndex) {
         List<NewsVO> newsList = new ArrayList<>();
         
         try {
@@ -80,38 +90,46 @@ public class USNewsCrawler implements NewsCrawler {
             Elements newsElements = doc.select("div.Mb\\(5px\\) h3 a");
             
             if (newsElements.isEmpty()) {
-                // 대체 선택자 시도
                 newsElements = doc.select("div.js-stream-content h3 a");
             }
             
             if (newsElements.isEmpty()) {
-                // 두 번째 대체 선택자
                 newsElements = doc.select("a[data-test-locator='mega-item-header']");
             }
             
             System.out.println("  → " + newsElements.size() + "개 뉴스 발견");
             
+            int newsIndex = startIndex;
             int count = 0;
+            
             for (Element element : newsElements) {
                 if (count >= maxCount) break;
                 
                 try {
                     String title = element.text();
-                    String link = element.attr("abs:href");
+                    String url2 = element.attr("abs:href");
                     
-                    if (title != null && !title.isEmpty() && link != null && !link.isEmpty()) {
+                    if (title != null && !title.isEmpty() && url2 != null && !url2.isEmpty()) {
                         NewsVO news = new NewsVO();
                         news.setStockCode(stockCode);
                         news.setStockName(stockName);
-                        news.setTitle(title);
-                        news.setLink(link);
-                        news.setSource("Yahoo Finance");
-                        news.setCountry("US");
-                        news.setPublishedAt(new Timestamp(System.currentTimeMillis()));
-                        news.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+                        
+                        // ✅ 실제 테이블 필드
+                        news.setTitle("[" + stockName + "] " + title);
+                        news.setNewsTitle(title);
+                        news.setNewsUrl(url2);  // ✅ setLink → setNewsUrl
+                        news.setName("Yahoo Finance");  // ✅ setSource → setName
+                        news.setNewsCode("YAHOO" + System.currentTimeMillis() + newsIndex);
+                        news.setNewsCol("STOCK_NEWS");
+                        
+                        // ❌ setCountry 제거! (테이블에 없음)
+                        
+                        // ✅ setPublishedAt(Timestamp) → setPublishedDate(LocalDateTime)
+                        news.setPublishedDate(LocalDateTime.now());
                         
                         newsList.add(news);
                         count++;
+                        newsIndex++;
                         
                         System.out.println("  ✅ " + count + ". " + title);
                     }
@@ -130,7 +148,7 @@ public class USNewsCrawler implements NewsCrawler {
     /**
      * MarketWatch 뉴스 크롤링
      */
-    private List<NewsVO> crawlMarketWatch(String stockCode, String stockName) {
+    private List<NewsVO> crawlMarketWatch(String stockCode, String stockName, int startIndex) {
         List<NewsVO> newsList = new ArrayList<>();
         
         try {
@@ -147,33 +165,42 @@ public class USNewsCrawler implements NewsCrawler {
             Elements newsElements = doc.select("div.element--article h3 a");
             
             if (newsElements.isEmpty()) {
-                // 대체 선택자
                 newsElements = doc.select("div.article__content a.link");
             }
             
             System.out.println("  → " + newsElements.size() + "개 뉴스 발견");
             
+            int newsIndex = startIndex;
             int count = 0;
+            
             for (Element element : newsElements) {
                 if (count >= 5) break; // MarketWatch는 최대 5개만
                 
                 try {
                     String title = element.text();
-                    String link = element.attr("abs:href");
+                    String url2 = element.attr("abs:href");
                     
-                    if (title != null && !title.isEmpty() && link != null && !link.isEmpty()) {
+                    if (title != null && !title.isEmpty() && url2 != null && !url2.isEmpty()) {
                         NewsVO news = new NewsVO();
                         news.setStockCode(stockCode);
                         news.setStockName(stockName);
-                        news.setTitle(title);
-                        news.setLink(link);
-                        news.setSource("MarketWatch");
-                        news.setCountry("US");
-                        news.setPublishedAt(new Timestamp(System.currentTimeMillis()));
-                        news.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+                        
+                        // ✅ 실제 테이블 필드
+                        news.setTitle("[" + stockName + "] " + title);
+                        news.setNewsTitle(title);
+                        news.setNewsUrl(url2);  // ✅ setLink → setNewsUrl
+                        news.setName("MarketWatch");  // ✅ setSource → setName
+                        news.setNewsCode("MARKETWATCH" + System.currentTimeMillis() + newsIndex);
+                        news.setNewsCol("STOCK_NEWS");
+                        
+                        // ❌ setCountry 제거!
+                        
+                        // ✅ setPublishedAt → setPublishedDate
+                        news.setPublishedDate(LocalDateTime.now());
                         
                         newsList.add(news);
                         count++;
+                        newsIndex++;
                         
                         System.out.println("  ✅ " + count + ". " + title);
                     }
