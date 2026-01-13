@@ -3,40 +3,134 @@ package com.portwatch.domain;
 import java.sql.Timestamp;
 
 /**
- * ✅ 회원 VO - 완벽 수정
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * MemberVO - 실제 MEMBER 테이블 완벽 매핑
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * 
- * MEMBER 테이블과 1:1 매핑
- * - 중복 메서드 모두 제거
- * - Alias 메서드 추가 (호환성)
+ * ✅ 실제 MEMBER 테이블 구조:
+ * - member_id VARCHAR(50) PK
+ * - member_email VARCHAR(100)
+ * - member_pass VARCHAR(200)
+ * - member_name VARCHAR(20)
+ * - member_phone VARCHAR(20)
+ * - member_address VARCHAR(255)
+ * - member_gender VARCHAR(10)
+ * - member_birth TIMESTAMP
+ * - member_role VARCHAR(20) DEFAULT 'USER'
+ * - member_status VARCHAR(20) DEFAULT 'ACTIVE'
+ * - created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+ * - updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
  * 
  * @author PortWatch
- * @version FINAL - Spring 5.0.7 + MySQL 8.0.33 완전 대응
+ * @version FINAL COMPLETE
  */
 public class MemberVO {
     
-    // 기본 정보
-    private String memberId;          // member_id VARCHAR(50) PK
-    private String memberEmail;       // member_email VARCHAR(100) UNIQUE
-    private String memberPass;        // member_pass VARCHAR(200)
-    private String memberName;        // member_name VARCHAR(50)
-    private String memberPhone;       // member_phone VARCHAR(20)
+    // ========================================
+    // 필수 필드
+    // ========================================
     
-    // 추가 정보
-    private String memberAddress;     // member_address VARCHAR(200)
-    private String memberGender;      // member_gender VARCHAR(10)
-    private Timestamp memberBirth;    // member_birth TIMESTAMP
+    /**
+     * 회원 ID (Primary Key)
+     * VARCHAR(50)
+     */
+    private String memberId;
     
-    // 시스템 정보
-    private String memberRole;        // member_role VARCHAR(20) DEFAULT 'USER'
-    private String memberStatus;      // member_status VARCHAR(20) DEFAULT 'ACTIVE'
-    private Timestamp createdAt;      // created_at TIMESTAMP
-    private Timestamp updatedAt;      // updated_at TIMESTAMP
+    /**
+     * 이메일
+     * VARCHAR(100)
+     */
+    private String memberEmail;
     
-    // 기본 생성자
+    /**
+     * 비밀번호 (SHA-256 해시)
+     * VARCHAR(200)
+     */
+    private String memberPass;
+    
+    /**
+     * 회원 이름
+     * VARCHAR(20)
+     */
+    private String memberName;
+    
+    // ========================================
+    // 선택 필드
+    // ========================================
+    
+    /**
+     * 전화번호
+     * VARCHAR(20) NULL
+     */
+    private String memberPhone;
+    
+    /**
+     * 주소
+     * VARCHAR(255) NULL
+     */
+    private String memberAddress;
+    
+    /**
+     * 성별 (MALE, FEMALE, OTHER)
+     * VARCHAR(10) NULL
+     */
+    private String memberGender;
+    
+    /**
+     * 생년월일
+     * TIMESTAMP NULL
+     */
+    private Timestamp memberBirth;
+    
+    // ========================================
+    // 시스템 필드
+    // ========================================
+    
+    /**
+     * 권한 (USER, ADMIN)
+     * VARCHAR(20) DEFAULT 'USER'
+     */
+    private String memberRole;
+    
+    /**
+     * 상태 (ACTIVE, INACTIVE, BANNED)
+     * VARCHAR(20) DEFAULT 'ACTIVE'
+     */
+    private String memberStatus;
+    
+    /**
+     * 생성 일시
+     * TIMESTAMP AUTO
+     */
+    private Timestamp createdAt;
+    
+    /**
+     * 수정 일시
+     * TIMESTAMP AUTO
+     */
+    private Timestamp updatedAt;
+    
+    // ========================================
+    // Constructors
+    // ========================================
+    
     public MemberVO() {
+        // 기본값 설정
+        this.memberRole = "USER";
+        this.memberStatus = "ACTIVE";
     }
     
-    // ===== Getters and Setters =====
+    public MemberVO(String memberId, String memberEmail, String memberPass, String memberName) {
+        this();
+        this.memberId = memberId;
+        this.memberEmail = memberEmail;
+        this.memberPass = memberPass;
+        this.memberName = memberName;
+    }
+    
+    // ========================================
+    // Getters and Setters
+    // ========================================
     
     public String getMemberId() {
         return memberId;
@@ -134,71 +228,24 @@ public class MemberVO {
         this.updatedAt = updatedAt;
     }
     
-    // ===== Alias Methods (호환성) =====
-    
-    /**
-     * ✅ JSP 호환성: memberRegDate alias (createdAt를 반환)
-     */
-    public Timestamp getMemberRegDate() {
-        return this.createdAt;
-    }
-    
-    public void setMemberRegDate(Timestamp memberRegDate) {
-        this.createdAt = memberRegDate;
-    }
-    
-    /**
-     * ✅ email alias (memberEmail를 반환)
-     * MemberServiceImpl, Controller에서 사용
-     */
-    public String getEmail() {
-        return this.memberEmail;
-    }
-    
-    public void setEmail(String email) {
-        this.memberEmail = email;
-    }
-    
-    /**
-     * ✅ name alias (memberName를 반환)
-     * Controller, JSP에서 사용
-     */
-    public String getName() {
-        return this.memberName;
-    }
-    
-    public void setName(String name) {
-        this.memberName = name;
-    }
-    
-    /**
-     * ✅ password alias (memberPass를 반환)
-     * MemberServiceImpl.login()에서 사용
-     */
-    public String getPassword() {
-        return this.memberPass;
-    }
-    
-    public void setPassword(String password) {
-        this.memberPass = password;
-    }
-    
-    /**
-     * ✅ status alias (memberStatus를 반환)
-     */
-    public String getStatus() {
-        return this.memberStatus;
-    }
-    
-    public void setStatus(String status) {
-        this.memberStatus = status;
-    }
+    // ========================================
+    // toString
+    // ========================================
     
     @Override
     public String toString() {
-        return "MemberVO [memberId=" + memberId + ", memberEmail=" + memberEmail + ", memberPass=" + memberPass
-                + ", memberName=" + memberName + ", memberPhone=" + memberPhone + ", memberAddress=" + memberAddress
-                + ", memberGender=" + memberGender + ", memberBirth=" + memberBirth + ", memberRole=" + memberRole
-                + ", memberStatus=" + memberStatus + ", createdAt=" + createdAt + ", updatedAt=" + updatedAt + "]";
+        return "MemberVO{" +
+                "memberId='" + memberId + '\'' +
+                ", memberEmail='" + memberEmail + '\'' +
+                ", memberName='" + memberName + '\'' +
+                ", memberPhone='" + memberPhone + '\'' +
+                ", memberAddress='" + memberAddress + '\'' +
+                ", memberGender='" + memberGender + '\'' +
+                ", memberBirth=" + memberBirth +
+                ", memberRole='" + memberRole + '\'' +
+                ", memberStatus='" + memberStatus + '\'' +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                '}';
     }
 }

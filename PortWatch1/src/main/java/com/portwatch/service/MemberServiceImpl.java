@@ -49,7 +49,7 @@ public class MemberServiceImpl implements MemberService {
         
         try {
             String hashedPassword = hashPassword(memberPass);
-            MemberVO member = ((MemberServiceImpl) memberDAO).login(memberEmail, hashedPassword);
+            MemberVO member = memberDAO.login(memberEmail, hashedPassword);
             
             if (member != null) {
                 System.out.println("✅ 로그인 성공 - Member ID: " + member.getMemberId());
