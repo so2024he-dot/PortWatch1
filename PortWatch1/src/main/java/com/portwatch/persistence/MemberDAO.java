@@ -5,14 +5,18 @@ import com.portwatch.domain.MemberVO;
 
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * MemberDAO - 회원 데이터 접근 인터페이스
+ * MemberDAO - 회원 데이터 접근 인터페이스 (Spring 5.0.7 + MySQL 8.0.33)
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * 
+ * 수정 내역:
+ * - selectById, selectByEmail 메서드 추가 (MemberServiceImpl 호환)
+ * - 기존 selectMemberById, selectMemberByEmail 유지
  * 
  * 실제 MEMBER 테이블 구조:
  * - member_id VARCHAR(50) PK
  * - member_email VARCHAR(100)
  * - member_pass VARCHAR(200)
- * - member_name VARCHAR(20)
+ * - member_name VARCHAR(100)
  * - member_phone VARCHAR(20)
  * - member_address VARCHAR(255)
  * - member_gender VARCHAR(10)
@@ -23,7 +27,7 @@ import com.portwatch.domain.MemberVO;
  * - updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
  * 
  * @author PortWatch
- * @version FINAL COMPLETE
+ * @version FINAL FIXED - 2026.01.14
  */
 public interface MemberDAO {
     
@@ -56,18 +60,32 @@ public interface MemberDAO {
     int checkIdDuplicate(String memberId) throws Exception;
     
     /**
-     * 회원 조회 (ID로)
+     * 회원 조회 (ID로) - 기존 메서드
      * @param memberId 회원 ID
      * @return 회원 정보
      */
     MemberVO selectMemberById(String memberId) throws Exception;
     
     /**
-     * 회원 조회 (이메일로)
+     * 회원 조회 (이메일로) - 기존 메서드
      * @param memberEmail 이메일
      * @return 회원 정보
      */
     MemberVO selectMemberByEmail(String memberEmail) throws Exception;
+    
+    /**
+     * ✅ 회원 조회 (ID로) - MemberServiceImpl 호환 메서드
+     * @param memberId 회원 ID
+     * @return 회원 정보
+     */
+    MemberVO selectById(String memberId) throws Exception;
+    
+    /**
+     * ✅ 회원 조회 (이메일로) - MemberServiceImpl 호환 메서드
+     * @param memberEmail 이메일
+     * @return 회원 정보
+     */
+    MemberVO selectByEmail(String memberEmail) throws Exception;
     
     /**
      * 전체 회원 조회

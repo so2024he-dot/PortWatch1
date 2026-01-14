@@ -28,6 +28,8 @@
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             max-width: 1200px;
+            
+            
             width: 100%;
             padding: 40px;
         }
