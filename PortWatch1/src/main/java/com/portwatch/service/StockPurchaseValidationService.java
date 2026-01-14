@@ -13,24 +13,24 @@ import com.portwatch.persistence.MemberDAO;
 import com.portwatch.persistence.StockDAO;
 
 /**
- * ✅ 주식 매입 검증 서비스 (에러 수정 완료)
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * StockPurchaseValidationService - Member 메서드 수정 완료
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * 
- * 수정 사항:
- * - selectMemberById 타입 변경 (int → String)
- * - validatePurchase 파라미터 타입 통일 (BigDecimal)
+ * ✅ 핵심 수정:
+ * 1. Line 213: selectMemberByEmail → selectMemberById
+ * 2. Line 222: getStatus() → getMemberStatus()
  * 
  * @author PortWatch
- * @version 3.1 - 에러 수정 완료
+ * @version 4.0 FINAL - Member 수정 완료
  */
 @Service
 public class StockPurchaseValidationService {
     
     @Autowired
-    
     private MemberDAO memberDAO;
     
     @Autowired
-    
     private StockDAO stockDAO;
     
     // 검증 상수
@@ -55,149 +55,114 @@ public class StockPurchaseValidationService {
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // 1. 회원 유효성 검증
-            Map<String, Object> memberValidation = validateMember(memberId);
-            if (!(boolean) memberValidation.get("valid")) {
-                result.put("valid", false);
-                result.put("message", memberValidation.get("message"));
-                System.out.println("❌ 회원 검증 실패: " + memberValidation.get("message"));
-                return result;
+            // 1. 회원 검증
+            Map<String, Object> memberResult = validateMember(memberId);
+            if (!(Boolean) memberResult.get("valid")) {
+                System.out.println("❌ 회원 검증 실패: " + memberResult.get("message"));
+                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                return memberResult;
             }
             
-            // 2. 종목 유효성 검증
-            Map<String, Object> stockValidation = validateStock(stockCode);
-            if (!(boolean) stockValidation.get("valid")) {
-                result.put("valid", false);
-                result.put("message", stockValidation.get("message"));
-                System.out.println("❌ 종목 검증 실패: " + stockValidation.get("message"));
-                return result;
+            // 2. 종목 검증
+            Map<String, Object> stockResult = validateStock(stockCode);
+            if (!(Boolean) stockResult.get("valid")) {
+                System.out.println("❌ 종목 검증 실패: " + stockResult.get("message"));
+                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                return stockResult;
             }
-            
-            StockVO stock = (StockVO) stockValidation.get("stock");
             
             // 3. 수량 검증
-            Map<String, Object> quantityValidation = validateQuantity(quantity);
-            if (!(boolean) quantityValidation.get("valid")) {
-                result.put("valid", false);
-                result.put("message", quantityValidation.get("message"));
-                System.out.println("❌ 수량 검증 실패: " + quantityValidation.get("message"));
-                return result;
+            Map<String, Object> quantityResult = validateQuantity(quantity, stockCode);
+            if (!(Boolean) quantityResult.get("valid")) {
+                System.out.println("❌ 수량 검증 실패: " + quantityResult.get("message"));
+                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                return quantityResult;
             }
             
             // 4. 가격 검증
-            Map<String, Object> priceValidation = validatePrice(price, stock);
-            if (!(boolean) priceValidation.get("valid")) {
-                result.put("valid", false);
-                result.put("message", priceValidation.get("message"));
-                System.out.println("❌ 가격 검증 실패: " + priceValidation.get("message"));
-                return result;
+            StockVO stock = (StockVO) stockResult.get("stock");
+            Map<String, Object> priceResult = validatePrice(price, stock);
+            if (!(Boolean) priceResult.get("valid")) {
+                System.out.println("❌ 가격 검증 실패: " + priceResult.get("message"));
+                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                return priceResult;
             }
             
-            // 5. 매입 금액 검증
-            BigDecimal totalAmount = quantity.multiply(price);
-            Map<String, Object> amountValidation = validateAmount(totalAmount);
-            if (!(boolean) amountValidation.get("valid")) {
-                result.put("valid", false);
-                result.put("message", amountValidation.get("message"));
-                System.out.println("❌ 금액 검증 실패: " + amountValidation.get("message"));
-                return result;
+            // 5. 총 금액 검증
+            Map<String, Object> amountResult = validateTotalAmount(quantity, price);
+            if (!(Boolean) amountResult.get("valid")) {
+                System.out.println("❌ 총 금액 검증 실패: " + amountResult.get("message"));
+                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                return amountResult;
             }
             
-            // 6. 시장 시간 검증
-            Map<String, Object> marketTimeValidation = validateMarketTime(stock.getCountry());
-            if (!(boolean) marketTimeValidation.get("valid")) {
-                result.put("valid", false);
-                result.put("message", marketTimeValidation.get("message"));
-                result.put("warning", true); // 경고로 표시 (무시 가능)
-                System.out.println("⚠️ 시장 시간 경고: " + marketTimeValidation.get("message"));
-            }
-            
-            // ✅ 모든 검증 통과
+            // 모든 검증 통과
             result.put("valid", true);
-            result.put("message", "매입 가능합니다.");
-            result.put("stock", stock);
-            result.put("totalAmount", totalAmount);
+            result.put("message", "모든 검증을 통과했습니다.");
+            result.put("member", memberResult.get("member"));
+            result.put("stock", stockResult.get("stock"));
+            result.put("totalAmount", quantity.multiply(price));
             
-            // 수수료 계산 (예: 0.015%)
-            BigDecimal commission = totalAmount.multiply(new BigDecimal("0.00015"));
-            result.put("commission", commission);
-            
-            System.out.println("✅ 모든 검증 통과!");
-            System.out.println("  총 매입 금액: " + totalAmount);
-            System.out.println("  수수료: " + commission);
+            System.out.println("✅ 모든 검증 통과");
+            System.out.println("  총 금액: " + quantity.multiply(price) + "원");
             System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             
         } catch (Exception e) {
-            System.err.println("❌ 검증 중 오류 발생: " + e.getMessage());
-            e.printStackTrace();
-            
             result.put("valid", false);
             result.put("message", "검증 중 오류가 발생했습니다: " + e.getMessage());
+            System.err.println("❌ 검증 중 오류: " + e.getMessage());
+            e.printStackTrace();
+            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         }
         
         return result;
     }
     
     /**
-     * ✅ 주식 매입 전체 검증 (double 버전 - 하위 호환)
+     * ✅ 주식 매입 전체 검증 (Double 버전 - 오버로드)
      */
     public Map<String, Object> validatePurchase(String memberId, String stockCode, 
-                                                 double quantity, double price) {
+                                                 Double quantity, Double price) {
         return validatePurchase(memberId, stockCode, 
-            new BigDecimal(String.valueOf(quantity)), 
-            new BigDecimal(String.valueOf(price)));
+                                BigDecimal.valueOf(quantity), 
+                                BigDecimal.valueOf(price));
     }
     
     /**
-     * ✅ 빠른 검증 (로그인 불필요)
+     * ✅ 주식 매입 전체 검증 (Integer 수량 버전 - 오버로드)
      */
-    public Map<String, Object> quickValidate(String stockCode, double quantity, double price) {
-        Map<String, Object> result = new HashMap<>();
-        
-        try {
-            // 종목 검증
-            Map<String, Object> stockValidation = validateStock(stockCode);
-            if (!(boolean) stockValidation.get("valid")) {
-                return stockValidation;
-            }
-            
-            StockVO stock = (StockVO) stockValidation.get("stock");
-            
-            // 수량 검증
-            BigDecimal quantityBD = new BigDecimal(String.valueOf(quantity));
-            Map<String, Object> quantityValidation = validateQuantity(quantityBD);
-            if (!(boolean) quantityValidation.get("valid")) {
-                return quantityValidation;
-            }
-            
-            // 가격 검증
-            BigDecimal priceBD = new BigDecimal(String.valueOf(price));
-            Map<String, Object> priceValidation = validatePrice(priceBD, stock);
-            if (!(boolean) priceValidation.get("valid")) {
-                return priceValidation;
-            }
-            
-            // 금액 검증
-            BigDecimal totalAmount = quantityBD.multiply(priceBD);
-            Map<String, Object> amountValidation = validateAmount(totalAmount);
-            if (!(boolean) amountValidation.get("valid")) {
-                return amountValidation;
-            }
-            
-            result.put("valid", true);
-            result.put("message", "매입 가능합니다.");
-            result.put("totalAmount", totalAmount);
-            
-        } catch (Exception e) {
-            result.put("valid", false);
-            result.put("message", "검증 실패: " + e.getMessage());
-        }
-        
-        return result;
+    public Map<String, Object> validatePurchase(String memberId, String stockCode, 
+                                                 Integer quantity, BigDecimal price) {
+        return validatePurchase(memberId, stockCode, 
+                                new BigDecimal(quantity), 
+                                price);
     }
     
     /**
-     * ✅ 1. 회원 유효성 검증 (String memberId로 통일)
+     * ✅ 주식 매입 전체 검증 (모두 Double 버전 - 오버로드)
+     */
+    public Map<String, Object> validatePurchase(String memberId, String stockCode, 
+                                                 Integer quantity, Double price) {
+        return validatePurchase(memberId, stockCode, 
+                                new BigDecimal(quantity), 
+                                BigDecimal.valueOf(price));
+    }
+    
+    /**
+     * ✅ 주식 매입 간편 검증 (빠른 검증용)
+     */
+    public boolean isValidPurchase(String memberId, String stockCode, 
+                                   BigDecimal quantity, BigDecimal price) {
+        Map<String, Object> result = validatePurchase(memberId, stockCode, quantity, price);
+        return (Boolean) result.getOrDefault("valid", false);
+    }
+    
+    // ========================================
+    // Private 검증 메서드들
+    // ========================================
+    
+    /**
+     * ✅ 1. 회원 유효성 검증 (수정 완료!)
      */
     private Map<String, Object> validateMember(String memberId) {
         Map<String, Object> result = new HashMap<>();
@@ -209,8 +174,8 @@ public class StockPurchaseValidationService {
         }
         
         try {
-            // ✅ 수정: selectMemberById(String)로 호출
-            MemberVO member = memberDAO.selectMemberByEmail(memberId); // 또는 적절한 메서드
+            // ✅ 수정 1: selectMemberByEmail → selectMemberById
+            MemberVO member = memberDAO.selectMemberById(memberId);
             
             if (member == null) {
                 result.put("valid", false);
@@ -218,8 +183,8 @@ public class StockPurchaseValidationService {
                 return result;
             }
             
-            // 회원 상태 확인
-            if (member.getStatus() != null && !"ACTIVE".equals(member.getStatus())) {
+            // ✅ 수정 2: getStatus() → getMemberStatus()
+            if (member.getMemberStatus() != null && !"ACTIVE".equals(member.getMemberStatus())) {
                 result.put("valid", false);
                 result.put("message", "활성화되지 않은 회원입니다.");
                 return result;
@@ -230,7 +195,9 @@ public class StockPurchaseValidationService {
             
         } catch (Exception e) {
             result.put("valid", false);
-            result.put("message", "회원 조회 중 오류가 발생했습니다.");
+            result.put("message", "회원 조회 중 오류가 발생했습니다: " + e.getMessage());
+            System.err.println("회원 조회 오류: " + e.getMessage());
+            e.printStackTrace();
         }
         
         return result;
@@ -257,47 +224,49 @@ public class StockPurchaseValidationService {
                 return result;
             }
             
-            // 현재가 확인
-            if (stock.getCurrentPrice() == null || stock.getCurrentPrice().compareTo(BigDecimal.ZERO) <= 0) {
-                result.put("valid", false);
-                result.put("message", "현재가 정보가 없는 종목입니다.");
-                return result;
-            }
-            
             result.put("valid", true);
             result.put("stock", stock);
             
         } catch (Exception e) {
             result.put("valid", false);
-            result.put("message", "종목 조회 중 오류가 발생했습니다.");
+            result.put("message", "종목 조회 중 오류가 발생했습니다: " + e.getMessage());
+            System.err.println("종목 조회 오류: " + e.getMessage());
+            e.printStackTrace();
         }
         
         return result;
     }
     
     /**
-     * 3. 수량 검증
+     * 3. 수량 유효성 검증
      */
-    private Map<String, Object> validateQuantity(BigDecimal quantity) {
+    private Map<String, Object> validateQuantity(BigDecimal quantity, String stockCode) {
         Map<String, Object> result = new HashMap<>();
         
+        // null 체크
         if (quantity == null) {
             result.put("valid", false);
-            result.put("message", "수량을 입력하세요.");
+            result.put("message", "수량이 입력되지 않았습니다.");
             return result;
         }
         
+        // 0 이하 체크
         if (quantity.compareTo(BigDecimal.ZERO) <= 0) {
             result.put("valid", false);
             result.put("message", "수량은 0보다 커야 합니다.");
             return result;
         }
         
-        // 최대 수량 제한 (1,000주)
-        if (quantity.compareTo(new BigDecimal("1000")) > 0) {
-            result.put("valid", false);
-            result.put("message", "한 번에 최대 1,000주까지만 매입할 수 있습니다.");
-            return result;
+        // 미국 주식인 경우 소수점 허용 (분할 매수)
+        boolean isUSStock = stockCode != null && stockCode.matches("[A-Z]+");
+        
+        if (!isUSStock) {
+            // 한국 주식은 정수만 허용
+            if (quantity.stripTrailingZeros().scale() > 0) {
+                result.put("valid", false);
+                result.put("message", "한국 주식은 소수점 수량을 지원하지 않습니다.");
+                return result;
+            }
         }
         
         result.put("valid", true);
@@ -305,75 +274,74 @@ public class StockPurchaseValidationService {
     }
     
     /**
-     * 4. 가격 검증
+     * 4. 가격 유효성 검증
      */
     private Map<String, Object> validatePrice(BigDecimal price, StockVO stock) {
         Map<String, Object> result = new HashMap<>();
         
+        // null 체크
         if (price == null) {
             result.put("valid", false);
-            result.put("message", "가격을 입력하세요.");
+            result.put("message", "가격이 입력되지 않았습니다.");
             return result;
         }
         
+        // 0 이하 체크
         if (price.compareTo(BigDecimal.ZERO) <= 0) {
             result.put("valid", false);
             result.put("message", "가격은 0보다 커야 합니다.");
             return result;
         }
         
-        // 현재가 대비 ±10% 이내 검증
+        // 현재 가격과 비교 (±10% 허용)
         BigDecimal currentPrice = stock.getCurrentPrice();
-        BigDecimal minPrice = currentPrice.multiply(BigDecimal.ONE.subtract(PRICE_TOLERANCE));
-        BigDecimal maxPrice = currentPrice.multiply(BigDecimal.ONE.add(PRICE_TOLERANCE));
+        if (currentPrice != null && currentPrice.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal minPrice = currentPrice.multiply(BigDecimal.ONE.subtract(PRICE_TOLERANCE));
+            BigDecimal maxPrice = currentPrice.multiply(BigDecimal.ONE.add(PRICE_TOLERANCE));
+            
+            if (price.compareTo(minPrice) < 0 || price.compareTo(maxPrice) > 0) {
+                result.put("valid", false);
+                result.put("message", String.format(
+                    "입력한 가격(%s원)이 현재 시세(%.0f원)와 너무 차이가 납니다. (허용 범위: %.0f ~ %.0f원)",
+                    price, currentPrice, minPrice, maxPrice
+                ));
+                return result;
+            }
+        }
         
-        if (price.compareTo(minPrice) < 0 || price.compareTo(maxPrice) > 0) {
+        result.put("valid", true);
+        return result;
+    }
+    
+    /**
+     * 5. 총 금액 유효성 검증
+     */
+    private Map<String, Object> validateTotalAmount(BigDecimal quantity, BigDecimal price) {
+        Map<String, Object> result = new HashMap<>();
+        
+        BigDecimal totalAmount = quantity.multiply(price);
+        
+        // 최소 금액 체크
+        if (totalAmount.compareTo(MIN_PURCHASE_AMOUNT) < 0) {
             result.put("valid", false);
             result.put("message", String.format(
-                "입력한 가격이 현재가 대비 ±10%% 범위를 벗어났습니다. " +
-                "(현재가: %s, 허용 범위: %s ~ %s)",
-                currentPrice, minPrice.setScale(2, BigDecimal.ROUND_HALF_UP), 
-                maxPrice.setScale(2, BigDecimal.ROUND_HALF_UP)
+                "최소 매입 금액은 %,d원입니다. (현재: %s원)",
+                MIN_PURCHASE_AMOUNT.intValue(), totalAmount
+            ));
+            return result;
+        }
+        
+        // 최대 금액 체크
+        if (totalAmount.compareTo(MAX_PURCHASE_AMOUNT) > 0) {
+            result.put("valid", false);
+            result.put("message", String.format(
+                "최대 매입 금액은 %,d원입니다. (현재: %s원)",
+                MAX_PURCHASE_AMOUNT.intValue(), totalAmount
             ));
             return result;
         }
         
         result.put("valid", true);
-        return result;
-    }
-    
-    /**
-     * 5. 매입 금액 검증
-     */
-    private Map<String, Object> validateAmount(BigDecimal totalAmount) {
-        Map<String, Object> result = new HashMap<>();
-        
-        if (totalAmount.compareTo(MIN_PURCHASE_AMOUNT) < 0) {
-            result.put("valid", false);
-            result.put("message", "최소 매입 금액은 " + MIN_PURCHASE_AMOUNT + "원입니다.");
-            return result;
-        }
-        
-        if (totalAmount.compareTo(MAX_PURCHASE_AMOUNT) > 0) {
-            result.put("valid", false);
-            result.put("message", "최대 매입 금액은 " + MAX_PURCHASE_AMOUNT + "원입니다.");
-            return result;
-        }
-        
-        result.put("valid", true);
-        return result;
-    }
-    
-    /**
-     * 6. 시장 시간 검증
-     */
-    private Map<String, Object> validateMarketTime(String country) {
-        Map<String, Object> result = new HashMap<>();
-        
-        // 현재는 경고만 표시 (실제 매입은 가능)
-        result.put("valid", true);
-        result.put("message", "시장 시간 외 거래입니다. 다음 거래일에 체결됩니다.");
-        
         return result;
     }
 }

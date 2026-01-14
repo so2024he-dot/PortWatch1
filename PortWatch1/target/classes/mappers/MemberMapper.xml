@@ -5,24 +5,17 @@
 
 <!-- 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-MemberMapper.xml - 실제 MEMBER 테이블 완벽 매핑
+MemberMapper.xml - MEMBER 테이블 (대문자!)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✅ 실제 MEMBER 테이블 구조:
-- member_id VARCHAR(50) PK
-- member_email VARCHAR(100)
-- member_pass VARCHAR(200)
-- member_name VARCHAR(20)
-- member_phone VARCHAR(20)
-- member_address VARCHAR(255)
-- member_gender VARCHAR(10)
-- member_birth TIMESTAMP
-- member_role VARCHAR(20) DEFAULT 'USER'
-- member_status VARCHAR(20) DEFAULT 'ACTIVE'
-- created_at TIMESTAMP AUTO
-- updated_at TIMESTAMP AUTO
+✅ 핵심 수정:
+member (소문자) → MEMBER (대문자)
 
-@version FINAL COMPLETE
+✅ 에러 해결:
+Table 'c6d2507t2p2.member' doesn't exist
+→ Table 'c6d2507t2p2.MEMBER' exists!
+
+@version FINAL - 대문자 테이블
 -->
 
 <mapper namespace="com.portwatch.persistence.MemberDAO">
@@ -62,7 +55,7 @@ MemberMapper.xml - 실제 MEMBER 테이블 완벽 매핑
             member_status,
             created_at,
             updated_at
-        FROM member
+        FROM MEMBER
         WHERE member_email = #{param1}
           AND member_pass = #{param2}
           AND member_status = 'ACTIVE'
@@ -72,7 +65,7 @@ MemberMapper.xml - 실제 MEMBER 테이블 완벽 매핑
          회원가입 ⭐⭐⭐
          ======================================== -->
     <insert id="insertMember">
-        INSERT INTO member (
+        INSERT INTO MEMBER (
             member_id,
             member_email,
             member_pass,
@@ -102,7 +95,7 @@ MemberMapper.xml - 실제 MEMBER 테이블 완벽 매핑
          ======================================== -->
     <select id="checkEmailDuplicate" resultType="int">
         SELECT COUNT(*)
-        FROM member
+        FROM MEMBER
         WHERE member_email = #{memberEmail}
     </select>
     
@@ -111,7 +104,7 @@ MemberMapper.xml - 실제 MEMBER 테이블 완벽 매핑
          ======================================== -->
     <select id="checkIdDuplicate" resultType="int">
         SELECT COUNT(*)
-        FROM member
+        FROM MEMBER
         WHERE member_id = #{memberId}
     </select>
     
@@ -132,7 +125,7 @@ MemberMapper.xml - 실제 MEMBER 테이블 완벽 매핑
             member_status,
             created_at,
             updated_at
-        FROM member
+        FROM MEMBER
         WHERE member_id = #{memberId}
     </select>
     
@@ -153,7 +146,7 @@ MemberMapper.xml - 실제 MEMBER 테이블 완벽 매핑
             member_status,
             created_at,
             updated_at
-        FROM member
+        FROM MEMBER
         WHERE member_email = #{memberEmail}
     </select>
     
@@ -174,7 +167,7 @@ MemberMapper.xml - 실제 MEMBER 테이블 완벽 매핑
             member_status,
             created_at,
             updated_at
-        FROM member
+        FROM MEMBER
         ORDER BY created_at DESC
     </select>
     
@@ -182,7 +175,7 @@ MemberMapper.xml - 실제 MEMBER 테이블 완벽 매핑
          회원 정보 수정
          ======================================== -->
     <update id="updateMember">
-        UPDATE member
+        UPDATE MEMBER
         SET member_name = #{memberName},
             member_phone = #{memberPhone},
             member_address = #{memberAddress},
@@ -195,7 +188,7 @@ MemberMapper.xml - 실제 MEMBER 테이블 완벽 매핑
          비밀번호 변경
          ======================================== -->
     <update id="updatePassword">
-        UPDATE member
+        UPDATE MEMBER
         SET member_pass = #{param2}
         WHERE member_id = #{param1}
     </update>
@@ -204,7 +197,7 @@ MemberMapper.xml - 실제 MEMBER 테이블 완벽 매핑
          회원 삭제
          ======================================== -->
     <delete id="deleteMember">
-        DELETE FROM member
+        DELETE FROM MEMBER
         WHERE member_id = #{memberId}
     </delete>
     
