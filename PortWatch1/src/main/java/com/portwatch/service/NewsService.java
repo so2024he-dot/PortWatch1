@@ -75,5 +75,7 @@ public interface NewsService {
 
 	List<NewsVO> searchNews(String keyword, int limit) throws Exception;
 
+	int getTotalNewsCount();
+
 	
 }

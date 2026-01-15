@@ -7,6 +7,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -66,42 +67,38 @@ public class NewsApiController {
      */
     @GetMapping("/recent")
     public ResponseEntity<Map<String, Object>> getRecentNews(
-            @RequestParam(value = "limit", defaultValue = "50") int limit) {
+            @RequestParam(defaultValue = "50") int limit) {
         
         log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        log.info("📰 최근 뉴스 조회");
-        log.info("  - 조회 개수: " + limit);
+        log.info("📰 [API] 최근 뉴스 조회");
+        log.info("  - limit: " + limit);
         
         Map<String, Object> response = new HashMap<>();
         
         try {
-            // 뉴스 조회
             List<NewsVO> newsList = newsService.getRecentNews(limit);
             
-            log.info("  - 조회 결과: " + newsList.size() + "건");
-            log.info("✅ 최근 뉴스 조회 완료");
-            
-            // 응답 데이터 구성
             response.put("success", true);
+            response.put("count", newsList != null ? newsList.size() : 0);
             response.put("news", newsList);
-            response.put("newsList", newsList);  // 호환성을 위한 추가 필드
-            response.put("count", newsList.size());
-            response.put("message", newsList.size() + "개의 뉴스를 불러왔습니다.");
+            
+            log.info("✅ 뉴스 조회 완료: " + (newsList != null ? newsList.size() : 0) + "개");
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("❌ 최근 뉴스 조회 실패", e);
+            log.error("❌ 뉴스 조회 실패: " + e.getMessage(), e);
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             
             response.put("success", false);
-            response.put("news", new Object[0]);
-            response.put("newsList", new Object[0]);
-            response.put("count", 0);
-            response.put("error", "뉴스를 불러오는데 실패했습니다.");
-            response.put("message", e.getMessage());
+            response.put("message", "뉴스 조회에 실패했습니다: " + e.getMessage());
+            response.put("news", List.of());
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
         
-        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        
-        return ResponseEntity.ok(response);
+       
     }
 
     /**
@@ -150,41 +147,46 @@ public class NewsApiController {
      * @return ResponseEntity<Map<String, Object>>
      * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      */
+
+    /**
+     * ✅ 뉴스 크롤링 실행
+     * POST /api/news/crawl
+     */
     @PostMapping("/crawl")
     public ResponseEntity<Map<String, Object>> crawlNews() {
         
         log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        log.info("🕷️ 뉴스 크롤링 시작");
+        log.info("🔄 [API] 뉴스 크롤링 시작");
         
         Map<String, Object> response = new HashMap<>();
         
         try {
-            // 뉴스 크롤링 실행
-            int newCount = newsService.crawlAndSaveNews();
-            
-            log.info("  - 새로운 뉴스: " + newCount + "건");
-            log.info("✅ 뉴스 크롤링 완료");
+            // 뉴스 크롤링 및 저장
+            int count = newsService.crawlAndSaveNews();
             
             response.put("success", true);
-            response.put("count", newCount);
-            response.put("newCount", newCount);  // 호환성을 위한 추가 필드
-            response.put("message", newCount + "개의 새로운 뉴스를 불러왔습니다.");
+            response.put("message", count + "개의 뉴스를 수집했습니다.");
+            response.put("count", count);
+            
+            log.info("✅ 뉴스 크롤링 완료: " + count + "개");
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("❌ 뉴스 크롤링 실패", e);
+            log.error("❌ 뉴스 크롤링 실패: " + e.getMessage(), e);
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             
             response.put("success", false);
+            response.put("message", "뉴스 크롤링에 실패했습니다: " + e.getMessage());
             response.put("count", 0);
-            response.put("newCount", 0);
-            response.put("error", "뉴스 크롤링에 실패했습니다.");
-            response.put("message", e.getMessage());
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
         
-        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        
-        return ResponseEntity.ok(response);
     }
-
+    
+    
     /**
      * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      * 카테고리별 뉴스 조회
@@ -237,6 +239,34 @@ public class NewsApiController {
         log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         
         return ResponseEntity.ok(response);
+    }
+    
+    
+    /**
+     * ✅ 뉴스 통계
+     * GET /api/news/stats
+     */
+    @GetMapping("/stats")
+    public ResponseEntity<Map<String, Object>> getNewsStats() {
+        
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            int totalCount = newsService.getTotalNewsCount();
+            
+            response.put("success", true);
+            response.put("totalCount", totalCount);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ 뉴스 통계 조회 실패: " + e.getMessage(), e);
+            
+            response.put("success", false);
+            response.put("message", "뉴스 통계 조회에 실패했습니다.");
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
     /**

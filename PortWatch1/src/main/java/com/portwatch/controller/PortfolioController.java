@@ -1,5 +1,6 @@
 package com.portwatch.controller;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import javax.servlet.http.HttpSession;
@@ -30,12 +31,13 @@ import lombok.extern.log4j.Log4j;
  * Spring 5.0.7 + MySQL 8.0.33
  * 
  * 수정 내역:
- * 1. @RequestMapping("/portfolio") 설정 (404 해결)
- * 2. 메인 페이지 매핑: "", "/", "/list" 모두 처리
- * 3. portfolioVO Model 추가
- * 4. 세션 체크 개선
- * 5. ✅ getPortfolio 메서드 구현 완료
- * 6. ✅ modify, remove 메서드 수정 (portfolioService 사용)
+ * 1. ✅ 62-63번째 라인 불필요한 괄호 제거 (컴파일 에러 해결)
+ * 2. ✅ @RequestMapping("/portfolio") 설정 (404 해결)
+ * 3. ✅ 메인 페이지 매핑: "", "/", "/list" 모두 처리
+ * 4. ✅ portfolioVO Model 추가
+ * 5. ✅ 세션 체크 개선
+ * 6. ✅ getPortfolio 메서드 구현 완료
+ * 7. ✅ modify, remove 메서드 수정 (portfolioService 사용)
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
 @Controller
@@ -48,6 +50,8 @@ public class PortfolioController {
     
     @Setter(onMethod_ = @Autowired)
     private StockService stockService;
+    
+    // ✅ 불필요한 괄호 제거됨 (62-63번째 라인 문제 해결)
     
     /**
      * ✅ 포트폴리오 메인 페이지 (/, "", /list 모두 처리)
@@ -126,6 +130,7 @@ public class PortfolioController {
                         RedirectAttributes rttr) {
         log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         log.info("📝 포트폴리오 등록 처리");
+        log.info("  - 받은 데이터: " + portfolio);
         
         MemberVO member = (MemberVO) session.getAttribute("member");
         if (member == null) {
@@ -135,13 +140,37 @@ public class PortfolioController {
         }
         
         try {
-            portfolio.setMemberId(member.getMemberId());
-            
-            // purchasePrice가 null이면 0으로 설정
-            if (portfolio.getPurchasePrice() == null) {
-                portfolio.setPurchasePrice(0.0);
+            // ✅ 입력 데이터 검증
+            if (portfolio.getStockId() == null || portfolio.getStockId() <= 0) {
+                log.warn("⚠️ 유효하지 않은 stockId: " + portfolio.getStockId());
+                rttr.addFlashAttribute("errorMessage", "주식을 선택해주세요.");
+                return "redirect:/portfolio/create";
             }
             
+            if (portfolio.getQuantity() == null || portfolio.getQuantity().compareTo(BigDecimal.ONE) < 0) {
+                log.warn("⚠️ 유효하지 않은 수량: " + portfolio.getQuantity());
+                rttr.addFlashAttribute("errorMessage", "수량은 최소 1주 이상이어야 합니다.");
+                return "redirect:/portfolio/create";
+            }
+            
+            if (portfolio.getPurchasePrice() == null || portfolio.getPurchasePrice().compareTo(BigDecimal.ZERO) < 0) {
+                log.warn("⚠️ 유효하지 않은 매입 단가: " + portfolio.getPurchasePrice());
+                rttr.addFlashAttribute("errorMessage", "매입 단가를 올바르게 입력해주세요.");
+                return "redirect:/portfolio/create";
+            }
+            
+            // ✅ 회원 ID 설정
+            portfolio.setMemberId(member.getMemberId());
+            
+            // ✅ null 체크 및 기본값 설정
+            if (portfolio.getPurchasePrice() == null) {
+                portfolio.setPurchasePrice(BigDecimal.ZERO);
+            }
+            if (portfolio.getQuantity() == null) {
+                portfolio.setQuantity(BigDecimal.ONE);
+            }
+            
+            // ✅ 포트폴리오 등록
             portfolioService.register(portfolio);
             
             log.info("✅ 포트폴리오 등록 완료");
@@ -152,6 +181,14 @@ public class PortfolioController {
             
             rttr.addFlashAttribute("message", "포트폴리오가 등록되었습니다.");
             return "redirect:/portfolio/list";
+            
+        } catch (IllegalArgumentException e) {
+            log.error("❌ 입력 데이터 오류: " + e.getMessage());
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            rttr.addFlashAttribute("errorMessage", "입력 데이터가 올바르지 않습니다: " + e.getMessage());
+            return "redirect:/portfolio/create";
+            
         } catch (Exception e) {
             log.error("❌ 포트폴리오 등록 실패: " + e.getMessage(), e);
             log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -160,17 +197,17 @@ public class PortfolioController {
             return "redirect:/portfolio/create";
         }
     }
-    
+
     /**
      * ✅ 포트폴리오 상세 조회
-     * URL: /portfolio/{portfolioId}
+     * URL: /portfolio/{portfolioId} (GET)
      */
     @GetMapping("/{portfolioId}")
     public String detail(@PathVariable Long portfolioId, 
                         HttpSession session, 
                         Model model) {
         log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        log.info("📊 포트폴리오 상세 조회");
+        log.info("🔍 포트폴리오 상세 조회");
         log.info("  - 포트폴리오 ID: " + portfolioId);
         
         MemberVO member = (MemberVO) session.getAttribute("member");
@@ -181,7 +218,6 @@ public class PortfolioController {
         }
         
         try {
-            // ✅ Service를 통한 조회
             PortfolioVO portfolio = portfolioService.getPortfolio(portfolioId);
             
             if (portfolio == null) {
@@ -191,11 +227,9 @@ public class PortfolioController {
             }
             
             model.addAttribute("portfolio", portfolio);
-            
-            log.info("✅ 포트폴리오 상세 조회 완료");
-            log.info("  - 종목명: " + portfolio.getStockName());
-            log.info("  - 보유 수량: " + portfolio.getQuantity());
+            log.info("✅ 포트폴리오 조회 완료");
             log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
         } catch (Exception e) {
             log.error("❌ 포트폴리오 조회 실패: " + e.getMessage(), e);
             log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -209,11 +243,11 @@ public class PortfolioController {
     
     /**
      * ✅ 포트폴리오 수정 페이지
-     * URL: /portfolio/update/{portfolioId}
+     * URL: /portfolio/update/{portfolioId} (GET)
      */
     @GetMapping("/update/{portfolioId}")
-    public String updateForm(@PathVariable Long portfolioId, 
-                            HttpSession session, 
+    public String updateForm(@PathVariable Long portfolioId,
+                            HttpSession session,
                             Model model) {
         log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         log.info("✏️ 포트폴리오 수정 페이지");
@@ -408,7 +442,7 @@ public class PortfolioController {
             throw new Exception("포트폴리오 수정 실패: " + e.getMessage(), e);
         }
     }
-
+    
     /**
      * ✅ 포트폴리오 삭제 (내부 사용)
      */
