@@ -71,7 +71,7 @@
                     <div class="user-menu">
                         <button class="user-btn" onclick="toggleUserMenu()">
                             <i class="fas fa-user-circle"></i>
-                            <span>${sessionScope.member.name}</span>
+                            <span>${sessionScope.member.memberName}</span>
                             <i class="fas fa-chevron-down"></i>
                         </button>
                         <div class="user-dropdown" id="userDropdown">

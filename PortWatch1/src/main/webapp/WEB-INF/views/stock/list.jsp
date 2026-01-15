@@ -102,7 +102,7 @@
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="userDropdown" 
                                    role="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-user"></i> ${loginMember.name}
+                                    <i class="fas fa-user"></i> ${loginMember.memberName}
                                 </a>
                                 <ul class="dropdown-menu" aria-labelledby="userDropdown">
                                     <li>
