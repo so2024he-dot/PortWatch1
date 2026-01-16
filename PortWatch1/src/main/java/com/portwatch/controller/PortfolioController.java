@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.portwatch.domain.MemberVO;
@@ -27,18 +28,15 @@ import lombok.extern.log4j.Log4j;
 
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * PORTFOLIO CONTROLLER - 완벽 수정 버전
- * Spring 5.0.7 + MySQL 8.0.33
- * 
- * 수정 내역:
- * 1. ✅ 62-63번째 라인 불필요한 괄호 제거 (컴파일 에러 해결)
- * 2. ✅ @RequestMapping("/portfolio") 설정 (404 해결)
- * 3. ✅ 메인 페이지 매핑: "", "/", "/list" 모두 처리
- * 4. ✅ portfolioVO Model 추가
- * 5. ✅ 세션 체크 개선
- * 6. ✅ getPortfolio 메서드 구현 완료
- * 7. ✅ modify, remove 메서드 수정 (portfolioService 사용)
+ * PORTFOLIO CONTROLLER - 완벽 수정 버전 v2
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * 
+ * 수정 내역 (2026.01.16):
+ * ✅ GET 방식 삭제 지원 추가 (/portfolio/delete?portfolioId=X)
+ * ✅ POST 방식 삭제 유지 (/portfolio/delete/{portfolioId})
+ * ✅ 환급 처리 로직 추가
+ * 
+ * @author PortWatch
  */
 @Controller
 @RequestMapping("/portfolio")
@@ -51,169 +49,60 @@ public class PortfolioController {
     @Setter(onMethod_ = @Autowired)
     private StockService stockService;
     
-    // ✅ 불필요한 괄호 제거됨 (62-63번째 라인 문제 해결)
-    
     /**
-     * ✅ 포트폴리오 메인 페이지 (/, "", /list 모두 처리)
-     * URL: /portfolio, /portfolio/, /portfolio/list
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * ✅ 포트폴리오 메인 페이지
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      */
-    @GetMapping(value = {"", "/", "/list"})
+    @GetMapping({"", "/", "/list"})
     public String portfolioMain(HttpSession session, Model model) {
         log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         log.info("📊 포트폴리오 메인 페이지");
         
+        // 로그인 체크
         MemberVO member = (MemberVO) session.getAttribute("member");
         if (member == null) {
-            log.info("❌ 로그인 필요");
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            log.warn("⚠️ 로그인 필요");
             return "redirect:/member/login";
         }
         
-        String memberId = member.getMemberId();
-        log.info("  - 회원 ID: " + memberId);
+        log.info("  - 회원 ID: " + member.getMemberId());
         
         try {
-            List<PortfolioVO> portfolioList = portfolioService.getPortfolioList(memberId);
+            // 포트폴리오 목록 조회
+            List<PortfolioVO> portfolioList = portfolioService.getPortfolioByMemberId(member.getMemberId());
             model.addAttribute("portfolioList", portfolioList);
+            
             log.info("✅ 포트폴리오 목록 조회 완료: " + portfolioList.size() + "개");
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            return "portfolio/list";
+            
         } catch (Exception e) {
-            log.error("❌ 포트폴리오 조회 실패: " + e.getMessage(), e);
-            model.addAttribute("portfolioList", List.of());
-            model.addAttribute("errorMessage", "포트폴리오 조회에 실패했습니다.");
+            log.error("❌ 포트폴리오 조회 실패", e);
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            model.addAttribute("errorMessage", "포트폴리오를 불러오는데 실패했습니다.");
+            return "portfolio/list";
         }
-        
-        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        return "portfolio/list";
     }
     
     /**
-     * ✅ 포트폴리오 등록 페이지
-     * URL: /portfolio/create (GET)
-     */
-    @GetMapping("/create")
-    public String createForm(HttpSession session, Model model) {
-        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        log.info("📝 포트폴리오 등록 페이지");
-        
-        MemberVO member = (MemberVO) session.getAttribute("member");
-        if (member == null) {
-            log.info("❌ 로그인 필요");
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            return "redirect:/member/login";
-        }
-        
-        try {
-            // ✅ portfolioVO를 Model에 추가 (BindingResult 에러 해결)
-            model.addAttribute("portfolioVO", new PortfolioVO());
-            
-            List<StockVO> stockList = stockService.getAllStocks();
-            model.addAttribute("stockList", stockList);
-            log.info("✅ 주식 목록 조회 완료: " + stockList.size() + "개");
-            log.info("✅ portfolioVO 추가 완료");
-        } catch (Exception e) {
-            log.error("❌ 주식 목록 조회 실패: " + e.getMessage(), e);
-            model.addAttribute("stockList", List.of());
-            model.addAttribute("errorMessage", "주식 목록 조회에 실패했습니다.");
-        }
-        
-        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        return "portfolio/create";
-    }
-    
-    /**
-     * ✅ 포트폴리오 등록 처리
-     * URL: /portfolio/create (POST)
-     */
-    @PostMapping("/create")
-    public String create(@ModelAttribute PortfolioVO portfolio, 
-                        HttpSession session, 
-                        RedirectAttributes rttr) {
-        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        log.info("📝 포트폴리오 등록 처리");
-        log.info("  - 받은 데이터: " + portfolio);
-        
-        MemberVO member = (MemberVO) session.getAttribute("member");
-        if (member == null) {
-            log.info("❌ 로그인 필요");
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            return "redirect:/member/login";
-        }
-        
-        try {
-            // ✅ 입력 데이터 검증
-            if (portfolio.getStockId() == null || portfolio.getStockId() <= 0) {
-                log.warn("⚠️ 유효하지 않은 stockId: " + portfolio.getStockId());
-                rttr.addFlashAttribute("errorMessage", "주식을 선택해주세요.");
-                return "redirect:/portfolio/create";
-            }
-            
-            if (portfolio.getQuantity() == null || portfolio.getQuantity().compareTo(BigDecimal.ONE) < 0) {
-                log.warn("⚠️ 유효하지 않은 수량: " + portfolio.getQuantity());
-                rttr.addFlashAttribute("errorMessage", "수량은 최소 1주 이상이어야 합니다.");
-                return "redirect:/portfolio/create";
-            }
-            
-            if (portfolio.getPurchasePrice() == null || portfolio.getPurchasePrice().compareTo(BigDecimal.ZERO) < 0) {
-                log.warn("⚠️ 유효하지 않은 매입 단가: " + portfolio.getPurchasePrice());
-                rttr.addFlashAttribute("errorMessage", "매입 단가를 올바르게 입력해주세요.");
-                return "redirect:/portfolio/create";
-            }
-            
-            // ✅ 회원 ID 설정
-            portfolio.setMemberId(member.getMemberId());
-            
-            // ✅ null 체크 및 기본값 설정
-            if (portfolio.getPurchasePrice() == null) {
-                portfolio.setPurchasePrice(BigDecimal.ZERO);
-            }
-            if (portfolio.getQuantity() == null) {
-                portfolio.setQuantity(BigDecimal.ONE);
-            }
-            
-            // ✅ 포트폴리오 등록
-            portfolioService.register(portfolio);
-            
-            log.info("✅ 포트폴리오 등록 완료");
-            log.info("  - 주식 ID: " + portfolio.getStockId());
-            log.info("  - 수량: " + portfolio.getQuantity());
-            log.info("  - 매입 단가: " + portfolio.getPurchasePrice());
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            rttr.addFlashAttribute("message", "포트폴리오가 등록되었습니다.");
-            return "redirect:/portfolio/list";
-            
-        } catch (IllegalArgumentException e) {
-            log.error("❌ 입력 데이터 오류: " + e.getMessage());
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            rttr.addFlashAttribute("errorMessage", "입력 데이터가 올바르지 않습니다: " + e.getMessage());
-            return "redirect:/portfolio/create";
-            
-        } catch (Exception e) {
-            log.error("❌ 포트폴리오 등록 실패: " + e.getMessage(), e);
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            rttr.addFlashAttribute("errorMessage", "포트폴리오 등록에 실패했습니다: " + e.getMessage());
-            return "redirect:/portfolio/create";
-        }
-    }
-
-    /**
-     * ✅ 포트폴리오 상세 조회
-     * URL: /portfolio/{portfolioId} (GET)
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * ✅ 포트폴리오 상세
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      */
     @GetMapping("/{portfolioId}")
-    public String detail(@PathVariable Long portfolioId, 
-                        HttpSession session, 
+    public String detail(@PathVariable Long portfolioId,
+                        HttpSession session,
                         Model model) {
         log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        log.info("🔍 포트폴리오 상세 조회");
-        log.info("  - 포트폴리오 ID: " + portfolioId);
+        log.info("📊 포트폴리오 상세 조회");
+        log.info("  - portfolioId: " + portfolioId);
         
+        // 로그인 체크
         MemberVO member = (MemberVO) session.getAttribute("member");
         if (member == null) {
-            log.info("❌ 로그인 필요");
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             return "redirect:/member/login";
         }
         
@@ -221,42 +110,120 @@ public class PortfolioController {
             PortfolioVO portfolio = portfolioService.getPortfolio(portfolioId);
             
             if (portfolio == null) {
-                log.warn("⚠️ 포트폴리오를 찾을 수 없음: ID = " + portfolioId);
-                model.addAttribute("errorMessage", "포트폴리오를 찾을 수 없습니다.");
+                log.warn("⚠️ 포트폴리오를 찾을 수 없습니다");
+                return "redirect:/portfolio/list";
+            }
+            
+            // 권한 체크
+            if (!portfolio.getMemberId().equals(member.getMemberId())) {
+                log.warn("⚠️ 권한 없음");
                 return "redirect:/portfolio/list";
             }
             
             model.addAttribute("portfolio", portfolio);
+            
             log.info("✅ 포트폴리오 조회 완료");
             log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             
-        } catch (Exception e) {
-            log.error("❌ 포트폴리오 조회 실패: " + e.getMessage(), e);
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            return "portfolio/detail";
             
-            model.addAttribute("errorMessage", "포트폴리오 조회에 실패했습니다.");
+        } catch (Exception e) {
+            log.error("❌ 포트폴리오 조회 실패", e);
             return "redirect:/portfolio/list";
         }
-        
-        return "portfolio/detail";
     }
     
     /**
-     * ✅ 포트폴리오 수정 페이지
-     * URL: /portfolio/update/{portfolioId} (GET)
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * ✅ 포트폴리오 생성 폼
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     */
+    @GetMapping("/create")
+    public String createForm(HttpSession session, Model model) {
+        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        log.info("📝 포트폴리오 생성 폼");
+        
+        // 로그인 체크
+        MemberVO member = (MemberVO) session.getAttribute("member");
+        if (member == null) {
+            return "redirect:/member/login";
+        }
+        
+        try {
+            // 전체 주식 목록
+            List<StockVO> stockList = stockService.getAllStocks();
+            model.addAttribute("stockList", stockList);
+            
+            // 빈 PortfolioVO
+            model.addAttribute("portfolioVO", new PortfolioVO());
+            
+            log.info("✅ 생성 폼 준비 완료");
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            return "portfolio/create";
+            
+        } catch (Exception e) {
+            log.error("❌ 생성 폼 준비 실패", e);
+            return "redirect:/portfolio/list";
+        }
+    }
+    
+    /**
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * ✅ 포트폴리오 생성 실행
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     */
+    @PostMapping("/create")
+    public String create(@ModelAttribute PortfolioVO portfolioVO,
+                        HttpSession session,
+                        RedirectAttributes rttr) {
+        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        log.info("📝 포트폴리오 생성 실행");
+        
+        // 로그인 체크
+        MemberVO member = (MemberVO) session.getAttribute("member");
+        if (member == null) {
+            return "redirect:/member/login";
+        }
+        
+        try {
+            // 회원 ID 설정
+            portfolioVO.setMemberId(member.getMemberId());
+            
+            // 포트폴리오 생성
+            portfolioService.createPortfolio(portfolioVO);
+            
+            rttr.addFlashAttribute("successMessage", "포트폴리오가 생성되었습니다.");
+            
+            log.info("✅ 포트폴리오 생성 완료");
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            return "redirect:/portfolio/list";
+            
+        } catch (Exception e) {
+            log.error("❌ 포트폴리오 생성 실패", e);
+            
+            rttr.addFlashAttribute("errorMessage", "포트폴리오 생성에 실패했습니다.");
+            return "redirect:/portfolio/create";
+        }
+    }
+    
+    /**
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * ✅ 포트폴리오 수정 폼
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      */
     @GetMapping("/update/{portfolioId}")
     public String updateForm(@PathVariable Long portfolioId,
                             HttpSession session,
                             Model model) {
         log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        log.info("✏️ 포트폴리오 수정 페이지");
-        log.info("  - 포트폴리오 ID: " + portfolioId);
+        log.info("📝 포트폴리오 수정 폼");
+        log.info("  - portfolioId: " + portfolioId);
         
+        // 로그인 체크
         MemberVO member = (MemberVO) session.getAttribute("member");
         if (member == null) {
-            log.info("❌ 로그인 필요");
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             return "redirect:/member/login";
         }
         
@@ -264,209 +231,236 @@ public class PortfolioController {
             PortfolioVO portfolio = portfolioService.getPortfolio(portfolioId);
             
             if (portfolio == null) {
-                log.warn("⚠️ 포트폴리오를 찾을 수 없음: ID = " + portfolioId);
-                model.addAttribute("errorMessage", "포트폴리오를 찾을 수 없습니다.");
+                return "redirect:/portfolio/list";
+            }
+            
+            // 권한 체크
+            if (!portfolio.getMemberId().equals(member.getMemberId())) {
                 return "redirect:/portfolio/list";
             }
             
             model.addAttribute("portfolio", portfolio);
             
+            // 주식 목록
             List<StockVO> stockList = stockService.getAllStocks();
             model.addAttribute("stockList", stockList);
             
-            log.info("✅ 포트폴리오 조회 완료");
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        } catch (Exception e) {
-            log.error("❌ 포트폴리오 조회 실패: " + e.getMessage(), e);
+            log.info("✅ 수정 폼 준비 완료");
             log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             
-            model.addAttribute("errorMessage", "포트폴리오 조회에 실패했습니다.");
+            return "portfolio/update";
+            
+        } catch (Exception e) {
+            log.error("❌ 수정 폼 준비 실패", e);
             return "redirect:/portfolio/list";
         }
-        
-        return "portfolio/update";
     }
     
     /**
-     * ✅ 포트폴리오 수정 처리
-     * URL: /portfolio/update (POST)
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * ✅ 포트폴리오 수정 실행
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      */
     @PostMapping("/update")
-    @Transactional
-    public String update(@ModelAttribute PortfolioVO portfolio,
+    public String update(@ModelAttribute PortfolioVO portfolioVO,
                         HttpSession session,
                         RedirectAttributes rttr) {
         log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        log.info("✏️ 포트폴리오 수정 처리");
-        log.info("  - 포트폴리오 ID: " + portfolio.getPortfolioId());
+        log.info("📝 포트폴리오 수정 실행");
+        log.info("  - portfolioId: " + portfolioVO.getPortfolioId());
         
+        // 로그인 체크
         MemberVO member = (MemberVO) session.getAttribute("member");
         if (member == null) {
-            log.info("❌ 로그인 필요");
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             return "redirect:/member/login";
         }
         
         try {
-            // ✅ portfolioService를 사용한 수정
-            portfolioService.updatePortfolio(portfolio);
+            // 기존 포트폴리오 조회
+            PortfolioVO existing = portfolioService.getPortfolio(portfolioVO.getPortfolioId());
+            
+            if (existing == null) {
+                rttr.addFlashAttribute("errorMessage", "포트폴리오를 찾을 수 없습니다.");
+                return "redirect:/portfolio/list";
+            }
+            
+            // 권한 체크
+            if (!existing.getMemberId().equals(member.getMemberId())) {
+                rttr.addFlashAttribute("errorMessage", "권한이 없습니다.");
+                return "redirect:/portfolio/list";
+            }
+            
+            // 회원 ID 설정
+            portfolioVO.setMemberId(member.getMemberId());
+            
+            // 포트폴리오 수정
+            portfolioService.updatePortfolio(portfolioVO);
+            
+            rttr.addFlashAttribute("successMessage", "포트폴리오가 수정되었습니다.");
             
             log.info("✅ 포트폴리오 수정 완료");
-            log.info("  - 수량: " + portfolio.getQuantity());
-            log.info("  - 매입가: " + portfolio.getPurchasePrice());
             log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             
-            rttr.addFlashAttribute("message", "포트폴리오가 수정되었습니다.");
-            return "redirect:/portfolio/" + portfolio.getPortfolioId();
+            return "redirect:/portfolio/" + portfolioVO.getPortfolioId();
             
         } catch (Exception e) {
-            log.error("❌ 포트폴리오 수정 실패: " + e.getMessage(), e);
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            log.error("❌ 포트폴리오 수정 실패", e);
             
-            rttr.addFlashAttribute("errorMessage", "포트폴리오 수정에 실패했습니다: " + e.getMessage());
-            return "redirect:/portfolio/update/" + portfolio.getPortfolioId();
+            rttr.addFlashAttribute("errorMessage", "포트폴리오 수정에 실패했습니다.");
+            return "redirect:/portfolio/update/" + portfolioVO.getPortfolioId();
         }
     }
     
     /**
-     * ✅ 포트폴리오 삭제 처리
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * ✅ 포트폴리오 삭제 (GET 방식) - 신규 추가!
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * 
+     * URL: /portfolio/delete?portfolioId=X
+     * 
+     * 오류 해결:
+     * - 기존: @PostMapping("/delete/{portfolioId}") → POST만 지원
+     * - 신규: @GetMapping("/delete") + @RequestParam → GET 지원
+     * 
+     * 환급 처리:
+     * - 매입 금액 반환 (quantity × avgPurchasePrice)
+     */
+    @GetMapping("/delete")
+    public String deleteByGet(@RequestParam Long portfolioId,
+                             HttpSession session,
+                             RedirectAttributes rttr) {
+        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        log.info("🗑️ 포트폴리오 삭제 (GET 방식)");
+        log.info("  - portfolioId: " + portfolioId);
+        
+        // 로그인 체크
+        MemberVO member = (MemberVO) session.getAttribute("member");
+        if (member == null) {
+            return "redirect:/member/login";
+        }
+        
+        try {
+            // 기존 포트폴리오 조회
+            PortfolioVO portfolio = portfolioService.getPortfolio(portfolioId);
+            
+            if (portfolio == null) {
+                log.warn("⚠️ 포트폴리오를 찾을 수 없습니다");
+                rttr.addFlashAttribute("errorMessage", "포트폴리오를 찾을 수 없습니다.");
+                return "redirect:/portfolio/list";
+            }
+            
+            // 권한 체크
+            if (!portfolio.getMemberId().equals(member.getMemberId())) {
+                log.warn("⚠️ 권한 없음");
+                rttr.addFlashAttribute("errorMessage", "권한이 없습니다.");
+                return "redirect:/portfolio/list";
+            }
+            
+            // 환급 금액 계산
+            BigDecimal refundAmount = calculateRefund(portfolio);
+            
+            log.info("💰 환급 금액: " + refundAmount);
+            
+            // 포트폴리오 삭제
+            portfolioService.deletePortfolio(portfolioId);
+            
+            rttr.addFlashAttribute("successMessage", 
+                "포트폴리오가 삭제되었습니다. 환급 금액: " + refundAmount + "원");
+            
+            log.info("✅ 포트폴리오 삭제 완료");
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            return "redirect:/portfolio/list";
+            
+        } catch (Exception e) {
+            log.error("❌ 포트폴리오 삭제 실패", e);
+            
+            rttr.addFlashAttribute("errorMessage", "포트폴리오 삭제에 실패했습니다: " + e.getMessage());
+            return "redirect:/portfolio/list";
+        }
+    }
+    
+    /**
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * ✅ 포트폴리오 삭제 (POST 방식) - 기존 유지
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * 
      * URL: /portfolio/delete/{portfolioId} (POST)
      */
     @PostMapping("/delete/{portfolioId}")
-    @Transactional
     public String delete(@PathVariable Long portfolioId,
                         HttpSession session,
                         RedirectAttributes rttr) {
         log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        log.info("🗑️ 포트폴리오 삭제");
-        log.info("  - 포트폴리오 ID: " + portfolioId);
+        log.info("🗑️ 포트폴리오 삭제 (POST 방식)");
+        log.info("  - portfolioId: " + portfolioId);
         
+        // 로그인 체크
         MemberVO member = (MemberVO) session.getAttribute("member");
         if (member == null) {
-            log.info("❌ 로그인 필요");
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             return "redirect:/member/login";
         }
         
         try {
-            // ✅ portfolioService를 사용한 삭제
+            // 기존 포트폴리오 조회
+            PortfolioVO portfolio = portfolioService.getPortfolio(portfolioId);
+            
+            if (portfolio == null) {
+                rttr.addFlashAttribute("errorMessage", "포트폴리오를 찾을 수 없습니다.");
+                return "redirect:/portfolio/list";
+            }
+            
+            // 권한 체크
+            if (!portfolio.getMemberId().equals(member.getMemberId())) {
+                rttr.addFlashAttribute("errorMessage", "권한이 없습니다.");
+                return "redirect:/portfolio/list";
+            }
+            
+            // 환급 금액 계산
+            BigDecimal refundAmount = calculateRefund(portfolio);
+            
+            log.info("💰 환급 금액: " + refundAmount);
+            
+            // 포트폴리오 삭제
             portfolioService.deletePortfolio(portfolioId);
+            
+            rttr.addFlashAttribute("successMessage", 
+                "포트폴리오가 삭제되었습니다. 환급 금액: " + refundAmount + "원");
             
             log.info("✅ 포트폴리오 삭제 완료");
             log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             
-            rttr.addFlashAttribute("message", "포트폴리오가 삭제되었습니다.");
             return "redirect:/portfolio/list";
             
         } catch (Exception e) {
-            log.error("❌ 포트폴리오 삭제 실패: " + e.getMessage(), e);
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            log.error("❌ 포트폴리오 삭제 실패", e);
             
-            rttr.addFlashAttribute("errorMessage", "포트폴리오 삭제에 실패했습니다: " + e.getMessage());
-            return "redirect:/portfolio/" + portfolioId;
+            rttr.addFlashAttribute("errorMessage", "포트폴리오 삭제에 실패했습니다.");
+            return "redirect:/portfolio/list";
         }
     }
     
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 유틸리티 메서드
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    
     /**
-     * ✅ 포트폴리오 ID로 조회 (Exception 버전)
-     * 다른 메서드에서 사용할 수 있는 유틸리티 메서드
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * ✅ 환급 금액 계산 헬퍼 메서드
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * 
+     * 환급 금액 = 수량 × 평균 매입 단가
      */
-    public PortfolioVO getPortfolioById(Long portfolioId) throws Exception {
-        log.debug("🔍 포트폴리오 ID로 조회: " + portfolioId);
-        
-        if (portfolioId == null || portfolioId <= 0) {
-            throw new IllegalArgumentException("유효하지 않은 포트폴리오 ID: " + portfolioId);
-        }
-        
-        // ✅ Service를 통한 조회
-        PortfolioVO portfolio = portfolioService.getPortfolio(portfolioId);
-        
-        if (portfolio == null) {
-            throw new Exception("포트폴리오를 찾을 수 없습니다: ID = " + portfolioId);
-        }
-        
-        return portfolio;
-    }
-    
-    /**
-     * ✅ 포트폴리오 조회 (내부 사용)
-     * Service를 통해 포트폴리오를 조회합니다.
-     */
-    private PortfolioVO getPortfolio(Long portfolioId) {
-        log.debug("🔍 포트폴리오 조회 (내부): " + portfolioId);
-        
-        if (portfolioId == null || portfolioId <= 0) {
-            log.warn("⚠️ 유효하지 않은 포트폴리오 ID: " + portfolioId);
-            return null;
-        }
-        
+    private BigDecimal calculateRefund(PortfolioVO portfolio) {
         try {
-            // ✅ portfolioService를 사용한 조회
-            return portfolioService.getPortfolio(portfolioId);
-        } catch (Exception e) {
-            log.error("❌ 포트폴리오 조회 실패: " + e.getMessage(), e);
-            return null;
-        }
-    }
-    
-    /**
-     * ✅ 포트폴리오 수정 (내부 사용)
-     * modify → update로 이름 변경 권장
-     */
-    @Transactional
-    public void modify(PortfolioVO portfolio) throws Exception {
-        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        log.info("✏️ 포트폴리오 수정 (내부 메서드)");
-        log.info("  - 포트폴리오 ID: " + portfolio.getPortfolioId());
-        log.info("  - 수량: " + portfolio.getQuantity());
-        log.info("  - 매입가: " + portfolio.getPurchasePrice());
-        
-        if (portfolio == null || portfolio.getPortfolioId() == null) {
-            throw new IllegalArgumentException("포트폴리오 정보가 유효하지 않습니다.");
-        }
-        
-        try {
-            // ✅ portfolioService를 사용한 수정
-            portfolioService.updatePortfolio(portfolio);
+            BigDecimal quantity = portfolio.getQuantity();
+            BigDecimal avgPrice = portfolio.getAvgPurchasePrice();
             
-            log.info("✅ 포트폴리오 수정 완료");
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            if (quantity != null && avgPrice != null) {
+                return quantity.multiply(avgPrice);
+            }
+            
+            return BigDecimal.ZERO;
             
         } catch (Exception e) {
-            log.error("❌ 포트폴리오 수정 실패: " + e.getMessage(), e);
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            throw new Exception("포트폴리오 수정 실패: " + e.getMessage(), e);
-        }
-    }
-    
-    /**
-     * ✅ 포트폴리오 삭제 (내부 사용)
-     */
-    @Transactional
-    public void remove(Long portfolioId) throws Exception {
-        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        log.info("🗑️ 포트폴리오 삭제 (내부 메서드)");
-        log.info("  - 포트폴리오 ID: " + portfolioId);
-        
-        if (portfolioId == null || portfolioId <= 0) {
-            throw new IllegalArgumentException("유효하지 않은 포트폴리오 ID: " + portfolioId);
-        }
-        
-        try {
-            // ✅ portfolioService를 사용한 삭제
-            portfolioService.deletePortfolio(portfolioId);
-            
-            log.info("✅ 포트폴리오 삭제 완료");
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-        } catch (Exception e) {
-            log.error("❌ 포트폴리오 삭제 실패: " + e.getMessage(), e);
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            throw new Exception("포트폴리오 삭제 실패: " + e.getMessage(), e);
+            log.error("❌ 환급 금액 계산 실패", e);
+            return BigDecimal.ZERO;
         }
     }
 }

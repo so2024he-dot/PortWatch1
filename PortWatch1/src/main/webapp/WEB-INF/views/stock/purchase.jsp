@@ -76,6 +76,20 @@
             font-size: 0.85rem;
         }
         
+        .exchange-rate-card {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .exchange-rate-card .rate-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #856404;
+        }
+        
         .form-group {
             margin-bottom: 1.5rem;
         }
@@ -231,6 +245,24 @@
             </div>
         </div>
         
+        <!-- 환율 정보 카드 (미국 주식인 경우만) -->
+        <c:if test="${stock.country == 'US'}">
+            <div class="exchange-rate-card" id="exchangeRateCard">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-exchange-alt"></i> 
+                        <strong>환율 정보</strong>
+                    </div>
+                    <div class="rate-value" id="exchangeRate">
+                        1 USD = <span id="rateValue">1,350.00</span> KRW
+                    </div>
+                </div>
+                <small class="text-muted d-block mt-2">
+                    ※ 원화 환산 금액은 참고용이며, 실제 거래는 달러로 진행됩니다.
+                </small>
+            </div>
+        </c:if>
+        
         <!-- 매입 폼 -->
         <form id="purchaseForm">
             <!-- 수량 입력 -->
@@ -291,9 +323,14 @@
                         <c:if test="${stock.country == 'US'}">USD</c:if>
                     </span>
                 </div>
-                <small class="text-muted">
-                    <i class="fas fa-info-circle"></i> MySQL 실시간 가격이 자동 적용됩니다
-                </small>
+                
+                <!-- 미국 주식 원화 환산 -->
+                <c:if test="${stock.country == 'US'}">
+                    <small class="text-muted mt-1 d-block">
+                        <i class="fas fa-won-sign"></i> 
+                        원화 환산: <strong id="priceInKrw">-</strong>원
+                    </small>
+                </c:if>
             </div>
             
             <!-- 매입 요약 -->
@@ -330,6 +367,18 @@
                     <span class="summary-label">총 투자 금액</span>
                     <span class="summary-value" id="summaryTotal">-</span>
                 </div>
+                
+                <!-- 미국 주식 원화 표시 -->
+                <c:if test="${stock.country == 'US'}">
+                    <div class="summary-row" style="border-top: 2px solid #667eea; margin-top: 0.5rem; padding-top: 1rem;">
+                        <span class="summary-label">
+                            <i class="fas fa-won-sign"></i> 원화 환산
+                        </span>
+                        <span class="summary-value" id="summaryTotalKrw" style="color: #f59e0b;">
+                            -
+                        </span>
+                    </div>
+                </c:if>
             </div>
             
             <!-- 알림 메시지 -->
@@ -357,7 +406,7 @@
     <script>
     /**
      * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     * 주식 매입 관리자 - 실시간 계산 버전 (2026.01.16)
+     * 주식 매입 관리자 - 환율 표시 버전 (2026.01.16)
      * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      */
     const PurchaseManager = {
@@ -367,6 +416,7 @@
         country: '${stock.country}',
         contextPath: '${pageContext.request.contextPath}',
         memberId: '${member.memberId}',
+        exchangeRate: 1350.00, // 기본값
         
         /**
          * 초기화
@@ -381,19 +431,51 @@
             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             
             this.bindEvents();
+            
+            // 미국 주식인 경우 환율 로드
+            if (this.country === 'US') {
+                this.loadExchangeRate();
+            }
+            
             this.calculateSummary();
+        },
+        
+        /**
+         * 환율 로드
+         */
+        loadExchangeRate: function() {
+            console.log('💱 환율 조회 중...');
+            
+            $.ajax({
+                url: this.contextPath + '/api/exchange/rate',
+                type: 'GET',
+                success: (response) => {
+                    if (response.success) {
+                        this.exchangeRate = parseFloat(response.rate);
+                        $('#rateValue').text(this.formatNumber(this.exchangeRate));
+                        
+                        console.log('✅ 환율 로드 완료:', this.exchangeRate);
+                        
+                        // 환율 로드 후 계산 실행
+                        this.calculateSummary();
+                    }
+                },
+                error: (xhr) => {
+                    console.warn('⚠️ 환율 조회 실패, 기본값 사용');
+                }
+            });
         },
         
         /**
          * 이벤트 바인딩
          */
         bindEvents: function() {
-            // 수량 입력 변경 시 실시간 계산
+            // 수량 입력 변경
             $('#quantityInput').on('input', () => {
                 this.calculateSummary();
             });
             
-            // 미국 주식 4분할 버튼
+            // 4분할 버튼
             $('.fraction-btn').on('click', (e) => {
                 const value = $(e.currentTarget).data('value');
                 $('#quantityInput').val(value);
@@ -412,14 +494,12 @@
         },
         
         /**
-         * 실시간 계산 (핵심!)
+         * 실시간 계산
          */
         calculateSummary: function() {
             const quantity = parseFloat($('#quantityInput').val()) || 0;
             
-            console.log('💰 실시간 계산');
-            console.log('  - 수량:', quantity);
-            console.log('  - 단가:', this.currentPrice);
+            console.log('💰 실시간 계산:', quantity, '주');
             
             // 1. 수량 표시
             const quantityStr = this.country === 'US' ? 
@@ -433,13 +513,13 @@
                 '$' + this.currentPrice.toFixed(2);
             $('#summaryPrice').text(priceStr);
             
-            // 3. 총 금액 계산 = 수량 × 단가
+            // 3. 총 금액 계산
             const totalAmount = quantity * this.currentPrice;
             
-            // 4. 수수료 계산 = 총 금액 × 0.1%
+            // 4. 수수료 계산
             const commission = totalAmount * 0.001;
             
-            // 5. 최종 금액 = 총 금액 + 수수료
+            // 5. 최종 금액
             const finalAmount = totalAmount + commission;
             
             // 수수료 표시
@@ -454,10 +534,18 @@
                 '$' + finalAmount.toFixed(2);
             $('#summaryTotal').text(finalStr);
             
+            // 미국 주식 원화 환산
+            if (this.country === 'US') {
+                const priceInKrw = this.currentPrice * this.exchangeRate;
+                const totalInKrw = finalAmount * this.exchangeRate;
+                
+                $('#priceInKrw').text(this.formatNumber(priceInKrw));
+                $('#summaryTotalKrw').text(this.formatNumber(totalInKrw) + '원');
+            }
+            
             console.log('  - 총 금액:', totalAmount);
             console.log('  - 수수료:', commission);
             console.log('  - 최종 금액:', finalAmount);
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         },
         
         /**
@@ -477,17 +565,7 @@
                 return;
             }
             
-            // 미국 주식: 소수점 3자리
-            if (this.country === 'US' && quantity.toFixed(3) !== quantity.toString()) {
-                const rounded = Math.round(quantity * 1000) / 1000;
-                $('#quantityInput').val(rounded);
-                this.calculateSummary();
-            }
-            
-            console.log('💳 매입 실행');
-            console.log('  - 종목:', this.stockCode);
-            console.log('  - 수량:', quantity);
-            console.log('  - 단가:', this.currentPrice);
+            console.log('💳 매입 실행:', this.stockCode, quantity, '주');
             
             // 로딩 표시
             const submitBtn = $('button[type="submit"]');
@@ -549,7 +627,6 @@
                 '"></i> ' + message);
             alertBox.show();
             
-            // 3초 후 자동 숨김 (에러 제외)
             if (type !== 'danger') {
                 setTimeout(() => {
                     alertBox.fadeOut();
