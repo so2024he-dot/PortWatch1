@@ -1,430 +1,664 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8"
-	pageEncoding="UTF-8"%>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
-<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>포트폴리오 등록 - PortWatch</title>
-<link
-	href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
-	rel="stylesheet">
-<link rel="stylesheet"
-	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
-<style>
-body {
-	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-	background-color: #f8f9fa;
-}
-
-.form-container {
-	background: white;
-	border-radius: 10px;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-	padding: 30px;
-	margin-top: 30px;
-}
-
-.stock-info-card {
-	background: #f8f9fa;
-	border-radius: 8px;
-	padding: 15px;
-	margin-bottom: 20px;
-}
-
-.price-badge {
-	background: #0d6efd;
-	color: white;
-	padding: 5px 15px;
-	border-radius: 20px;
-	font-size: 16px;
-	font-weight: bold;
-}
-
-.btn-custom {
-	border-radius: 20px;
-	padding: 10px 30px;
-}
-
-.required {
-	color: red;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주식 매입 - PortWatch</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .purchase-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .purchase-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .purchase-header h2 {
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stock-select-card {
+            background: #f9fafb;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .stock-info-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: white;
+            display: none;
+        }
+        
+        .stock-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stock-code {
+            opacity: 0.9;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .current-price {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+        }
+        
+        .price-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 12px;
+            border-radius: 10px;
+            display: inline-block;
+            font-size: 0.85rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        
+        .form-control, .form-select {
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .fraction-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .fraction-btn {
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            background: white;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .fraction-btn:hover {
+            border-color: #667eea;
+            background: #f3f4f6;
+        }
+        
+        .fraction-btn.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+        
+        .summary-card {
+            background: #f9fafb;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .summary-row:last-child {
+            border-bottom: none;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+        
+        .summary-label {
+            font-weight: 600;
+            color: #6b7280;
+        }
+        
+        .summary-value {
+            font-weight: 700;
+            color: #1f2937;
+            font-size: 1.1rem;
+        }
+        
+        .btn-purchase {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            transition: all 0.3s;
+        }
+        
+        .btn-purchase:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .alert-box {
+            display: none;
+            margin-top: 1rem;
+            border-radius: 10px;
+        }
+        
+        .input-group-text {
+            background: #f3f4f6;
+            border: 2px solid #e5e7eb;
+            font-weight: 600;
+        }
+    </style>
 </head>
-
 <body>
-	<!-- Header 포함 -->
-	<jsp:include page="../common/header.jsp" />
-
-	<div class="container">
-		<div class="row justify-content-center">
-			<div class="col-md-8">
-				<div class="form-container">
-					<h2 class="mb-4">
-						<i class="fas fa-plus-circle"></i> 포트폴리오 등록
-					</h2>
-
-					<c:if test="${not empty error}">
-						<div class="alert alert-danger">
-							<i class="fas fa-exclamation-triangle"></i> ${error}
-						</div>
-					</c:if>
-
-
-
-					<!-- ✅ 수정된 Form -->
-					<form id="portfolioForm"
-						action="${pageContext.request.contextPath}/portfolio/create"
-						method="POST" onsubmit="return validateForm()">
-
-						<!-- 주식 선택 -->
-						<div class="mb-3">
-							<label for="stockId" class="form-label">주식 선택 <span
-								class="text-danger">*</span></label> <select class="form-select"
-								id="stockId" name="stockId" required>
-								<option value="">-- 주식을 선택하세요 --</option>
-								<c:forEach items="${stockList}" var="stock">
-									<option value="${stock.stockId}" data-code="${stock.stockCode}"
-										data-name="${stock.stockName}">${stock.stockCode} -
-										${stock.stockName}</option>
-								</c:forEach>
-							</select>
-							<div class="invalid-feedback">주식을 선택해주세요.</div>
-						</div>
-
-						<!-- 수량 -->
-						<div class="mb-3">
-							<label for="quantity" class="form-label">수량 <span
-								class="text-danger">*</span></label> <input type="number"
-								class="form-control" id="quantity" name="quantity" min="1"
-								step="1" required placeholder="예: 10">
-							<div class="invalid-feedback">수량을 입력해주세요 (최소 1주).</div>
-						</div>
-
-						<!-- 매입 단가 -->
-						<div class="mb-3">
-							<label for="purchasePrice" class="form-label">매입 단가 <span
-								class="text-danger">*</span></label> <input type="number"
-								class="form-control" id="purchasePrice" name="purchasePrice"
-								min="0" step="0.01" required placeholder="예: 50000">
-							<div class="invalid-feedback">매입 단가를 입력해주세요.</div>
-						</div>
-
-						<!-- 총 투자금액 (읽기 전용) -->
-						<div class="mb-3">
-							<label class="form-label">총 투자금액</label> <input type="text"
-								class="form-control" id="totalAmount" readonly>
-						</div>
-
-						<!-- 버튼 -->
-						<div class="d-flex gap-2">
-							<button type="submit" class="btn btn-primary">
-								<i class="fas fa-save"></i> 등록
-							</button>
-							<a href="${pageContext.request.contextPath}/portfolio/list"
-								class="btn btn-secondary"> <i class="fas fa-times"></i> 취소
-							</a>
-						</div>
-					</form>
-				</div>
-
-				<!-- Bootstrap 5 JS -->
-				<script
-					src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-
-				<!-- ✅ JavaScript 검증 로직 -->
-				<script>
-					// 총 투자금액 자동 계산
-					document.getElementById('quantity').addEventListener(
-							'input', calculateTotal);
-					document.getElementById('purchasePrice').addEventListener(
-							'input', calculateTotal);
-
-					function calculateTotal() {
-						const quantity = parseFloat(document
-								.getElementById('quantity').value) || 0;
-						const price = parseFloat(document
-								.getElementById('purchasePrice').value) || 0;
-						const total = quantity * price;
-
-						document.getElementById('totalAmount').value = total > 0 ? total
-								.toLocaleString('ko-KR')
-								+ '원'
-								: '';
-					}
-
-					// 폼 검증
-					function validateForm() {
-						const stockId = document.getElementById('stockId').value;
-						const quantity = document.getElementById('quantity').value;
-						const purchasePrice = document
-								.getElementById('purchasePrice').value;
-
-						// 주식 선택 확인
-						if (!stockId || stockId === '') {
-							alert('주식을 선택해주세요.');
-							document.getElementById('stockId').focus();
-							return false;
-						}
-
-						// 수량 확인
-						if (!quantity || parseFloat(quantity) < 1) {
-							alert('수량은 최소 1주 이상이어야 합니다.');
-							document.getElementById('quantity').focus();
-							return false;
-						}
-
-						// 매입 단가 확인
-						if (!purchasePrice || parseFloat(purchasePrice) < 0) {
-							alert('매입 단가를 올바르게 입력해주세요.');
-							document.getElementById('purchasePrice').focus();
-							return false;
-						}
-
-						// ✅ 숫자 형식 검증
-						if (isNaN(quantity) || isNaN(purchasePrice)) {
-							alert('숫자 형식이 올바르지 않습니다.');
-							return false;
-						}
-
-						// 확인 메시지
-						const selectedOption = document
-								.getElementById('stockId').selectedOptions[0];
-						const stockName = selectedOption
-								.getAttribute('data-name');
-						const total = parseFloat(quantity)
-								* parseFloat(purchasePrice);
-
-						return confirm(`다음 내용으로 포트폴리오를 등록하시겠습니까?\n\n`
-								+ `주식: ${stockName}\n`
-								+ `수량: ${quantity}주\n`
-								+ `매입 단가: ${parseFloat(purchasePrice).toLocaleString('ko-KR')}원\n`
-								+ `총 투자금액: ${total.toLocaleString('ko-KR')}원`);
-					}
-
-					// Bootstrap 5 폼 검증 스타일
-					(function() {
-						'use strict';
-						const forms = document
-								.querySelectorAll('.needs-validation');
-						Array.prototype.slice.call(forms).forEach(
-								function(form) {
-									form.addEventListener('submit', function(
-											event) {
-										if (!form.checkValidity()) {
-											event.preventDefault();
-											event.stopPropagation();
-										}
-										form.classList.add('was-validated');
-									}, false);
-								});
-					})();
-				</script>
-</body>
-</html>
-<!-- 수정 된 사항 Form  -->
-
-
-
-<form:form modelAttribute="portfolioVO"
-	action="${pageContext.request.contextPath}/portfolio/create"
-	method="post">
-
-	<!-- 종목 선택 -->
-	<div class="mb-4">
-		<label class="form-label"> <i class="fas fa-chart-line"></i>
-			종목 선택 <span class="required">*</span>
-		</label>
-		<form:select path="stockId" class="form-select" id="stockSelect"
-			onchange="updateStockInfo()">
-			<form:option value="" label="-- 종목을 선택하세요 --" />
-			<c:if test="${not empty stockList}">
-				<c:forEach var="stock" items="${stockList}">
-					<form:option value="${stock.stockId}"
-						data-code="${stock.stockCode}" data-name="${stock.stockName}"
-						data-price="${stock.currentPrice}" data-country="${stock.country}">
-                                            [${stock.country}] ${stock.stockName} (${stock.stockCode})
-                                        </form:option>
-				</c:forEach>
-			</c:if>
-		</form:select>
-		<form:errors path="stockId" cssClass="text-danger" />
-	</div>
-
-	<!-- 선택된 종목 정보 표시 -->
-	<div id="stockInfoCard" class="stock-info-card" style="display: none;">
-		<div class="row align-items-center">
-			<div class="col-md-6">
-				<h5 id="selectedStockName">-</h5>
-				<p class="text-muted mb-0">
-					<span id="selectedStockCode">-</span> <span
-						id="selectedStockCountry" class="ms-2 badge bg-primary">-</span>
-				</p>
-			</div>
-			<div class="col-md-6 text-end">
-				<div class="text-muted small">현재가</div>
-				<div class="price-badge" id="selectedStockPrice">-</div>
-			</div>
-		</div>
-	</div>
-
-	<!-- 수량 입력 -->
-	<div class="mb-4">
-		<label class="form-label"> <i class="fas fa-sort-numeric-up"></i>
-			수량 <span class="required">*</span>
-		</label>
-		<form:input path="quantity" type="number" class="form-control" min="1"
-			step="1" placeholder="구매 수량을 입력하세요" oninput="calculateTotal()" />
-		<form:errors path="quantity" cssClass="text-danger" />
-	</div>
-
-	<!-- 매수가 입력 -->
-	<div class="mb-4">
-		<label class="form-label"> <i class="fas fa-dollar-sign"></i>
-			매수가 <span class="required">*</span> <span class="text-muted small"
-			id="priceHint"></span>
-		</label>
-		<form:input path="purchasePrice" type="number" class="form-control"
-			min="0.01" step="0.01" placeholder="매수 가격을 입력하세요"
-			oninput="calculateTotal()" />
-		<form:errors path="purchasePrice" cssClass="text-danger" />
-		<div class="form-text" id="priceGuide"></div>
-	</div>
-
-	<!-- 총 투자금액 표시 -->
-	<div class="mb-4">
-		<div class="stock-info-card">
-			<div class="row">
-				<div class="col-6">
-					<strong>총 투자금액:</strong>
-				</div>
-				<div class="col-6 text-end">
-					<strong id="totalAmount" class="text-primary">0 원</strong>
-				</div>
-			</div>
-		</div>
-	</div>
-
-	<!-- 매수일 -->
-	<div class="mb-4">
-		<label class="form-label"> <i class="fas fa-calendar"></i> 매수일
-		</label>
-		<form:input path="purchaseDate" type="date" class="form-control" />
-		<form:errors path="purchaseDate" cssClass="text-danger" />
-	</div>
-
-	<!-- 버튼 -->
-	<div class="text-center mt-4">
-		<button type="submit" class="btn btn-primary btn-custom me-2">
-			<i class="fas fa-save"></i> 등록
-		</button>
-		<a href="${pageContext.request.contextPath}/portfolio/list"
-			class="btn btn-secondary btn-custom"> <i class="fas fa-times"></i>
-			취소
-		</a>
-	</div>
-</form:form>
-</div>
-</div>
-</div>
-</div>
-
-<script
-	src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-	// 종목 정보 업데이트
-	function updateStockInfo() {
-		const select = document.getElementById('stockSelect');
-		const selectedOption = select.options[select.selectedIndex];
-
-		if (selectedOption.value) {
-			const stockName = selectedOption.getAttribute('data-name');
-			const stockCode = selectedOption.getAttribute('data-code');
-			const stockPrice = selectedOption.getAttribute('data-price');
-			const country = selectedOption.getAttribute('data-country');
-
-			// 정보 표시
-			document.getElementById('selectedStockName').textContent = stockName;
-			document.getElementById('selectedStockCode').textContent = stockCode;
-			document.getElementById('selectedStockCountry').textContent = country === 'KR' ? '한국'
-					: '미국';
-
-			// 가격 표시 (한국/미국 구분)
-			if (country === 'KR') {
-				document.getElementById('selectedStockPrice').textContent = new Intl.NumberFormat(
-						'ko-KR').format(stockPrice)
-						+ ' 원';
-				document.getElementById('priceHint').textContent = '(1주당 가격)';
-				document.getElementById('priceGuide').innerHTML = '<i class="fas fa-info-circle"></i> 한국 주식은 1주 단위로 거래됩니다.';
-			} else {
-				document.getElementById('selectedStockPrice').textContent = '$'
-						+ new Intl.NumberFormat('en-US', {
-							minimumFractionDigits : 2
-						}).format(stockPrice);
-				document.getElementById('priceHint').textContent = '(달러 단위)';
-				document.getElementById('priceGuide').innerHTML = '<i class="fas fa-info-circle"></i> 미국 주식은 소수점 단위로 거래 가능합니다.';
-			}
-
-			// 매수가 input에 현재가 미리 채우기
-			document.querySelector('input[name="purchasePrice"]').value = stockPrice;
-
-			document.getElementById('stockInfoCard').style.display = 'block';
-
-			// 총액 계산
-			calculateTotal();
-		} else {
-			document.getElementById('stockInfoCard').style.display = 'none';
-			document.getElementById('priceHint').textContent = '';
-			document.getElementById('priceGuide').innerHTML = '';
-		}
-	}
-
-	// 총 투자금액 계산
-	function calculateTotal() {
-		const quantity = parseFloat(document
-				.querySelector('input[name="quantity"]').value) || 0;
-		const price = parseFloat(document
-				.querySelector('input[name="purchasePrice"]').value) || 0;
-		const total = quantity * price;
-
-		const select = document.getElementById('stockSelect');
-		const selectedOption = select.options[select.selectedIndex];
-		const country = selectedOption.getAttribute('data-country');
-
-		if (total > 0) {
-			if (country === 'KR') {
-				document.getElementById('totalAmount').textContent = new Intl.NumberFormat(
-						'ko-KR').format(total)
-						+ ' 원';
-			} else {
-				document.getElementById('totalAmount').textContent = '$'
-						+ new Intl.NumberFormat('en-US', {
-							minimumFractionDigits : 2
-						}).format(total);
-			}
-		} else {
-			document.getElementById('totalAmount').textContent = '0 원';
-		}
-	}
-
-	// 페이지 로드 시 종목이 미리 선택된 경우 (매수 버튼으로 온 경우)
-	window.onload = function() {
-		const select = document.getElementById('stockSelect');
-		if (select.value) {
-			updateStockInfo();
-		}
-
-		// 오늘 날짜를 기본값으로 설정
-		const today = new Date().toISOString().split('T')[0];
-		const dateInput = document.querySelector('input[name="purchaseDate"]');
-		if (!dateInput.value) {
-			dateInput.value = today;
-		}
-	};
-</script>
+    <div class="purchase-container">
+        <!-- 헤더 -->
+        <div class="purchase-header">
+            <h2>
+                <i class="fas fa-shopping-cart"></i> 주식 매입
+            </h2>
+            <p class="text-muted">종목을 선택하고 원하는 수량을 입력하세요</p>
+        </div>
+        
+        <!-- 주식 선택 카드 -->
+        <div class="stock-select-card">
+            <label class="form-label">
+                <i class="fas fa-search"></i> 주식 종목 선택
+            </label>
+            <select id="stockSelect" class="form-select">
+                <option value="">-- 종목을 선택하세요 --</option>
+                <c:forEach items="${stockList}" var="stockItem">
+                    <option value="${stockItem.stockCode}" 
+                            data-name="${stockItem.stockName}"
+                            data-price="${stockItem.currentPrice}"
+                            data-country="${stockItem.country}"
+                            <c:if test="${stock.stockCode == stockItem.stockCode}">selected</c:if>>
+                        ${stockItem.stockName} (${stockItem.stockCode}) - 
+                        <c:choose>
+                            <c:when test="${stockItem.country == 'KR'}">
+                                <fmt:formatNumber value="${stockItem.currentPrice}" pattern="#,##0"/>원
+                            </c:when>
+                            <c:otherwise>
+                                $<fmt:formatNumber value="${stockItem.currentPrice}" pattern="#,##0.00"/>
+                            </c:otherwise>
+                        </c:choose>
+                    </option>
+                </c:forEach>
+            </select>
+        </div>
+        
+        <!-- 선택된 주식 정보 카드 -->
+        <div id="stockInfoCard" class="stock-info-card" 
+             <c:if test="${not empty stock}">style="display:block;"</c:if>>
+            <div class="stock-name" id="displayStockName">${stock.stockName}</div>
+            <div class="stock-code" id="displayStockCode">
+                ${stock.stockCode}
+                <span class="price-badge" id="displayCountryBadge">
+                    <c:choose>
+                        <c:when test="${stock.country == 'KR'}">
+                            🇰🇷 한국 주식
+                        </c:when>
+                        <c:otherwise>
+                            🇺🇸 미국 주식
+                        </c:otherwise>
+                    </c:choose>
+                </span>
+            </div>
+            <div>현재가</div>
+            <div class="current-price" id="displayCurrentPrice">
+                <c:choose>
+                    <c:when test="${stock.country == 'KR'}">
+                        <fmt:formatNumber value="${stock.currentPrice}" pattern="#,##0"/>원
+                    </c:when>
+                    <c:otherwise>
+                        $<fmt:formatNumber value="${stock.currentPrice}" pattern="#,##0.00"/>
+                    </c:otherwise>
+                </c:choose>
+            </div>
+        </div>
+        
+        <!-- 매입 폼 -->
+        <form id="purchaseForm">
+            <input type="hidden" id="selectedStockCode" value="${stock.stockCode}">
+            <input type="hidden" id="selectedCountry" value="${stock.country}">
+            <input type="hidden" id="selectedPrice" value="${stock.currentPrice}">
+            
+            <!-- 수량 입력 -->
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-hashtag"></i> 매입 수량
+                </label>
+                <div class="input-group">
+                    <input type="number" 
+                           id="quantityInput" 
+                           class="form-control"
+                           placeholder="수량 입력"
+                           step="0.001" 
+                           min="0.001"
+                           value="1"
+                           required>
+                    <span class="input-group-text">주</span>
+                </div>
+                
+                <!-- 미국 주식 4분할 버튼 -->
+                <div id="fractionButtons" class="fraction-buttons" style="display:none;">
+                    <button type="button" class="fraction-btn" data-value="0.25">
+                        1/4주<br><small>(0.25)</small>
+                    </button>
+                    <button type="button" class="fraction-btn" data-value="0.5">
+                        1/2주<br><small>(0.5)</small>
+                    </button>
+                    <button type="button" class="fraction-btn" data-value="0.75">
+                        3/4주<br><small>(0.75)</small>
+                    </button>
+                    <button type="button" class="fraction-btn active" data-value="1">
+                        1주<br><small>(1.0)</small>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 매입 단가 (읽기 전용) -->
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-tag"></i> 매입 단가 (현재가)
+                </label>
+                <div class="input-group">
+                    <input type="text" 
+                           id="priceDisplay" 
+                           class="form-control"
+                           value="<c:if test='${not empty stock}'><fmt:formatNumber value='${stock.currentPrice}' pattern='#,##0.00'/></c:if>"
+                           readonly>
+                    <span class="input-group-text" id="currencySymbol">
+                        <c:if test="${stock.country == 'KR'}">원</c:if>
+                        <c:if test="${stock.country == 'US'}">USD</c:if>
+                    </span>
+                </div>
+                <small class="text-muted">
+                    <i class="fas fa-info-circle"></i> MySQL 실시간 가격이 자동 적용됩니다
+                </small>
+            </div>
+            
+            <!-- 매입 요약 -->
+            <div class="summary-card">
+                <h5 class="mb-3">
+                    <i class="fas fa-calculator"></i> 매입 요약
+                </h5>
+                
+                <div class="summary-row">
+                    <span class="summary-label">수량</span>
+                    <span class="summary-value" id="summaryQuantity">-</span>
+                </div>
+                
+                <div class="summary-row">
+                    <span class="summary-label">단가</span>
+                    <span class="summary-value" id="summaryPrice">-</span>
+                </div>
+                
+                <div class="summary-row">
+                    <span class="summary-label">수수료 (0.1%)</span>
+                    <span class="summary-value" id="summaryCommission">-</span>
+                </div>
+                
+                <div class="summary-row">
+                    <span class="summary-label">총 투자 금액</span>
+                    <span class="summary-value" id="summaryTotal">-</span>
+                </div>
+            </div>
+            
+            <!-- 알림 메시지 -->
+            <div id="alertBox" class="alert-box"></div>
+            
+            <!-- 매입 버튼 -->
+            <button type="submit" class="btn btn-purchase mt-3" id="submitBtn" disabled>
+                <i class="fas fa-check-circle"></i> 매입하기
+            </button>
+            
+            <!-- 취소 버튼 -->
+            <a href="${pageContext.request.contextPath}/stock/list" 
+               class="btn btn-secondary w-100 mt-2">
+                <i class="fas fa-arrow-left"></i> 취소
+            </a>
+        </form>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <script>
+    /**
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * 주식 매입 관리자 - parseFloat 오류 해결 버전 (2026.01.16)
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * 
+     * 핵심 수정:
+     * - EL 표현식 오류 완전 제거
+     * - 주식 선택 기능 추가
+     * - 실시간 계산 로직
+     */
+    const PurchaseManager = {
+        stockCode: '',
+        stockName: '',
+        currentPrice: 0,
+        country: '',
+        contextPath: '${pageContext.request.contextPath}',
+        memberId: '${member.memberId}',
+        
+        /**
+         * 초기화
+         */
+        init: function() {
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            console.log('💰 매입 관리자 초기화');
+            console.log('  - contextPath:', this.contextPath);
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            
+            // 초기 주식 정보 설정
+            const initialCode = document.getElementById('selectedStockCode').value;
+            if (initialCode) {
+                const option = document.querySelector('option[value="' + initialCode + '"]');
+                if (option) {
+                    this.updateStockInfo(option);
+                }
+            }
+            
+            this.bindEvents();
+        },
+        
+        /**
+         * 이벤트 바인딩
+         */
+        bindEvents: function() {
+            // 주식 선택 변경
+            document.getElementById('stockSelect').addEventListener('change', (e) => {
+                const option = e.target.options[e.target.selectedIndex];
+                if (option.value) {
+                    this.updateStockInfo(option);
+                } else {
+                    document.getElementById('stockInfoCard').style.display = 'none';
+                    document.getElementById('submitBtn').disabled = true;
+                }
+            });
+            
+            // 수량 입력 변경
+            document.getElementById('quantityInput').addEventListener('input', () => {
+                this.calculateSummary();
+            });
+            
+            // 4분할 버튼 이벤트 (동적으로 생성되므로 이벤트 위임 사용)
+            document.getElementById('fractionButtons').addEventListener('click', (e) => {
+                if (e.target.classList.contains('fraction-btn') || e.target.closest('.fraction-btn')) {
+                    const btn = e.target.classList.contains('fraction-btn') ? 
+                                 e.target : e.target.closest('.fraction-btn');
+                    const value = btn.getAttribute('data-value');
+                    
+                    document.getElementById('quantityInput').value = value;
+                    
+                    // 모든 버튼 비활성화
+                    document.querySelectorAll('.fraction-btn').forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    // 클릭된 버튼 활성화
+                    btn.classList.add('active');
+                    
+                    this.calculateSummary();
+                }
+            });
+            
+            // 폼 제출
+            document.getElementById('purchaseForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.executePurchase();
+            });
+        },
+        
+        /**
+         * 주식 정보 업데이트
+         */
+        updateStockInfo: function(option) {
+            this.stockCode = option.value;
+            this.stockName = option.getAttribute('data-name');
+            this.currentPrice = parseFloat(option.getAttribute('data-price'));
+            this.country = option.getAttribute('data-country');
+            
+            console.log('📊 주식 선택:', this.stockName, this.stockCode, this.currentPrice);
+            
+            // 숨겨진 필드 업데이트
+            document.getElementById('selectedStockCode').value = this.stockCode;
+            document.getElementById('selectedCountry').value = this.country;
+            document.getElementById('selectedPrice').value = this.currentPrice;
+            
+            // 주식 정보 카드 표시
+            document.getElementById('displayStockName').textContent = this.stockName;
+            document.getElementById('displayStockCode').innerHTML = 
+                this.stockCode + ' <span class="price-badge" id="displayCountryBadge">' +
+                (this.country === 'KR' ? '🇰🇷 한국 주식' : '🇺🇸 미국 주식') +
+                '</span>';
+            
+            // 현재가 표시
+            const priceStr = this.country === 'KR' ? 
+                this.formatNumber(this.currentPrice) + '원' :
+                '$' + this.currentPrice.toFixed(2);
+            document.getElementById('displayCurrentPrice').textContent = priceStr;
+            document.getElementById('priceDisplay').value = this.currentPrice.toFixed(2);
+            document.getElementById('currencySymbol').textContent = 
+                this.country === 'KR' ? '원' : 'USD';
+            
+            // 주식 정보 카드 표시
+            document.getElementById('stockInfoCard').style.display = 'block';
+            
+            // 4분할 버튼 표시 (미국 주식인 경우)
+            const fractionButtons = document.getElementById('fractionButtons');
+            const quantityInput = document.getElementById('quantityInput');
+            
+            if (this.country === 'US') {
+                fractionButtons.style.display = 'grid';
+                quantityInput.step = '0.001';
+                quantityInput.min = '0.001';
+            } else {
+                fractionButtons.style.display = 'none';
+                quantityInput.step = '1';
+                quantityInput.min = '1';
+                quantityInput.value = '1';
+            }
+            
+            // 매입 버튼 활성화
+            document.getElementById('submitBtn').disabled = false;
+            
+            // 계산 실행
+            this.calculateSummary();
+        },
+        
+        /**
+         * 실시간 계산
+         */
+        calculateSummary: function() {
+            if (!this.stockCode) return;
+            
+            const quantityStr = document.getElementById('quantityInput').value;
+            const quantity = parseFloat(quantityStr) || 0;
+            
+            console.log('💰 실시간 계산:', quantity, '주 ×', this.currentPrice);
+            
+            // 1. 수량 표시
+            const quantityDisplay = this.country === 'US' ? 
+                quantity.toFixed(3) + ' 주' : 
+                Math.floor(quantity) + ' 주';
+            document.getElementById('summaryQuantity').textContent = quantityDisplay;
+            
+            // 2. 단가 표시
+            const priceStr = this.country === 'KR' ? 
+                this.formatNumber(this.currentPrice) + '원' : 
+                '$' + this.currentPrice.toFixed(2);
+            document.getElementById('summaryPrice').textContent = priceStr;
+            
+            // 3. 총 금액 계산
+            const totalAmount = quantity * this.currentPrice;
+            
+            // 4. 수수료 계산 (0.1%)
+            const commission = totalAmount * 0.001;
+            
+            // 5. 최종 금액
+            const finalAmount = totalAmount + commission;
+            
+            // 표시
+            const commissionStr = this.country === 'KR' ? 
+                this.formatNumber(commission) + '원' : 
+                '$' + commission.toFixed(2);
+            document.getElementById('summaryCommission').textContent = commissionStr;
+            
+            const finalStr = this.country === 'KR' ? 
+                this.formatNumber(finalAmount) + '원' : 
+                '$' + finalAmount.toFixed(2);
+            document.getElementById('summaryTotal').textContent = finalStr;
+        },
+        
+        /**
+         * 매입 실행
+         */
+        executePurchase: function() {
+            if (!this.stockCode) {
+                this.showAlert('danger', '종목을 먼저 선택하세요.');
+                return;
+            }
+            
+            const quantity = parseFloat(document.getElementById('quantityInput').value);
+            
+            if (!quantity || quantity <= 0) {
+                this.showAlert('danger', '유효한 수량을 입력하세요.');
+                return;
+            }
+            
+            // 한국 주식: 정수만
+            if (this.country === 'KR' && quantity !== Math.floor(quantity)) {
+                this.showAlert('danger', '한국 주식은 정수 수량만 가능합니다.');
+                return;
+            }
+            
+            console.log('💳 매입 실행:', this.stockCode, quantity, '주');
+            
+            // 로딩 표시
+            const submitBtn = document.getElementById('submitBtn');
+            const originalHtml = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 매입 중...';
+            
+            // API 호출
+            fetch(this.contextPath + '/api/purchase/execute', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    stockCode: this.stockCode,
+                    quantity: quantity,
+                    price: this.currentPrice
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('✅ 매입 성공:', data);
+                
+                this.showAlert('success', '매입이 완료되었습니다!');
+                
+                setTimeout(() => {
+                    window.location.href = this.contextPath + '/dashboard';
+                }, 1500);
+            })
+            .catch(error => {
+                console.error('❌ 매입 실패:', error);
+                
+                this.showAlert('danger', '매입에 실패했습니다: ' + error.message);
+                
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalHtml;
+            });
+        },
+        
+        /**
+         * 숫자 포맷팅
+         */
+        formatNumber: function(num) {
+            return Math.floor(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        },
+        
+        /**
+         * 알림 표시
+         */
+        showAlert: function(type, message) {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.className = 'alert alert-' + type + ' alert-box';
+            alertBox.innerHTML = '<i class="fas fa-' + 
+                (type === 'success' ? 'check-circle' : 
+                 type === 'danger' ? 'exclamation-triangle' : 
+                 'info-circle') + 
+                '"></i> ' + message;
+            alertBox.style.display = 'block';
+            
+            if (type !== 'danger') {
+                setTimeout(() => {
+                    alertBox.style.display = 'none';
+                }, 3000);
+            }
+        }
+    };
+    
+    // 페이지 로드 시 초기화
+    document.addEventListener('DOMContentLoaded', function() {
+        PurchaseManager.init();
+    });
+    </script>
 </body>
 </html>
