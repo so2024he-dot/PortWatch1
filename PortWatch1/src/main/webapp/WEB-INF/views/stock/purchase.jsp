@@ -67,6 +67,16 @@
             margin-top: 1rem;
         }
         
+        .price-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        
         .form-group {
             margin-bottom: 1.5rem;
         }
@@ -89,6 +99,11 @@
         .form-control:focus {
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-control:read-only {
+            background-color: #f3f4f6;
+            cursor: not-allowed;
         }
         
         .validation-result {
@@ -191,7 +206,7 @@
         <!-- 헤더 -->
         <div class="purchase-header">
             <h2><i class="fas fa-shopping-cart"></i> 주식 매입</h2>
-            <p class="text-muted">종목을 선택하고 수량과 가격을 입력하세요</p>
+            <p class="text-muted">종목을 선택하고 수량을 입력하세요</p>
         </div>
         
         <!-- 종목 정보 -->
@@ -199,8 +214,11 @@
             <div class="stock-name" id="stockName">${stock.stockName}</div>
             <div class="stock-code" id="stockCode">${stock.stockCode}</div>
             <div class="current-price" id="currentPrice">
-                <fmt:formatNumber value="${stock.currentPrice}" pattern="#,##0" />원
+                <fmt:formatNumber value="${stock.currentPrice}" pattern="#,##0.00" />원
             </div>
+            <span class="price-badge">
+                <i class="fas fa-sync-alt"></i> MySQL 실시간 가격
+            </span>
             <c:if test="${stock.country == 'US'}">
                 <div class="text-muted mt-2">
                     <i class="fas fa-flag-usa"></i> 미국 주식 (소수점 매입 가능)
@@ -225,36 +243,35 @@
                        name="quantity"
                        placeholder="수량을 입력하세요"
                        step="${stock.country == 'US' ? '0.001' : '1'}"
-                       min="0"
+                       min="${stock.country == 'US' ? '0.001' : '1'}"
                        required>
                 <small class="text-muted">
                     <c:choose>
                         <c:when test="${stock.country == 'US'}">
-                            미국 주식: 소수점 3자리까지 입력 가능
+                            미국 주식: 소수점 3자리까지 입력 가능 (예: 0.5주, 1.234주)
                         </c:when>
                         <c:otherwise>
-                            한국 주식: 정수만 입력 가능
+                            한국 주식: 정수만 입력 가능 (예: 1주, 10주)
                         </c:otherwise>
                     </c:choose>
                 </small>
             </div>
             
-            <!-- 가격 입력 -->
+            <!-- ✅ 가격 표시 (읽기 전용) -->
             <div class="form-group">
                 <label class="form-label" for="price">
-                    <i class="fas fa-won-sign"></i> 매입 가격
+                    <i class="fas fa-won-sign"></i> 매입 가격 (MySQL 현재가)
                 </label>
                 <input type="number" 
                        class="form-control" 
                        id="price" 
                        name="price"
-                       placeholder="가격을 입력하세요"
                        value="${stock.currentPrice}"
-                       step="0.01"
-                       min="0"
-                       required>
+                       readonly
+                       step="0.01">
                 <small class="text-muted">
-                    현재가 기준 ±10% 범위 내에서 입력
+                    <i class="fas fa-info-circle"></i> 
+                    MySQL에 저장된 실시간 가격이 자동으로 적용됩니다
                 </small>
             </div>
             
@@ -274,7 +291,7 @@
                     <span id="totalAmount">0원</span>
                 </div>
                 <div class="summary-row">
-                    <span>수수료</span>
+                    <span>수수료 (0.1%)</span>
                     <span id="commission">0원</span>
                 </div>
                 <div class="summary-row">
@@ -307,7 +324,8 @@
         let validationPassed = false;
         
         /**
-         * 매입 가능 여부 검증
+         * ✅ 매입 가능 여부 검증
+         * API: /api/purchase/validate (POST)
          */
         function validatePurchase() {
             const stockCode = $('#stockCodeInput').val();
@@ -315,7 +333,7 @@
             const price = parseFloat($('#price').val());
             
             if (!quantity || !price) {
-                showValidationResult('error', '수량과 가격을 모두 입력해주세요.');
+                showValidationResult('error', '수량을 입력해주세요.');
                 return;
             }
             
@@ -326,15 +344,16 @@
             $.ajax({
                 url: '${pageContext.request.contextPath}/api/purchase/validate',
                 type: 'POST',
-                data: {
+                contentType: 'application/json',
+                data: JSON.stringify({
                     stockCode: stockCode,
                     quantity: quantity,
                     price: price
-                },
+                }),
                 success: function(response) {
                     if (response.valid) {
                         // 검증 성공
-                        showValidationResult('success', '✅ ' + response.message);
+                        showValidationResult('success', '✅ 매입 가능합니다!');
                         
                         // 요약 정보 표시
                         updateSummary(response);
@@ -342,11 +361,6 @@
                         // 매입 버튼 활성화
                         $('#purchaseBtn').prop('disabled', false);
                         validationPassed = true;
-                        
-                        // 경고 메시지 (시장 시간 등)
-                        if (response.marketTimeWarning) {
-                            showValidationResult('warning', '⚠️ ' + response.marketTimeWarning, true);
-                        }
                     } else {
                         // 검증 실패
                         showValidationResult('error', '❌ ' + response.message);
@@ -356,8 +370,9 @@
                     }
                 },
                 error: function(xhr, status, error) {
-                    showValidationResult('error', '검증 중 오류가 발생했습니다.');
-                    console.error('Validation error:', error);
+                    console.error('Validation error:', xhr.responseJSON);
+                    const message = xhr.responseJSON?.message || '검증 중 오류가 발생했습니다.';
+                    showValidationResult('error', message);
                 },
                 complete: function() {
                     // 버튼 복원
@@ -370,19 +385,11 @@
         /**
          * 검증 결과 표시
          */
-        function showValidationResult(type, message, append = false) {
+        function showValidationResult(type, message) {
             const $result = $('#validationResult');
-            
-            if (append) {
-                // 기존 메시지에 추가
-                $result.append('<div class="mt-2">' + message + '</div>');
-            } else {
-                // 새 메시지로 교체
-                $result.removeClass('success error warning');
-                $result.addClass(type);
-                $result.html(message);
-            }
-            
+            $result.removeClass('success error warning');
+            $result.addClass(type);
+            $result.html(message);
             $result.show();
         }
         
@@ -392,7 +399,7 @@
         function updateSummary(response) {
             const totalAmount = response.totalAmount || 0;
             const commission = response.commission || 0;
-            const requiredAmount = totalAmount + commission;
+            const requiredAmount = response.requiredAmount || (totalAmount + commission);
             
             $('#totalAmount').text(formatNumber(totalAmount) + '원');
             $('#commission').text(formatNumber(commission) + '원');
@@ -409,7 +416,8 @@
         }
         
         /**
-         * 매입 실행
+         * ✅ 매입 실행
+         * API: /api/purchase/execute (POST)
          */
         $('#purchaseForm').on('submit', function(e) {
             e.preventDefault();
@@ -430,6 +438,8 @@
                 price: parseFloat($('#price').val())
             };
             
+            console.log('매입 요청:', formData);
+            
             // 로딩 표시
             $('#purchaseBtn').html('<span class="spinner-border spinner-border-sm"></span> 매입 중...');
             $('#purchaseBtn').prop('disabled', true);
@@ -437,20 +447,29 @@
             $.ajax({
                 url: '${pageContext.request.contextPath}/api/purchase/execute',
                 type: 'POST',
-                data: formData,
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
                 success: function(response) {
+                    console.log('매입 응답:', response);
+                    
                     if (response.success) {
-                        alert('매입이 완료되었습니다!');
-                        window.location.href = '${pageContext.request.contextPath}/portfolio/detail/' + formData.portfolioId;
+                        alert('✅ 매입이 완료되었습니다!\n' +
+                              '종목: ' + response.stockName + '\n' +
+                              '수량: ' + response.quantity + '\n' +
+                              '가격: ' + formatNumber(response.price) + '원');
+                        
+                        // 대시보드로 이동
+                        window.location.href = '${pageContext.request.contextPath}/dashboard';
                     } else {
-                        alert('매입 실패: ' + response.message);
+                        alert('❌ 매입 실패: ' + response.message);
                         $('#purchaseBtn').html('<i class="fas fa-shopping-cart"></i> 매입하기');
                         $('#purchaseBtn').prop('disabled', false);
                     }
                 },
                 error: function(xhr, status, error) {
-                    alert('매입 중 오류가 발생했습니다.');
-                    console.error('Purchase error:', error);
+                    console.error('Purchase error:', xhr.responseJSON);
+                    const message = xhr.responseJSON?.message || '매입 중 오류가 발생했습니다.';
+                    alert('❌ ' + message);
                     $('#purchaseBtn').html('<i class="fas fa-shopping-cart"></i> 매입하기');
                     $('#purchaseBtn').prop('disabled', false);
                 }
@@ -460,11 +479,18 @@
         /**
          * 입력값 변경 시 검증 상태 초기화
          */
-        $('#quantity, #price').on('input', function() {
+        $('#quantity').on('input', function() {
             validationPassed = false;
             $('#purchaseBtn').prop('disabled', true);
             $('#validationResult').hide();
             $('#summaryBox').hide();
+        });
+        
+        /**
+         * 페이지 로드 시 수량 입력 필드에 포커스
+         */
+        $(document).ready(function() {
+            $('#quantity').focus();
         });
     </script>
     

@@ -4,13 +4,17 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 /**
- * ✅ 포트폴리오 VO - 완벽 최종 수정
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * ✅ 포트폴리오 VO - 최종 수정 버전
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * 
- * getPurchasePrice() BigDecimal 반환으로 통일!
- * PortfolioServiceImpl과 완벽 호환!
+ * 핵심 수정:
+ * - getProfit() 메서드 추가 (profitLoss 별칭)
+ * - getProfitRate() 메서드 추가 (profitLossRate 별칭)
+ * - Dashboard JSP 호환성 완벽 지원
  * 
  * @author PortWatch
- * @version FINAL - Spring 5.0.7 + MySQL 8.0.33 완벽 호환
+ * @version FIXED - 2026.01.16
  */
 public class PortfolioVO {
     
@@ -122,7 +126,6 @@ public class PortfolioVO {
     
     /**
      * ✅✅✅ purchasePrice getter - BigDecimal 반환!
-     * PortfolioServiceImpl의 165, 351, 353번 라인 호환!
      */
     public BigDecimal getPurchasePrice() {
         return avgPurchasePrice;
@@ -136,7 +139,7 @@ public class PortfolioVO {
     }
     
     /**
-     * ✅ purchasePrice setter (double 버전 - PortfolioController 호환)
+     * ✅ purchasePrice setter (double 버전)
      */
     public void setPurchasePrice(double purchasePrice) {
         this.avgPurchasePrice = BigDecimal.valueOf(purchasePrice);
@@ -216,6 +219,22 @@ public class PortfolioVO {
         this.profitLoss = profitLoss;
     }
     
+    /**
+     * ✅ profit getter (profitLoss 별칭 - Dashboard JSP 호환)
+     * 
+     * Dashboard에서 ${portfolio.profit}를 사용하므로 별칭 제공
+     */
+    public BigDecimal getProfit() {
+        return profitLoss;
+    }
+    
+    /**
+     * ✅ profit setter (profitLoss 별칭)
+     */
+    public void setProfit(BigDecimal profit) {
+        this.profitLoss = profit;
+    }
+    
     public BigDecimal getProfitLossRate() {
         return profitLossRate;
     }
@@ -225,7 +244,16 @@ public class PortfolioVO {
     }
     
     /**
-     * ✅ profitRate 별칭 (호환성)
+     * ✅ profitRate getter (profitLossRate 별칭 - Dashboard JSP 호환)
+     * 
+     * Dashboard에서 ${portfolio.profitRate}를 사용하므로 별칭 제공
+     */
+    public BigDecimal getProfitRate() {
+        return profitLossRate;
+    }
+    
+    /**
+     * ✅ profitRate setter (profitLossRate 별칭)
      */
     public void setProfitRate(BigDecimal profitRate) {
         this.profitLossRate = profitRate;
@@ -239,6 +267,16 @@ public class PortfolioVO {
         this.marketType = marketType;
     }
     
+    /**
+     * ✅ 포트폴리오 이름 반환 (기본값)
+     */
+    public String getPortfolioName() {
+        if (stockName != null && !stockName.isEmpty()) {
+            return stockName + " 포트폴리오";
+        }
+        return "포트폴리오";
+    }
+    
     @Override
     public String toString() {
         return "PortfolioVO [portfolioId=" + portfolioId + ", memberId=" + memberId + ", stockId=" + stockId
@@ -248,9 +286,4 @@ public class PortfolioVO {
                 + ", totalValue=" + totalValue + ", profitLoss=" + profitLoss + ", profitLossRate=" + profitLossRate
                 + ", marketType=" + marketType + "]";
     }
-
-	public Object getPortfolioName() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }
