@@ -4,16 +4,31 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 import lombok.Data;
-@Data
+
 /**
- * 포트폴리오에 속한 종목 정보
- * PORTFOLIO_STOCK 테이블과 매핑
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * PortfolioStockVO - 수정 버전
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * 
+ * ✅ 핵심 수정:
+ * - stockQuantity를 Integer -> BigDecimal로 변경
+ * - 미국 주식 소수점 매수 지원 (예: 0.5주, 0.123주)
+ * - DB: DECIMAL(15,4) 매핑
+ * 
+ * @author PortWatch
+ * @version FIXED - 2026.01.16
  */
+@Data
 public class PortfolioStockVO {
+    
+    // 기본 정보
     private Integer portfolioStockId;
     private Integer portfolioId;
     private String stockCode;
-    private Integer stockQuantity;
+    
+    // ✅ 수량: Integer → BigDecimal 변경!
+    private BigDecimal stockQuantity;
+    
     private BigDecimal stockAvgPrice;
     private Timestamp stockAddDate;
     
@@ -21,6 +36,7 @@ public class PortfolioStockVO {
     private String stockName;
     private String stockMarket;
     private String stockSector;
+    private String country;  // 추가: 한국/미국 구분용
     private BigDecimal currentPrice; // 현재가 (STOCK_PRICE에서 조회)
     
     // 계산 필드
@@ -31,7 +47,8 @@ public class PortfolioStockVO {
     
     public PortfolioStockVO() {}
     
-    // Getters and Setters
+    // ===== Getters and Setters =====
+    
     public Integer getPortfolioStockId() {
         return portfolioStockId;
     }
@@ -56,12 +73,21 @@ public class PortfolioStockVO {
         this.stockCode = stockCode;
     }
     
-    public Integer getStockQuantity() {
+    /**
+     * ✅ 수량 Getter (BigDecimal)
+     */
+    public BigDecimal getStockQuantity() {
         return stockQuantity;
     }
     
-    public void setStockQuantity(Integer stockQuantity) {
+    /**
+     * ✅ 수량 Setter (BigDecimal)
+     * 한국 주식: 정수 (1, 10, 100)
+     * 미국 주식: 소수점 가능 (0.5, 0.123, 1.234)
+     */
+    public void setStockQuantity(BigDecimal stockQuantity) {
         this.stockQuantity = stockQuantity;
+        calculateValues(); // 수량 변경 시 자동 계산
     }
     
     public BigDecimal getStockAvgPrice() {
@@ -70,6 +96,7 @@ public class PortfolioStockVO {
     
     public void setStockAvgPrice(BigDecimal stockAvgPrice) {
         this.stockAvgPrice = stockAvgPrice;
+        calculateValues(); // 평균 가격 변경 시 자동 계산
     }
     
     public Timestamp getStockAddDate() {
@@ -104,13 +131,21 @@ public class PortfolioStockVO {
         this.stockSector = stockSector;
     }
     
+    public String getCountry() {
+        return country;
+    }
+    
+    public void setCountry(String country) {
+        this.country = country;
+    }
+    
     public BigDecimal getCurrentPrice() {
         return currentPrice;
     }
     
     public void setCurrentPrice(BigDecimal currentPrice) {
         this.currentPrice = currentPrice;
-        calculateValues();
+        calculateValues(); // 현재가 변경 시 자동 계산
     }
     
     public BigDecimal getTotalPurchaseAmount() {
@@ -146,25 +181,64 @@ public class PortfolioStockVO {
     }
     
     /**
-     * 수익률 및 손익 자동 계산
+     * ✅ 수익률 및 손익 자동 계산 (BigDecimal 버전)
+     * 
+     * 한국 주식: 정수 수량
+     * 미국 주식: 소수점 수량
      */
     public void calculateValues() {
         if (stockQuantity != null && stockAvgPrice != null) {
-            totalPurchaseAmount = stockAvgPrice.multiply(new BigDecimal(stockQuantity));
+            // 매입 총액 = 수량 × 평균 가격
+            totalPurchaseAmount = stockAvgPrice.multiply(stockQuantity);
         }
         
         if (stockQuantity != null && currentPrice != null) {
-            currentValue = currentPrice.multiply(new BigDecimal(stockQuantity));
+            // 현재 평가액 = 수량 × 현재가
+            currentValue = currentPrice.multiply(stockQuantity);
         }
         
-        if (currentValue != null && totalPurchaseAmount != null) {
+        if (currentValue != null && totalPurchaseAmount != null && 
+            totalPurchaseAmount.compareTo(BigDecimal.ZERO) != 0) {
+            // 손익 = 현재 평가액 - 매입 총액
             profitLoss = currentValue.subtract(totalPurchaseAmount);
             
-            if (totalPurchaseAmount.compareTo(BigDecimal.ZERO) != 0) {
-                profitLossRate = profitLoss.divide(totalPurchaseAmount, 4, BigDecimal.ROUND_HALF_UP)
-                                          .multiply(new BigDecimal(100))
-                                          .doubleValue();
-            }
+            // 수익률 = (손익 / 매입 총액) × 100
+            profitLossRate = profitLoss.divide(totalPurchaseAmount, 4, BigDecimal.ROUND_HALF_UP)
+                                      .multiply(new BigDecimal(100))
+                                      .doubleValue();
+        }
+    }
+    
+    /**
+     * ✅ 한국 주식 여부 확인
+     */
+    public boolean isKoreanStock() {
+        return "KR".equals(country);
+    }
+    
+    /**
+     * ✅ 미국 주식 여부 확인
+     */
+    public boolean isUSStock() {
+        return "US".equals(country);
+    }
+    
+    /**
+     * ✅ 수량을 국가별 형식으로 포맷팅
+     * 한국: 정수 (예: "10")
+     * 미국: 소수점 3자리 (예: "10.500")
+     */
+    public String getFormattedQuantity() {
+        if (stockQuantity == null) {
+            return "0";
+        }
+        
+        if (isKoreanStock()) {
+            // 한국 주식: 정수만 표시
+            return stockQuantity.setScale(0, BigDecimal.ROUND_DOWN).toString();
+        } else {
+            // 미국 주식: 소수점 3자리까지 표시
+            return stockQuantity.setScale(3, BigDecimal.ROUND_HALF_UP).toString();
         }
     }
     
@@ -174,9 +248,12 @@ public class PortfolioStockVO {
                 "portfolioStockId=" + portfolioStockId +
                 ", stockCode='" + stockCode + '\'' +
                 ", stockName='" + stockName + '\'' +
+                ", country='" + country + '\'' +
                 ", stockQuantity=" + stockQuantity +
                 ", stockAvgPrice=" + stockAvgPrice +
                 ", currentPrice=" + currentPrice +
+                ", totalPurchaseAmount=" + totalPurchaseAmount +
+                ", currentValue=" + currentValue +
                 ", profitLoss=" + profitLoss +
                 ", profitLossRate=" + profitLossRate +
                 '}';

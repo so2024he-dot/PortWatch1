@@ -19,12 +19,11 @@ import com.portwatch.persistence.MemberDAO;
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * 
  * ✅ 수정 내역:
- * - Line 273 void 오류 해결
- * - TODO 메서드 전체 구현
- * - 인증 코드 저장소 추가
+ * - Line 243: changePassword(3개 파라미터) 반환 타입을 void -> boolean 변경
+ * - 현재 비밀번호 불일치 시 Exception 대신 false 반환
  * 
  * @author PortWatch
- * @version COMPLETE - 2026.01.15
+ * @version FIXED - 2026.01.16
  */
 @Service
 public class MemberServiceImpl implements MemberService {
@@ -236,11 +235,16 @@ public class MemberServiceImpl implements MemberService {
     }
     
     /**
-     * ✅ 비밀번호 변경 (구 비밀번호 확인)
+     * ✅ 비밀번호 변경 (현재 비밀번호 확인 포함) - 반환 타입 boolean으로 수정!
+     * 
+     * @param memberId 회원 ID
+     * @param oldPassword 현재 비밀번호
+     * @param newPassword 새 비밀번호
+     * @return true: 성공, false: 현재 비밀번호 불일치
      */
     @Override
     @Transactional
-    public void changePassword(String memberId, String oldPassword, String newPassword) throws Exception {
+    public boolean changePassword(String memberId, String oldPassword, String newPassword) throws Exception {
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         System.out.println("🔑 비밀번호 변경");
         System.out.println("  - 회원 ID: " + memberId);
@@ -249,15 +253,18 @@ public class MemberServiceImpl implements MemberService {
             MemberVO member = memberDAO.selectById(memberId);
             
             if (member == null) {
+                System.out.println("❌ 회원 정보를 찾을 수 없습니다.");
+                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
                 throw new Exception("회원 정보를 찾을 수 없습니다.");
             }
             
             String hashedOldPassword = hashPassword(oldPassword);
             
+            // ✅ 현재 비밀번호 불일치 시 false 반환 (Exception X)
             if (!hashedOldPassword.equals(member.getMemberPass())) {
                 System.out.println("❌ 현재 비밀번호가 일치하지 않습니다.");
                 System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                throw new Exception("현재 비밀번호가 일치하지 않습니다.");
+                return false;
             }
             
             String hashedNewPassword = hashPassword(newPassword);
@@ -265,6 +272,8 @@ public class MemberServiceImpl implements MemberService {
             
             System.out.println("✅ 비밀번호 변경 완료");
             System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            return true;
             
         } catch (Exception e) {
             System.err.println("❌ 비밀번호 변경 실패: " + e.getMessage());
@@ -274,11 +283,11 @@ public class MemberServiceImpl implements MemberService {
     }
     
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // ✅ 새로 구현된 메서드들 (Lines 291-337)
+    // ✅ 추가 메서드들
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     
     /**
-     * ✅ 회원 탈퇴 (COMPLETE!)
+     * ✅ 회원 탈퇴 (소프트 삭제)
      */
     @Override
     @Transactional
@@ -309,7 +318,7 @@ public class MemberServiceImpl implements MemberService {
     }
     
     /**
-     * ✅ 이메일 사용 가능 여부 확인 (COMPLETE!)
+     * ✅ 이메일 사용 가능 여부 확인
      */
     @Override
     public boolean checkEmailAvailable(String email) throws Exception {
@@ -333,8 +342,7 @@ public class MemberServiceImpl implements MemberService {
     }
     
     /**
-     * ✅ 인증 코드 생성 (COMPLETE!)
-     * 6자리 숫자 인증 코드
+     * ✅ 인증 코드 생성
      */
     @Override
     public String generateVerificationCode() throws Exception {
@@ -359,7 +367,7 @@ public class MemberServiceImpl implements MemberService {
     }
     
     /**
-     * ✅ 인증 코드 검증 (COMPLETE!)
+     * ✅ 인증 코드 검증
      */
     @Override
     public boolean verifyCode(String email, String code) throws Exception {
@@ -404,8 +412,7 @@ public class MemberServiceImpl implements MemberService {
     }
     
     /**
-     * ✅ 인증 코드 저장 (COMPLETE!)
-     * 5분 유효
+     * ✅ 인증 코드 저장
      */
     @Override
     public void saveVerificationCode(String email, String code) throws Exception {
@@ -429,7 +436,7 @@ public class MemberServiceImpl implements MemberService {
     }
     
     /**
-     * ✅ 비밀번호 변경 (인증 코드 확인 없이) (COMPLETE!)
+     * ✅ 비밀번호 변경 (현재 비밀번호 확인 없이)
      */
     @Override
     @Transactional
@@ -459,7 +466,7 @@ public class MemberServiceImpl implements MemberService {
     }
     
     /**
-     * ✅ 회원 삭제 (하드 삭제) (COMPLETE!)
+     * ✅ 회원 삭제 (하드 삭제)
      */
     @Override
     @Transactional
@@ -488,7 +495,7 @@ public class MemberServiceImpl implements MemberService {
     }
     
     /**
-     * ✅ 전체 회원 조회 (COMPLETE!)
+     * ✅ 전체 회원 조회
      */
     @Override
     public List<MemberVO> getAllMembers() throws Exception {

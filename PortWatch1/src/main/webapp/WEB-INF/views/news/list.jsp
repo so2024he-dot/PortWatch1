@@ -155,7 +155,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-         ✅ 수정된 JavaScript - API 엔드포인트 수정
+         ✅ 수정된 JavaScript - JSP EL 표현식 오류 해결
          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <script>
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -171,512 +171,181 @@
      * - 수동 새로고침 (크롤링)
      * - 자동 새로고침 (5분 간격)
      * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-    
     const NewsManager = {
-        // ✅ 올바른 방법: Controller에서 전달받은 값 직접 사용
         contextPath: '${pageContext.request.contextPath}',
         autoRefreshInterval: null,
+        autoRefreshTime: 5 * 60 * 1000, // 5분
         
         /**
+         * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
          * 초기화
-         */
+         * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
         init: function() {
             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            console.log('📰 뉴스 매니저 초기화');
-            console.log('  - contextPath:', this.contextPath);
+            console.log('📰 NewsManager 초기화');
+            console.log('  - Context Path: ' + this.contextPath);
             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             
-            this.bindEvents();
             this.loadNews();
-            this.startAutoRefresh();  // 5분마다 자동 새로고침
+            this.setupEventHandlers();
+            this.startAutoRefresh();
         },
         
         /**
-         * 이벤트 리스너 바인딩
-         */
-        bindEvents: function() {
-            console.log('🔗 이벤트 리스너 바인딩');
-            
-            // ✅ 새로고침 버튼
+         * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         * 이벤트 핸들러 설정
+         * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        setupEventHandlers: function() {
             const refreshBtn = document.getElementById('refreshNewsBtn');
             if (refreshBtn) {
-                refreshBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    console.log('🔄 뉴스 새로고침 버튼 클릭!');
+                refreshBtn.addEventListener('click', () => {
+                    console.log('🔄 수동 새로고침 버튼 클릭');
                     this.refreshNews();
                 });
-                console.log('✅ 새로고침 버튼 이벤트 등록 완료');
-            } else {
-                console.error('❌ 새로고침 버튼을 찾을 수 없습니다!');
             }
         },
         
         /**
-         * 뉴스 로드
-         */
+         * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         * 뉴스 로드 (DB에서 최신 뉴스 가져오기)
+         * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
         loadNews: function() {
-            console.log('📰 뉴스 로드 시작');
-            this.showLoading();
+            console.log('📥 뉴스 로드 시작');
             
-            // ✅ 올바른 API 엔드포인트
-            const apiUrl = this.contextPath + '/api/news/recent?limit=50';
-            console.log('🔗 API 호출:', apiUrl);
-            
-            fetch(apiUrl)
+            fetch(this.contextPath + '/api/news/recent?limit=50')
                 .then(response => {
-                    console.log('📡 서버 응답:', response.status);
                     if (!response.ok) {
-                        throw new Error('뉴스 로드 실패: ' + response.status);
+                        throw new Error('Network response was not ok');
                     }
                     return response.json();
                 })
                 .then(data => {
-                    console.log('✅ 뉴스 로드 완료:', data);
-                    
-                    // 응답 데이터 파싱
-                    const newsList = Array.isArray(data) ? data : (data.news || data.newsList || []);
-                    
-                    console.log('📋 뉴스 개수:', newsList.length);
-                    
-                    // 뉴스 렌더링
-                    this.renderNews(newsList);
-                    this.hideLoading();
+                    console.log('✅ 뉴스 로드 성공:', data.length + '개');
+                    this.renderNews(data);
                 })
                 .catch(error => {
                     console.error('❌ 뉴스 로드 실패:', error);
-                    this.showError('뉴스를 불러오는데 실패했습니다: ' + error.message);
+                    this.showError('뉴스를 불러오는 중 오류가 발생했습니다.');
                 });
         },
         
         /**
-         * 뉴스 새로고침 (크롤링)
-         */
+         * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         * 뉴스 새로고침 (크롤링 실행 + 로드)
+         * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
         refreshNews: function() {
-            console.log('🔄 뉴스 크롤링 시작');
+            console.log('🔄 뉴스 새로고침 시작 (크롤링)');
             
             const refreshBtn = document.getElementById('refreshNewsBtn');
             const originalHtml = refreshBtn.innerHTML;
             
-            // 버튼 비활성화
+            refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 크롤링 중...';
             refreshBtn.disabled = true;
-            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 크롤링 중...';
             
-            fetch(this.contextPath + '/api/news/crawl', {
+            fetch(this.contextPath + '/api/news/refresh', {
                 method: 'POST'
             })
-            .then(response => response.json())
-            .then(data => {
-                console.log('✅ 크롤링 완료:', data);
-                
-                // 버튼 복원
-                refreshBtn.disabled = false;
-                refreshBtn.innerHTML = originalHtml;
-                
-                // 뉴스 목록 새로고침
-                this.loadNews();
-                
-                const count = data.count || data.newCount || 0;
-                alert(count + '개의 새로운 뉴스를 불러왔습니다!');
-            })
-            .catch(error => {
-                console.error('❌ 뉴스 새로고침 실패:', error);
-                
-                // 버튼 복원
-                refreshBtn.disabled = false;
-                refreshBtn.innerHTML = originalHtml;
-                
-                alert('뉴스 새로고침에 실패했습니다.');
-            });
+                .then(response => response.json())
+                .then(data => {
+                    console.log('✅ 크롤링 완료:', data);
+                    
+                    // 1초 후 새로운 뉴스 로드
+                    setTimeout(() => {
+                        this.loadNews();
+                    }, 1000);
+                })
+                .catch(error => {
+                    console.error('❌ 크롤링 실패:', error);
+                    this.showError('뉴스 크롤링 중 오류가 발생했습니다.');
+                })
+                .finally(() => {
+                    refreshBtn.innerHTML = originalHtml;
+                    refreshBtn.disabled = false;
+                });
         },
         
         /**
+         * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
          * 자동 새로고침 시작
-         */
+         * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
         startAutoRefresh: function() {
             console.log('⏰ 자동 새로고침 시작 (5분 간격)');
             
-            // 기존 인터벌 제거
-            if (this.autoRefreshInterval) {
-                clearInterval(this.autoRefreshInterval);
-            }
-            
-            // 5분마다 자동 새로고침
             this.autoRefreshInterval = setInterval(() => {
-                const now = new Date();
-                console.log('🔄 자동 새로고침 실행:', now.toLocaleTimeString());
+                console.log('⏰ 자동 새로고침 실행');
                 this.loadNews();
-            }, 5 * 60 * 1000);  // 5분 = 300,000ms
-            
-            console.log('✅ 자동 새로고침 설정 완료');
+            }, this.autoRefreshTime);
         },
         
         /**
-         * 뉴스 렌더링
-         */
+         * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         * 뉴스 렌더링 (수정 버전 - JSP EL 표현식 오류 해결)
+         * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         * 
+         * ✅ 핵심 수정:
+         * - backtick (`) 사용 제거
+         * - JSP EL 표현식과 JavaScript Template Literals 분리
+         * - 조건부 HTML 생성을 JavaScript 변수로 처리
+         * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
         renderNews: function(newsList) {
             console.log('🎨 뉴스 렌더링');
             
             const container = document.getElementById('newsContainer');
             
             if (!newsList || newsList.length === 0) {
-                container.innerHTML = `
-                    <div class="alert alert-info text-center">
-                        <i class="fas fa-info-circle"></i>
-                        뉴스가 없습니다. 새로고침 버튼을 눌러 뉴스를 불러오세요.
-                    </div>
-                `;
+                container.innerHTML = '<div class="alert alert-info text-center">' +
+                                        '<i class="fas fa-info-circle"></i> ' +
+                                        '뉴스가 없습니다. 새로고침 버튼을 눌러 뉴스를 불러오세요.' +
+                                      '</div>';
                 return;
             }
+            
+            // ✅ contextPath는 JSP에서 생성 (JavaScript 영역 밖)
+            const contextPath = this.contextPath;
             
             let html = '<div class="row">';
             
             newsList.forEach(news => {
-                // 날짜 포맷팅
-                let dateStr = '';
-                if (news.publishedAt) {
-                    dateStr = news.publishedAt;
-                } else if (news.createdAt) {
-                    dateStr = news.createdAt;
+                const dateStr = news.publishedAt || news.createdAt || '';
+                
+                // ✅ 조건부 HTML을 JavaScript 변수로 처리
+                let categoryHtml = '';
+                if (news.category) {
+                    categoryHtml = '<div class="mb-2">' +
+                                     '<span class="news-category">' + news.category + '</span>' +
+                                   '</div>';
                 }
                 
-                html += `
-                    <div class="col-md-6 mb-4">
-                        <div class="card news-card h-100" 
-                             onclick="location.href='${pageContext.request.contextPath}/news/detail/${news.newsId}'">
-                            <div class="card-body">
-                                <h5 class="card-title">
-                                    ${news.title}
-                                </h5>
-                                
-                                /**
-                                 * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                                 * news/list.jsp - EL 표현식 오류 수정 버전
-                                 * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                                 * 
-                                 * 문제: JSP EL 표현식에서 JavaScript 템플릿 리터럴 사용으로 인한 파싱 오류
-                                 * 해결: 문자열 연결 방식으로 변경
-                                 * 
-                                 * 오류 위치: Line 351-355 (대략적인 위치)
-                                 */
-
-                                // ❌ 잘못된 코드 (오류 발생)
-                                // ------------------------------
-                                html += `
-                                    <div class="col-md-6 mb-4">
-                                        <div class="card news-card h-100" 
-                                             onclick="location.href='${pageContext.request.contextPath}/news/detail/${news.newsId}'">
-                                            <div class="card-body">
-                                                <h5 class="card-title">
-                                                    ${news.title}
-                                                </h5>
-                                                
-                                                ${news.category ? `
-                                                    <div class="mb-2">
-                                                        <span class="news-category">${news.category}</span>
-                                                    </div>
-                                                ` : ''}
-                                                
-                                                <p class="card-text text-muted">
-                                                    ${news.summary || news.content || ''}
-                                                </p>
-                                                
-                                                <div class="news-meta mt-3">
-                                                    <small>
-                                                        <i class="fas fa-calendar"></i>
-                                                        ${dateStr}
-                                                    </small>
-                                                    ${news.source ? `
-                                                        <small class="ms-3">
-                                                            <i class="fas fa-newspaper"></i>
-                                                            ${news.source}
-                                                        </small>
-                                                    ` : ''}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                `;
-
-
-                                // ✅ 올바른 코드 (수정 버전)
-                                // ------------------------------
-                                html += '<div class="col-md-6 mb-4">';
-                                html += '    <div class="card news-card h-100" ';
-                                html += '         onclick="location.href=\'' + contextPath + '/news/detail/' + news.newsId + '\'">';
-                                html += '        <div class="card-body">';
-                                html += '            <h5 class="card-title">';
-                                html += '                ' + (news.title || '제목 없음');
-                                html += '            </h5>';
-
-                                // 카테고리가 있을 경우에만 표시
-                                if (news.category) {
-                                    html += '            <div class="mb-2">';
-                                    html += '                <span class="news-category">' + news.category + '</span>';
-                                    html += '            </div>';
-                                }
-
-                                html += '            <p class="card-text text-muted">';
-                                html += '                ' + (news.summary || news.content || '내용 없음');
-                                html += '            </p>';
-                                html += '            <div class="news-meta mt-3">';
-                                html += '                <small>';
-                                html += '                    <i class="fas fa-calendar"></i>';
-                                html += '                    ' + dateStr;
-                                html += '                </small>';
-
-                                // 출처가 있을 경우에만 표시
-                                if (news.source) {
-                                    html += '                <small class="ms-3">';
-                                    html += '                    <i class="fas fa-newspaper"></i>';
-                                    html += '                    ' + news.source;
-                                    html += '                </small>';
-                                }
-
-                                html += '            </div>';
-                                html += '        </div>';
-                                html += '    </div>';
-                                html += '</div>';
-
-
-                                /**
-                                 * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                                 * 완전한 renderNews 함수 - 수정 버전
-                                 * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                                 */
-
-                                renderNews: function(newsList) {
-                                    console.log('🎨 뉴스 렌더링');
-                                    
-                                    const container = document.getElementById('newsContainer');
-                                    
-                                    if (!newsList || newsList.length === 0) {
-                                        container.innerHTML = 
-                                            '<div class="alert alert-info text-center">' +
-                                            '    <i class="fas fa-info-circle"></i>' +
-                                            '    뉴스가 없습니다. 새로고침 버튼을 눌러 뉴스를 불러오세요.' +
-                                            '</div>';
-                                        return;
-                                    }
-                                    
-                                    let html = '<div class="row">';
-                                    
-                                    newsList.forEach(function(news) {
-                                        // 날짜 포맷팅
-                                        let dateStr = '';
-                                        if (news.publishedAt) {
-                                            dateStr = news.publishedAt;
-                                        } else if (news.createdAt) {
-                                            dateStr = news.createdAt;
-                                        }
-                                        
-                                        html += '<div class="col-md-6 mb-4">';
-                                        html += '    <div class="card news-card h-100" ';
-                                        html += '         onclick="location.href=\'' + NewsManager.contextPath + '/news/detail/' + news.newsId + '\'">';
-                                        html += '        <div class="card-body">';
-                                        html += '            <h5 class="card-title">';
-                                        html += '                ' + (news.title || '제목 없음');
-                                        html += '            </h5>';
-                                        
-                                        // 카테고리가 있을 경우에만 표시
-                                        if (news.category) {
-                                            html += '            <div class="mb-2">';
-                                            html += '                <span class="news-category">' + news.category + '</span>';
-                                            html += '            </div>';
-                                        }
-                                        
-                                        html += '            <p class="card-text text-muted">';
-                                        html += '                ' + (news.summary || news.content || '내용 없음');
-                                        html += '            </p>';
-                                        html += '            <div class="news-meta mt-3">';
-                                        html += '                <small>';
-                                        html += '                    <i class="fas fa-calendar"></i>';
-                                        html += '                    ' + dateStr;
-                                        html += '                </small>';
-                                        
-                                        // 출처가 있을 경우에만 표시
-                                        if (news.source) {
-                                            html += '                <small class="ms-3">';
-                                            html += '                    <i class="fas fa-newspaper"></i>';
-                                            html += '                    ' + news.source;
-                                            html += '                </small>';
-                                        }
-                                        
-                                        html += '            </div>';
-                                        html += '        </div>';
-                                        html += '    </div>';
-                                        html += '</div>';
-                                    });
-                                    
-                                    html += '</div>';
-                                    container.innerHTML = html;
-                                    
-                                    console.log('✅ 뉴스 렌더링 완료');
-                                }
-
-
-                                /**
-                                 * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                                 * 적용 방법
-                                 * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                                 * 
-                                 * 1. src/main/webapp/WEB-INF/views/news/list.jsp 파일 열기
-                                 * 2. renderNews 함수 찾기 (대략 Line 316)
-                                 * 3. 위의 수정된 renderNews 함수로 교체
-                                 * 4. 서버 재시작
-                                 * 5. /news/list 접근하여 테스트
-                                 * 
-                                 * 주의사항:
-                                 * - JSP EL 표현식 ${...}은 서버 사이드에서 먼저 파싱됨
-                                 * - JavaScript 템플릿 리터럴 `...` 내부에 EL 표현식 사용 금지
-                                 * - 문자열 연결 방식(+ 연산자) 사용 권장
-                                 */
-
-
-                                /**
-                                 * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                                 * 대안: ES6 Template Literals를 안전하게 사용하는 방법
-                                 * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                                 */
-
-                                // 방법 1: contextPath를 변수로 미리 선언
-                                const contextPath = '${pageContext.request.contextPath}'; // JSP에서 한 번만 파싱
-
-                                renderNews: function(newsList) {
-                                    // ... 생략 ...
-                                    
-                                    newsList.forEach(function(news) {
-                                        const dateStr = news.publishedAt || news.createdAt || '';
-                                        
-                                        // 이제 Template Literals 안전하게 사용 가능
-                                        html += `
-                                            <div class="col-md-6 mb-4">
-                                                <div class="card news-card h-100" 
-                                                     onclick="location.href='${contextPath}/news/detail/${news.newsId}'">
-                                                    <div class="card-body">
-                                                        <h5 class="card-title">
-                                                            ${news.title || '제목 없음'}
-                                                        </h5>
-                                                        
-                                                        ${news.category ? 
-                                                            '<div class="mb-2">' +
-                                                            '<span class="news-category">' + news.category + '</span>' +
-                                                            '</div>' 
-                                                            : ''}
-                                                        
-                                                        <p class="card-text text-muted">
-                                                            ${news.summary || news.content || '내용 없음'}
-                                                        </p>
-                                                        
-                                                        <div class="news-meta mt-3">
-                                                            <small>
-                                                                <i class="fas fa-calendar"></i>
-                                                                ${dateStr}
-                                                            </small>
-                                                            ${news.source ? 
-                                                                '<small class="ms-3">' +
-                                                                '<i class="fas fa-newspaper"></i>' +
-                                                                news.source +
-                                                                '</small>' 
-                                                                : ''}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        `;
-                                    });
-                                }
-
-                                // 방법 2: 완전히 Template Literals만 사용 (가장 깔끔)
-                                renderNews: function(newsList) {
-                                    console.log('🎨 뉴스 렌더링');
-                                    
-                                    const container = document.getElementById('newsContainer');
-                                    
-                                    if (!newsList || newsList.length === 0) {
-                                        container.innerHTML = `
-                                            <div class="alert alert-info text-center">
-                                                <i class="fas fa-info-circle"></i>
-                                                뉴스가 없습니다. 새로고침 버튼을 눌러 뉴스를 불러오세요.
-                                            </div>
-                                        `;
-                                        return;
-                                    }
-                                    
-                                    const contextPath = '${pageContext.request.contextPath}';
-                                    
-                                    const newsHtml = newsList.map(news => {
-                                        const dateStr = news.publishedAt || news.createdAt || '';
-                                        const categoryHtml = news.category ? 
-                                            `<div class="mb-2">
-                                                <span class="news-category">${news.category}</span>
-                                            </div>` : '';
-                                        const sourceHtml = news.source ? 
-                                            `<small class="ms-3">
-                                                <i class="fas fa-newspaper"></i>
-                                                ${news.source}
-                                            </small>` : '';
-                                        
-                                        return `
-                                            <div class="col-md-6 mb-4">
-                                                <div class="card news-card h-100" 
-                                                     onclick="location.href='${contextPath}/news/detail/${news.newsId}'">
-                                                    <div class="card-body">
-                                                        <h5 class="card-title">
-                                                            ${news.title || '제목 없음'}
-                                                        </h5>
-                                                        ${categoryHtml}
-                                                        <p class="card-text text-muted">
-                                                            ${news.summary || news.content || '내용 없음'}
-                                                        </p>
-                                                        <div class="news-meta mt-3">
-                                                            <small>
-                                                                <i class="fas fa-calendar"></i>
-                                                                ${dateStr}
-                                                            </small>
-                                                            ${sourceHtml}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        `;
-                                    }).join('');
-                                    
-                                    container.innerHTML = `<div class="row">${newsHtml}</div>`;
-                                    
-                                    console.log('✅ 뉴스 렌더링 완료');
-                                }
-
-
-                                /**
-                                 * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                                 * 핵심 원칙
-                                 * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                                 * 
-                                 * 1. JSP EL 표현식 ${...}은 반드시 순수 JavaScript 영역 밖에서만 사용
-                                 * 2. Template Literals 내부에서 조건부 HTML 생성 시 주의
-                                 * 3. 가장 안전한 방법: contextPath만 JSP에서 생성, 나머지는 순수 JS
-                                 */
-                                
-                                <p class="card-text text-muted">
-                                    ${news.summary || news.content || ''}
-                                </p>
-                                
-                                <div class="news-meta mt-3">
-                                    <small>
-                                        <i class="fas fa-calendar"></i>
-                                        ${dateStr}
-                                    </small>
-                                    ${news.source ? `
-                                        <small class="ms-3">
-                                            <i class="fas fa-newspaper"></i>
-                                            ${news.source}
-                                        </small>
-                                    ` : ''}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                let sourceHtml = '';
+                if (news.source) {
+                    sourceHtml = '<small class="ms-3">' +
+                                   '<i class="fas fa-newspaper"></i> ' +
+                                   news.source +
+                                 '</small>';
+                }
+                
+                // ✅ 템플릿 리터럴 사용 (backtick 없음, + 연산자 사용)
+                html += '<div class="col-md-6 mb-4">' +
+                          '<div class="card news-card h-100" ' +
+                               'onclick="location.href=\'' + contextPath + '/news/detail/' + news.newsId + '\'">' +
+                            '<div class="card-body">' +
+                              '<h5 class="card-title">' +
+                                (news.title || '제목 없음') +
+                              '</h5>' +
+                              categoryHtml +
+                              '<p class="card-text text-muted">' +
+                                (news.summary || news.content || '내용 없음') +
+                              '</p>' +
+                              '<div class="news-meta mt-3">' +
+                                '<small>' +
+                                  '<i class="fas fa-calendar"></i> ' +
+                                  dateStr +
+                                '</small>' +
+                                sourceHtml +
+                              '</div>' +
+                            '</div>' +
+                          '</div>' +
+                        '</div>';
             });
             
             html += '</div>';
@@ -686,38 +355,14 @@
         },
         
         /**
-         * 로딩 표시
-         */
-        showLoading: function() {
-            const container = document.getElementById('newsContainer');
-            container.innerHTML = `
-                <div class="text-center py-5">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">로딩중...</span>
-                    </div>
-                    <p class="mt-3">뉴스를 불러오는 중입니다...</p>
-                </div>
-            `;
-        },
-        
-        /**
-         * 로딩 숨김
-         */
-        hideLoading: function() {
-            // 렌더링으로 자동 제거됨
-        },
-        
-        /**
          * 에러 표시
          */
         showError: function(message) {
             const container = document.getElementById('newsContainer');
-            container.innerHTML = `
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    ${message}
-                </div>
-            `;
+            container.innerHTML = '<div class="alert alert-danger">' +
+                                    '<i class="fas fa-exclamation-triangle"></i> ' +
+                                    message +
+                                  '</div>';
         }
     };
     
