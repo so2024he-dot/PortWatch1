@@ -23,7 +23,7 @@
         }
         
         .purchase-container {
-            max-width: 600px;
+            max-width: 700px;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
@@ -43,38 +43,37 @@
         }
         
         .stock-info-card {
-            background: #f9fafb;
-            border-radius: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
             padding: 1.5rem;
             margin-bottom: 1.5rem;
+            color: white;
         }
         
         .stock-name {
             font-size: 1.5rem;
             font-weight: 700;
-            color: #1f2937;
+            margin-bottom: 0.5rem;
         }
         
         .stock-code {
-            color: #6b7280;
+            opacity: 0.9;
             font-size: 1rem;
+            margin-bottom: 1rem;
         }
         
         .current-price {
             font-size: 2rem;
             font-weight: 700;
-            color: #667eea;
-            margin-top: 1rem;
+            margin-top: 0.5rem;
         }
         
         .price-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 12px;
+            border-radius: 10px;
             display: inline-block;
-            background: #667eea;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            margin-top: 0.5rem;
+            font-size: 0.85rem;
         }
         
         .form-group {
@@ -92,7 +91,8 @@
             border: 2px solid #e5e7eb;
             border-radius: 10px;
             padding: 0.75rem 1rem;
-            font-size: 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
             transition: all 0.3s;
         }
         
@@ -101,217 +101,251 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
         
-        .form-control:read-only {
-            background-color: #f3f4f6;
-            cursor: not-allowed;
+        .fraction-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 10px;
         }
         
-        .validation-result {
-            padding: 1rem;
+        .fraction-btn {
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            background: white;
             border-radius: 10px;
-            margin-bottom: 1.5rem;
-            display: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
         }
         
-        .validation-result.success {
-            background: #d1fae5;
-            border: 2px solid #10b981;
-            color: #065f46;
+        .fraction-btn:hover {
+            border-color: #667eea;
+            background: #f3f4f6;
         }
         
-        .validation-result.error {
-            background: #fee2e2;
-            border: 2px solid #ef4444;
-            color: #991b1b;
+        .fraction-btn.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
         }
         
-        .validation-result.warning {
-            background: #fef3c7;
-            border: 2px solid #f59e0b;
-            color: #92400e;
-        }
-        
-        .summary-box {
+        .summary-card {
             background: #f9fafb;
-            border-radius: 12px;
+            border-radius: 15px;
             padding: 1.5rem;
-            margin-bottom: 1.5rem;
+            margin-top: 1.5rem;
         }
         
         .summary-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.5rem 0;
+            padding: 0.75rem 0;
             border-bottom: 1px solid #e5e7eb;
         }
         
         .summary-row:last-child {
             border-bottom: none;
-            font-weight: 700;
             font-size: 1.2rem;
+            font-weight: 700;
             color: #667eea;
+        }
+        
+        .summary-label {
+            font-weight: 600;
+            color: #6b7280;
+        }
+        
+        .summary-value {
+            font-weight: 700;
+            color: #1f2937;
+            font-size: 1.1rem;
         }
         
         .btn-purchase {
             width: 100%;
             padding: 1rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
             font-size: 1.1rem;
             font-weight: 700;
-            transition: all 0.3s;
-        }
-        
-        .btn-purchase:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-        }
-        
-        .btn-purchase:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        
-        .btn-validate {
-            width: 100%;
-            padding: 0.75rem;
-            background: white;
-            color: #667eea;
-            border: 2px solid #667eea;
-            border-radius: 10px;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            transition: all 0.3s;
-        }
-        
-        .btn-validate:hover {
-            background: #667eea;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
             color: white;
+            transition: all 0.3s;
         }
         
-        .spinner-border-sm {
-            width: 1rem;
-            height: 1rem;
-            border-width: 0.2rem;
+        .btn-purchase:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .alert-box {
+            display: none;
+            margin-top: 1rem;
+            border-radius: 10px;
+        }
+        
+        .input-group-text {
+            background: #f3f4f6;
+            border: 2px solid #e5e7eb;
+            font-weight: 600;
         }
     </style>
 </head>
 <body>
-    
     <div class="purchase-container">
-        
         <!-- 헤더 -->
         <div class="purchase-header">
-            <h2><i class="fas fa-shopping-cart"></i> 주식 매입</h2>
-            <p class="text-muted">종목을 선택하고 수량을 입력하세요</p>
+            <h2>
+                <i class="fas fa-shopping-cart"></i> 주식 매입
+            </h2>
+            <p class="text-muted">원하는 수량을 입력하고 매입하세요</p>
         </div>
         
-        <!-- 종목 정보 -->
+        <!-- 주식 정보 카드 -->
         <div class="stock-info-card">
-            <div class="stock-name" id="stockName">${stock.stockName}</div>
-            <div class="stock-code" id="stockCode">${stock.stockCode}</div>
-            <div class="current-price" id="currentPrice">
-                <fmt:formatNumber value="${stock.currentPrice}" pattern="#,##0.00" />원
+            <div class="stock-name">${stock.stockName}</div>
+            <div class="stock-code">
+                ${stock.stockCode} 
+                <span class="price-badge">
+                    <c:choose>
+                        <c:when test="${stock.country == 'KR'}">
+                            🇰🇷 한국 주식
+                        </c:when>
+                        <c:otherwise>
+                            🇺🇸 미국 주식
+                        </c:otherwise>
+                    </c:choose>
+                </span>
             </div>
-            <span class="price-badge">
-                <i class="fas fa-sync-alt"></i> MySQL 실시간 가격
-            </span>
-            <c:if test="${stock.country == 'US'}">
-                <div class="text-muted mt-2">
-                    <i class="fas fa-flag-usa"></i> 미국 주식 (소수점 매입 가능)
-                </div>
-            </c:if>
+            <div>현재가</div>
+            <div class="current-price">
+                <c:choose>
+                    <c:when test="${stock.country == 'KR'}">
+                        <fmt:formatNumber value="${stock.currentPrice}" pattern="#,##0"/>원
+                    </c:when>
+                    <c:otherwise>
+                        $<fmt:formatNumber value="${stock.currentPrice}" pattern="#,##0.00"/>
+                    </c:otherwise>
+                </c:choose>
+            </div>
         </div>
         
         <!-- 매입 폼 -->
         <form id="purchaseForm">
-            
-            <input type="hidden" id="portfolioId" name="portfolioId" value="${portfolioId}">
-            <input type="hidden" id="stockCodeInput" name="stockCode" value="${stock.stockCode}">
-            
             <!-- 수량 입력 -->
             <div class="form-group">
-                <label class="form-label" for="quantity">
-                    <i class="fas fa-layer-group"></i> 매입 수량
+                <label class="form-label">
+                    <i class="fas fa-hashtag"></i> 매입 수량
                 </label>
-                <input type="number" 
-                       class="form-control" 
-                       id="quantity" 
-                       name="quantity"
-                       placeholder="수량을 입력하세요"
-                       step="${stock.country == 'US' ? '0.001' : '1'}"
-                       min="${stock.country == 'US' ? '0.001' : '1'}"
-                       required>
-                <small class="text-muted">
-                    <c:choose>
-                        <c:when test="${stock.country == 'US'}">
-                            미국 주식: 소수점 3자리까지 입력 가능 (예: 0.5주, 1.234주)
-                        </c:when>
-                        <c:otherwise>
-                            한국 주식: 정수만 입력 가능 (예: 1주, 10주)
-                        </c:otherwise>
-                    </c:choose>
-                </small>
+                <div class="input-group">
+                    <input type="number" 
+                           id="quantityInput" 
+                           class="form-control"
+                           placeholder="수량 입력"
+                           <c:choose>
+                               <c:when test="${stock.country == 'KR'}">
+                                   step="1" min="1"
+                               </c:when>
+                               <c:otherwise>
+                                   step="0.001" min="0.001"
+                               </c:otherwise>
+                           </c:choose>
+                           value="1"
+                           required>
+                    <span class="input-group-text">주</span>
+                </div>
+                
+                <!-- 미국 주식 4분할 버튼 -->
+                <c:if test="${stock.country == 'US'}">
+                    <div class="fraction-buttons">
+                        <button type="button" class="fraction-btn" data-value="0.25">
+                            1/4주<br><small>(0.25)</small>
+                        </button>
+                        <button type="button" class="fraction-btn" data-value="0.5">
+                            1/2주<br><small>(0.5)</small>
+                        </button>
+                        <button type="button" class="fraction-btn" data-value="0.75">
+                            3/4주<br><small>(0.75)</small>
+                        </button>
+                        <button type="button" class="fraction-btn active" data-value="1">
+                            1주<br><small>(1.0)</small>
+                        </button>
+                    </div>
+                </c:if>
             </div>
             
-            <!-- ✅ 가격 표시 (읽기 전용) -->
+            <!-- 매입 단가 (읽기 전용) -->
             <div class="form-group">
-                <label class="form-label" for="price">
-                    <i class="fas fa-won-sign"></i> 매입 가격 (MySQL 현재가)
+                <label class="form-label">
+                    <i class="fas fa-tag"></i> 매입 단가 (현재가)
                 </label>
-                <input type="number" 
-                       class="form-control" 
-                       id="price" 
-                       name="price"
-                       value="${stock.currentPrice}"
-                       readonly
-                       step="0.01">
+                <div class="input-group">
+                    <input type="text" 
+                           id="priceDisplay" 
+                           class="form-control"
+                           value="<fmt:formatNumber value='${stock.currentPrice}' pattern='#,##0.00'/>"
+                           readonly>
+                    <span class="input-group-text">
+                        <c:if test="${stock.country == 'KR'}">원</c:if>
+                        <c:if test="${stock.country == 'US'}">USD</c:if>
+                    </span>
+                </div>
                 <small class="text-muted">
-                    <i class="fas fa-info-circle"></i> 
-                    MySQL에 저장된 실시간 가격이 자동으로 적용됩니다
+                    <i class="fas fa-info-circle"></i> MySQL 실시간 가격이 자동 적용됩니다
                 </small>
             </div>
-            
-            <!-- 검증 버튼 -->
-            <button type="button" class="btn-validate" onclick="validatePurchase()">
-                <i class="fas fa-check-circle"></i> 매입 가능 여부 확인
-            </button>
-            
-            <!-- 검증 결과 -->
-            <div id="validationResult" class="validation-result"></div>
             
             <!-- 매입 요약 -->
-            <div id="summaryBox" class="summary-box" style="display: none;">
-                <h6 class="mb-3"><i class="fas fa-calculator"></i> 매입 요약</h6>
+            <div class="summary-card">
+                <h5 class="mb-3">
+                    <i class="fas fa-calculator"></i> 매입 요약
+                </h5>
+                
                 <div class="summary-row">
-                    <span>매입 금액</span>
-                    <span id="totalAmount">0원</span>
+                    <span class="summary-label">수량</span>
+                    <span class="summary-value" id="summaryQuantity">1.000 주</span>
                 </div>
+                
                 <div class="summary-row">
-                    <span>수수료 (0.1%)</span>
-                    <span id="commission">0원</span>
+                    <span class="summary-label">단가</span>
+                    <span class="summary-value" id="summaryPrice">
+                        <c:choose>
+                            <c:when test="${stock.country == 'KR'}">
+                                <fmt:formatNumber value="${stock.currentPrice}" pattern="#,##0"/>원
+                            </c:when>
+                            <c:otherwise>
+                                $<fmt:formatNumber value="${stock.currentPrice}" pattern="#,##0.00"/>
+                            </c:otherwise>
+                        </c:choose>
+                    </span>
                 </div>
+                
                 <div class="summary-row">
-                    <span>총 필요 금액</span>
-                    <span id="requiredAmount">0원</span>
+                    <span class="summary-label">수수료 (0.1%)</span>
+                    <span class="summary-value" id="summaryCommission">-</span>
+                </div>
+                
+                <div class="summary-row">
+                    <span class="summary-label">총 투자 금액</span>
+                    <span class="summary-value" id="summaryTotal">-</span>
                 </div>
             </div>
             
+            <!-- 알림 메시지 -->
+            <div id="alertBox" class="alert-box"></div>
+            
             <!-- 매입 버튼 -->
-            <button type="submit" class="btn-purchase" id="purchaseBtn" disabled>
-                <i class="fas fa-shopping-cart"></i> 매입하기
+            <button type="submit" class="btn btn-purchase mt-3">
+                <i class="fas fa-check-circle"></i> 매입하기
             </button>
             
+            <!-- 취소 버튼 -->
+            <a href="${pageContext.request.contextPath}/stock/list" 
+               class="btn btn-secondary w-100 mt-2">
+                <i class="fas fa-arrow-left"></i> 취소
+            </a>
         </form>
-        
-        <!-- 취소 버튼 -->
-        <button type="button" class="btn btn-outline-secondary mt-3 w-100" onclick="window.history.back()">
-            <i class="fas fa-times"></i> 취소
-        </button>
-        
     </div>
     
     <!-- Bootstrap JS -->
@@ -321,178 +355,213 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
     <script>
-        let validationPassed = false;
+    /**
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * 주식 매입 관리자 - 실시간 계산 버전 (2026.01.16)
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     */
+    const PurchaseManager = {
+        stockCode: '${stock.stockCode}',
+        stockName: '${stock.stockName}',
+        currentPrice: parseFloat('${stock.currentPrice}'),
+        country: '${stock.country}',
+        contextPath: '${pageContext.request.contextPath}',
+        memberId: '${member.memberId}',
         
         /**
-         * ✅ 매입 가능 여부 검증
-         * API: /api/purchase/validate (POST)
+         * 초기화
          */
-        function validatePurchase() {
-            const stockCode = $('#stockCodeInput').val();
-            const quantity = parseFloat($('#quantity').val());
-            const price = parseFloat($('#price').val());
+        init: function() {
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            console.log('💰 매입 관리자 초기화');
+            console.log('  - 종목:', this.stockName);
+            console.log('  - 코드:', this.stockCode);
+            console.log('  - 현재가:', this.currentPrice);
+            console.log('  - 국가:', this.country);
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             
-            if (!quantity || !price) {
-                showValidationResult('error', '수량을 입력해주세요.');
+            this.bindEvents();
+            this.calculateSummary();
+        },
+        
+        /**
+         * 이벤트 바인딩
+         */
+        bindEvents: function() {
+            // 수량 입력 변경 시 실시간 계산
+            $('#quantityInput').on('input', () => {
+                this.calculateSummary();
+            });
+            
+            // 미국 주식 4분할 버튼
+            $('.fraction-btn').on('click', (e) => {
+                const value = $(e.currentTarget).data('value');
+                $('#quantityInput').val(value);
+                
+                $('.fraction-btn').removeClass('active');
+                $(e.currentTarget).addClass('active');
+                
+                this.calculateSummary();
+            });
+            
+            // 폼 제출
+            $('#purchaseForm').on('submit', (e) => {
+                e.preventDefault();
+                this.executePurchase();
+            });
+        },
+        
+        /**
+         * 실시간 계산 (핵심!)
+         */
+        calculateSummary: function() {
+            const quantity = parseFloat($('#quantityInput').val()) || 0;
+            
+            console.log('💰 실시간 계산');
+            console.log('  - 수량:', quantity);
+            console.log('  - 단가:', this.currentPrice);
+            
+            // 1. 수량 표시
+            const quantityStr = this.country === 'US' ? 
+                quantity.toFixed(3) + ' 주' : 
+                Math.floor(quantity) + ' 주';
+            $('#summaryQuantity').text(quantityStr);
+            
+            // 2. 단가 표시
+            const priceStr = this.country === 'KR' ? 
+                this.formatNumber(this.currentPrice) + '원' : 
+                '$' + this.currentPrice.toFixed(2);
+            $('#summaryPrice').text(priceStr);
+            
+            // 3. 총 금액 계산 = 수량 × 단가
+            const totalAmount = quantity * this.currentPrice;
+            
+            // 4. 수수료 계산 = 총 금액 × 0.1%
+            const commission = totalAmount * 0.001;
+            
+            // 5. 최종 금액 = 총 금액 + 수수료
+            const finalAmount = totalAmount + commission;
+            
+            // 수수료 표시
+            const commissionStr = this.country === 'KR' ? 
+                this.formatNumber(commission) + '원' : 
+                '$' + commission.toFixed(2);
+            $('#summaryCommission').text(commissionStr);
+            
+            // 총 투자 금액 표시
+            const finalStr = this.country === 'KR' ? 
+                this.formatNumber(finalAmount) + '원' : 
+                '$' + finalAmount.toFixed(2);
+            $('#summaryTotal').text(finalStr);
+            
+            console.log('  - 총 금액:', totalAmount);
+            console.log('  - 수수료:', commission);
+            console.log('  - 최종 금액:', finalAmount);
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        },
+        
+        /**
+         * 매입 실행
+         */
+        executePurchase: function() {
+            const quantity = parseFloat($('#quantityInput').val());
+            
+            if (!quantity || quantity <= 0) {
+                this.showAlert('danger', '유효한 수량을 입력하세요.');
                 return;
             }
             
-            // 로딩 표시
-            $('.btn-validate').html('<span class="spinner-border spinner-border-sm"></span> 검증 중...');
-            $('.btn-validate').prop('disabled', true);
+            // 한국 주식: 정수만
+            if (this.country === 'KR' && quantity % 1 !== 0) {
+                this.showAlert('danger', '한국 주식은 정수 수량만 가능합니다.');
+                return;
+            }
             
+            // 미국 주식: 소수점 3자리
+            if (this.country === 'US' && quantity.toFixed(3) !== quantity.toString()) {
+                const rounded = Math.round(quantity * 1000) / 1000;
+                $('#quantityInput').val(rounded);
+                this.calculateSummary();
+            }
+            
+            console.log('💳 매입 실행');
+            console.log('  - 종목:', this.stockCode);
+            console.log('  - 수량:', quantity);
+            console.log('  - 단가:', this.currentPrice);
+            
+            // 로딩 표시
+            const submitBtn = $('button[type="submit"]');
+            const originalHtml = submitBtn.html();
+            submitBtn.prop('disabled', true);
+            submitBtn.html('<i class="fas fa-spinner fa-spin"></i> 매입 중...');
+            
+            // API 호출
             $.ajax({
-                url: '${pageContext.request.contextPath}/api/purchase/validate',
+                url: this.contextPath + '/api/purchase/execute',
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({
-                    stockCode: stockCode,
+                    stockCode: this.stockCode,
                     quantity: quantity,
-                    price: price
+                    price: this.currentPrice
                 }),
-                success: function(response) {
-                    if (response.valid) {
-                        // 검증 성공
-                        showValidationResult('success', '✅ 매입 가능합니다!');
-                        
-                        // 요약 정보 표시
-                        updateSummary(response);
-                        
-                        // 매입 버튼 활성화
-                        $('#purchaseBtn').prop('disabled', false);
-                        validationPassed = true;
-                    } else {
-                        // 검증 실패
-                        showValidationResult('error', '❌ ' + response.message);
-                        $('#purchaseBtn').prop('disabled', true);
-                        $('#summaryBox').hide();
-                        validationPassed = false;
-                    }
+                success: (response) => {
+                    console.log('✅ 매입 성공:', response);
+                    
+                    this.showAlert('success', '매입이 완료되었습니다!');
+                    
+                    setTimeout(() => {
+                        window.location.href = this.contextPath + '/dashboard';
+                    }, 1500);
                 },
-                error: function(xhr, status, error) {
-                    console.error('Validation error:', xhr.responseJSON);
-                    const message = xhr.responseJSON?.message || '검증 중 오류가 발생했습니다.';
-                    showValidationResult('error', message);
-                },
-                complete: function() {
-                    // 버튼 복원
-                    $('.btn-validate').html('<i class="fas fa-check-circle"></i> 매입 가능 여부 확인');
-                    $('.btn-validate').prop('disabled', false);
+                error: (xhr) => {
+                    console.error('❌ 매입 실패:', xhr);
+                    
+                    const error = xhr.responseJSON || {};
+                    const message = error.message || '매입에 실패했습니다.';
+                    
+                    this.showAlert('danger', message);
+                    
+                    submitBtn.prop('disabled', false);
+                    submitBtn.html(originalHtml);
                 }
             });
-        }
-        
-        /**
-         * 검증 결과 표시
-         */
-        function showValidationResult(type, message) {
-            const $result = $('#validationResult');
-            $result.removeClass('success error warning');
-            $result.addClass(type);
-            $result.html(message);
-            $result.show();
-        }
-        
-        /**
-         * 매입 요약 업데이트
-         */
-        function updateSummary(response) {
-            const totalAmount = response.totalAmount || 0;
-            const commission = response.commission || 0;
-            const requiredAmount = response.requiredAmount || (totalAmount + commission);
-            
-            $('#totalAmount').text(formatNumber(totalAmount) + '원');
-            $('#commission').text(formatNumber(commission) + '원');
-            $('#requiredAmount').text(formatNumber(requiredAmount) + '원');
-            
-            $('#summaryBox').show();
-        }
+        },
         
         /**
          * 숫자 포맷팅
          */
-        function formatNumber(num) {
-            return Math.round(num).toLocaleString('ko-KR');
+        formatNumber: function(num) {
+            return Math.floor(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        },
+        
+        /**
+         * 알림 표시
+         */
+        showAlert: function(type, message) {
+            const alertBox = $('#alertBox');
+            alertBox.removeClass('alert-success alert-danger alert-warning alert-info');
+            alertBox.addClass('alert alert-' + type);
+            alertBox.html('<i class="fas fa-' + 
+                (type === 'success' ? 'check-circle' : 
+                 type === 'danger' ? 'exclamation-triangle' : 
+                 'info-circle') + 
+                '"></i> ' + message);
+            alertBox.show();
+            
+            // 3초 후 자동 숨김 (에러 제외)
+            if (type !== 'danger') {
+                setTimeout(() => {
+                    alertBox.fadeOut();
+                }, 3000);
+            }
         }
-        
-        /**
-         * ✅ 매입 실행
-         * API: /api/purchase/execute (POST)
-         */
-        $('#purchaseForm').on('submit', function(e) {
-            e.preventDefault();
-            
-            if (!validationPassed) {
-                alert('먼저 매입 가능 여부를 확인해주세요.');
-                return;
-            }
-            
-            if (!confirm('정말로 매입하시겠습니까?')) {
-                return;
-            }
-            
-            const formData = {
-                portfolioId: $('#portfolioId').val(),
-                stockCode: $('#stockCodeInput').val(),
-                quantity: parseFloat($('#quantity').val()),
-                price: parseFloat($('#price').val())
-            };
-            
-            console.log('매입 요청:', formData);
-            
-            // 로딩 표시
-            $('#purchaseBtn').html('<span class="spinner-border spinner-border-sm"></span> 매입 중...');
-            $('#purchaseBtn').prop('disabled', true);
-            
-            $.ajax({
-                url: '${pageContext.request.contextPath}/api/purchase/execute',
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(formData),
-                success: function(response) {
-                    console.log('매입 응답:', response);
-                    
-                    if (response.success) {
-                        alert('✅ 매입이 완료되었습니다!\n' +
-                              '종목: ' + response.stockName + '\n' +
-                              '수량: ' + response.quantity + '\n' +
-                              '가격: ' + formatNumber(response.price) + '원');
-                        
-                        // 대시보드로 이동
-                        window.location.href = '${pageContext.request.contextPath}/dashboard';
-                    } else {
-                        alert('❌ 매입 실패: ' + response.message);
-                        $('#purchaseBtn').html('<i class="fas fa-shopping-cart"></i> 매입하기');
-                        $('#purchaseBtn').prop('disabled', false);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Purchase error:', xhr.responseJSON);
-                    const message = xhr.responseJSON?.message || '매입 중 오류가 발생했습니다.';
-                    alert('❌ ' + message);
-                    $('#purchaseBtn').html('<i class="fas fa-shopping-cart"></i> 매입하기');
-                    $('#purchaseBtn').prop('disabled', false);
-                }
-            });
-        });
-        
-        /**
-         * 입력값 변경 시 검증 상태 초기화
-         */
-        $('#quantity').on('input', function() {
-            validationPassed = false;
-            $('#purchaseBtn').prop('disabled', true);
-            $('#validationResult').hide();
-            $('#summaryBox').hide();
-        });
-        
-        /**
-         * 페이지 로드 시 수량 입력 필드에 포커스
-         */
-        $(document).ready(function() {
-            $('#quantity').focus();
-        });
-    </script>
+    };
     
+    // 페이지 로드 시 초기화
+    $(document).ready(function() {
+        PurchaseManager.init();
+    });
+    </script>
 </body>
 </html>
