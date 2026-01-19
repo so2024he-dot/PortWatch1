@@ -84,6 +84,27 @@
             font-size: 0.85rem;
         }
         
+        /* ✅ 환율 정보 카드 스타일 추가 */
+        .exchange-rate-card {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: 15px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            color: white;
+            display: none;
+        }
+        
+        .exchange-rate-card .rate-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 0.3rem;
+        }
+        
+        .exchange-rate-card .rate-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+        
         .form-group {
             margin-bottom: 1.5rem;
         }
@@ -170,6 +191,12 @@
             font-size: 1.1rem;
         }
         
+        /* ✅ 원화 환산 금액 강조 스타일 */
+        .summary-value.krw-converted {
+            color: #10b981;
+            font-size: 1.2rem;
+        }
+        
         .btn-purchase {
             width: 100%;
             padding: 1rem;
@@ -237,100 +264,78 @@
             </select>
         </div>
         
+        <!-- ✅ 환율 정보 카드 (미국 주식인 경우만 표시) -->
+        <div id="exchangeRateCard" class="exchange-rate-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="rate-label">
+                        <i class="fas fa-exchange-alt"></i> USD → KRW 환율
+                    </div>
+                    <div class="rate-value" id="displayExchangeRate">
+                        로딩 중...
+                    </div>
+                </div>
+                <div class="text-end">
+                    <small class="rate-label">실시간 환율</small>
+                    <div><i class="fas fa-sync-alt fa-spin" id="exchangeRateSpinner"></i></div>
+                </div>
+            </div>
+        </div>
+        
         <!-- 선택된 주식 정보 카드 -->
-        <div id="stockInfoCard" class="stock-info-card" 
-             <c:if test="${not empty stock}">style="display:block;"</c:if>>
-            <div class="stock-name" id="displayStockName">${stock.stockName}</div>
-            <div class="stock-code" id="displayStockCode">
-                ${stock.stockCode}
-                <span class="price-badge" id="displayCountryBadge">
-                    <c:choose>
-                        <c:when test="${stock.country == 'KR'}">
-                            🇰🇷 한국 주식
-                        </c:when>
-                        <c:otherwise>
-                            🇺🇸 미국 주식
-                        </c:otherwise>
-                    </c:choose>
-                </span>
-            </div>
-            <div>현재가</div>
-            <div class="current-price" id="displayCurrentPrice">
-                <c:choose>
-                    <c:when test="${stock.country == 'KR'}">
-                        <fmt:formatNumber value="${stock.currentPrice}" pattern="#,##0"/>원
-                    </c:when>
-                    <c:otherwise>
-                        $<fmt:formatNumber value="${stock.currentPrice}" pattern="#,##0.00"/>
-                    </c:otherwise>
-                </c:choose>
-            </div>
+        <div id="stockInfoCard" class="stock-info-card">
+            <div class="stock-name" id="displayStockName"></div>
+            <div class="stock-code" id="displayStockCode"></div>
+            <div class="current-price" id="displayCurrentPrice"></div>
         </div>
         
         <!-- 매입 폼 -->
         <form id="purchaseForm">
-            <input type="hidden" id="selectedStockCode" value="${stock.stockCode}">
-            <input type="hidden" id="selectedCountry" value="${stock.country}">
-            <input type="hidden" id="selectedPrice" value="${stock.currentPrice}">
+            <!-- 숨겨진 필드들 -->
+            <input type="hidden" id="selectedStockCode" name="stockCode">
+            <input type="hidden" id="selectedCountry" name="country">
+            <input type="hidden" id="selectedPrice" name="price">
+            
+            <!-- 현재가 표시 (읽기 전용) -->
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-tag"></i> 현재가
+                </label>
+                <div class="input-group">
+                    <input type="text" id="priceDisplay" class="form-control" readonly>
+                    <span class="input-group-text" id="currencySymbol">USD</span>
+                </div>
+            </div>
             
             <!-- 수량 입력 -->
             <div class="form-group">
                 <label class="form-label">
-                    <i class="fas fa-hashtag"></i> 매입 수량
+                    <i class="fas fa-sort-numeric-up"></i> 수량
                 </label>
-                <div class="input-group">
-                    <input type="number" 
-                           id="quantityInput" 
-                           class="form-control"
-                           placeholder="수량 입력"
-                           step="0.001" 
-                           min="0.001"
-                           value="1"
-                           required>
-                    <span class="input-group-text">주</span>
-                </div>
+                <input type="number" id="quantityInput" class="form-control" 
+                       placeholder="수량을 입력하세요" 
+                       step="1" min="1" value="1" required>
                 
-                <!-- 미국 주식 4분할 버튼 -->
-                <div id="fractionButtons" class="fraction-buttons" style="display:none;">
+                <!-- 4분할 버튼 (미국 주식인 경우만 표시) -->
+                <div id="fractionButtons" class="fraction-buttons" style="display: none;">
                     <button type="button" class="fraction-btn" data-value="0.25">
-                        1/4주<br><small>(0.25)</small>
+                        <i class="fas fa-chart-pie"></i> 1/4주
                     </button>
                     <button type="button" class="fraction-btn" data-value="0.5">
-                        1/2주<br><small>(0.5)</small>
+                        <i class="fas fa-chart-pie"></i> 1/2주
                     </button>
                     <button type="button" class="fraction-btn" data-value="0.75">
-                        3/4주<br><small>(0.75)</small>
+                        <i class="fas fa-chart-pie"></i> 3/4주
                     </button>
-                    <button type="button" class="fraction-btn active" data-value="1">
-                        1주<br><small>(1.0)</small>
+                    <button type="button" class="fraction-btn" data-value="1">
+                        <i class="fas fa-chart-pie"></i> 1주
                     </button>
                 </div>
-            </div>
-            
-            <!-- 매입 단가 (읽기 전용) -->
-            <div class="form-group">
-                <label class="form-label">
-                    <i class="fas fa-tag"></i> 매입 단가 (현재가)
-                </label>
-                <div class="input-group">
-                    <input type="text" 
-                           id="priceDisplay" 
-                           class="form-control"
-                           value="<c:if test='${not empty stock}'><fmt:formatNumber value='${stock.currentPrice}' pattern='#,##0.00'/></c:if>"
-                           readonly>
-                    <span class="input-group-text" id="currencySymbol">
-                        <c:if test="${stock.country == 'KR'}">원</c:if>
-                        <c:if test="${stock.country == 'US'}">USD</c:if>
-                    </span>
-                </div>
-                <small class="text-muted">
-                    <i class="fas fa-info-circle"></i> MySQL 실시간 가격이 자동 적용됩니다
-                </small>
             </div>
             
             <!-- 매입 요약 -->
             <div class="summary-card">
-                <h5 class="mb-3">
+                <h5 style="margin-bottom: 1rem; font-weight: 700;">
                     <i class="fas fa-calculator"></i> 매입 요약
                 </h5>
                 
@@ -344,90 +349,89 @@
                     <span class="summary-value" id="summaryPrice">-</span>
                 </div>
                 
+                <!-- ✅ 원화 환산 금액 (미국 주식인 경우만 표시) -->
+                <div id="summaryKrwRow" class="summary-row" style="display: none;">
+                    <span class="summary-label">
+                        <i class="fas fa-won-sign"></i> 원화 환산
+                    </span>
+                    <span class="summary-value krw-converted" id="summaryKrwAmount">-</span>
+                </div>
+                
                 <div class="summary-row">
                     <span class="summary-label">수수료 (0.1%)</span>
                     <span class="summary-value" id="summaryCommission">-</span>
                 </div>
                 
                 <div class="summary-row">
-                    <span class="summary-label">총 투자 금액</span>
+                    <span class="summary-label">총 금액</span>
                     <span class="summary-value" id="summaryTotal">-</span>
+                </div>
+                
+                <!-- ✅ 원화 총액 (미국 주식인 경우만 표시) -->
+                <div id="summaryKrwTotalRow" class="summary-row" style="display: none;">
+                    <span class="summary-label">
+                        <i class="fas fa-won-sign"></i> 원화 총액
+                    </span>
+                    <span class="summary-value krw-converted" id="summaryKrwTotal">-</span>
                 </div>
             </div>
             
-            <!-- 알림 메시지 -->
-            <div id="alertBox" class="alert-box"></div>
-            
             <!-- 매입 버튼 -->
-            <button type="submit" class="btn btn-purchase mt-3" id="submitBtn" disabled>
-                <i class="fas fa-check-circle"></i> 매입하기
+            <button type="submit" id="submitBtn" class="btn-purchase" disabled>
+                <i class="fas fa-shopping-cart"></i> 매입하기
             </button>
             
-            <!-- 취소 버튼 -->
-            <a href="${pageContext.request.contextPath}/stock/list" 
-               class="btn btn-secondary w-100 mt-2">
-                <i class="fas fa-arrow-left"></i> 취소
-            </a>
+            <!-- 알림 -->
+            <div id="alertBox" class="alert-box"></div>
         </form>
     </div>
-    
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
     <script>
     /**
      * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     * 주식 매입 관리자 - parseFloat 오류 해결 버전 (2026.01.16)
+     * PurchaseManager - 주식 매입 관리자 (환율 정보 추가!)
      * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     * 
-     * 핵심 수정:
-     * - EL 표현식 오류 완전 제거
-     * - 주식 선택 기능 추가
-     * - 실시간 계산 로직
      */
-    const PurchaseManager = {
-        stockCode: '',
-        stockName: '',
-        currentPrice: 0,
-        country: '',
+    var PurchaseManager = {
         contextPath: '${pageContext.request.contextPath}',
-        memberId: '${member.memberId}',
+        stockCode: null,
+        stockName: null,
+        currentPrice: 0,
+        country: null,
+        exchangeRate: 0,  // ✅ 환율 추가
         
         /**
          * 초기화
          */
         init: function() {
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            console.log('💰 매입 관리자 초기화');
-            console.log('  - contextPath:', this.contextPath);
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            console.log('💰 PurchaseManager 초기화');
+            console.log('  contextPath:', this.contextPath);
             
-            // 초기 주식 정보 설정
-            const initialCode = document.getElementById('selectedStockCode').value;
-            if (initialCode) {
-                const option = document.querySelector('option[value="' + initialCode + '"]');
-                if (option) {
-                    this.updateStockInfo(option);
-                }
+            // 이미 선택된 주식이 있으면 표시
+            const stockSelect = document.getElementById('stockSelect');
+            if (stockSelect.value) {
+                const option = stockSelect.options[stockSelect.selectedIndex];
+                this.updateStockInfo(option);
             }
             
-            this.bindEvents();
+            // 이벤트 리스너 등록
+            this.attachEventListeners();
         },
         
         /**
-         * 이벤트 바인딩
+         * 이벤트 리스너 등록
          */
-        bindEvents: function() {
+        attachEventListeners: function() {
             // 주식 선택 변경
             document.getElementById('stockSelect').addEventListener('change', (e) => {
                 const option = e.target.options[e.target.selectedIndex];
+                
                 if (option.value) {
                     this.updateStockInfo(option);
+                    document.getElementById('submitBtn').disabled = false;
                 } else {
                     document.getElementById('stockInfoCard').style.display = 'none';
+                    document.getElementById('exchangeRateCard').style.display = 'none';
                     document.getElementById('submitBtn').disabled = true;
                 }
             });
@@ -465,6 +469,40 @@
         },
         
         /**
+         * ✅ 환율 정보 가져오기 (신규 추가!)
+         */
+        loadExchangeRate: function() {
+            console.log('💱 환율 조회 시작...');
+            
+            const spinner = document.getElementById('exchangeRateSpinner');
+            const rateDisplay = document.getElementById('displayExchangeRate');
+            
+            fetch(this.contextPath + '/api/exchange/rate')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        this.exchangeRate = parseFloat(data.rate);
+                        
+                        rateDisplay.textContent = this.formatNumber(this.exchangeRate) + ' 원/달러';
+                        spinner.style.display = 'none';
+                        
+                        console.log('✅ 환율 로드 완료:', this.exchangeRate);
+                        
+                        // 계산 다시 실행
+                        this.calculateSummary();
+                    } else {
+                        rateDisplay.textContent = '환율 정보 없음';
+                        console.warn('⚠️ 환율 조회 실패');
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ 환율 조회 에러:', error);
+                    rateDisplay.textContent = '환율 조회 실패';
+                    spinner.style.display = 'none';
+                });
+        },
+        
+        /**
          * 주식 정보 업데이트
          */
         updateStockInfo: function(option) {
@@ -498,6 +536,14 @@
             
             // 주식 정보 카드 표시
             document.getElementById('stockInfoCard').style.display = 'block';
+            
+            // ✅ 미국 주식인 경우 환율 정보 표시
+            if (this.country === 'US') {
+                document.getElementById('exchangeRateCard').style.display = 'block';
+                this.loadExchangeRate();
+            } else {
+                document.getElementById('exchangeRateCard').style.display = 'none';
+            }
             
             // 4분할 버튼 표시 (미국 주식인 경우)
             const fractionButtons = document.getElementById('fractionButtons');
@@ -552,6 +598,25 @@
             
             // 5. 최종 금액
             const finalAmount = totalAmount + commission;
+            
+            // 6. ✅ 미국 주식인 경우 원화 환산 금액 표시
+            if (this.country === 'US' && this.exchangeRate > 0) {
+                // 원화 환산 금액 계산
+                const krwAmount = totalAmount * this.exchangeRate;
+                const krwTotal = finalAmount * this.exchangeRate;
+                
+                // 원화 환산 금액 표시
+                document.getElementById('summaryKrwRow').style.display = 'flex';
+                document.getElementById('summaryKrwTotalRow').style.display = 'flex';
+                document.getElementById('summaryKrwAmount').textContent = 
+                    this.formatNumber(krwAmount) + '원';
+                document.getElementById('summaryKrwTotal').textContent = 
+                    this.formatNumber(krwTotal) + '원';
+            } else {
+                // 한국 주식인 경우 원화 환산 금액 숨김
+                document.getElementById('summaryKrwRow').style.display = 'none';
+                document.getElementById('summaryKrwTotalRow').style.display = 'none';
+            }
             
             // 표시
             const commissionStr = this.country === 'KR' ? 
