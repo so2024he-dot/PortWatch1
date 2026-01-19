@@ -15,15 +15,11 @@ import com.portwatch.service.ExchangeRateService;
 
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * ExchangeRateApiController - 환율 API
+ * ExchangeRateApiController - 환율 API (수정 완료!)
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * 
- * API 목록:
- * - GET /api/exchange/rate: 현재 환율 조회
- * - GET /api/exchange/convert: 금액 변환 (USD ↔ KRW)
- * 
  * @author PortWatch
- * @version 1.0 - 2026.01.16
+ * @version 2.0 - 2026.01.16
  */
 @RestController
 @RequestMapping("/api/exchange")
@@ -38,15 +34,6 @@ public class ExchangeRateApiController {
      * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      * 
      * URL: GET /api/exchange/rate
-     * 
-     * 사용 예시:
-     * fetch('/api/exchange/rate')
-     *   .then(response => response.json())
-     *   .then(data => {
-     *       console.log('환율:', data.rate);
-     *   });
-     * 
-     * @return 환율 정보
      */
     @GetMapping("/rate")
     public ResponseEntity<Map<String, Object>> getCurrentRate() {
@@ -56,7 +43,7 @@ public class ExchangeRateApiController {
         Map<String, Object> result = new HashMap<>();
         
         try {
-            BigDecimal rate = exchangeRateService.getCurrentExchangeRate();
+            BigDecimal rate = exchangeRateService.getUSDToKRW();
             
             result.put("success", true);
             result.put("rate", rate);
@@ -85,24 +72,6 @@ public class ExchangeRateApiController {
      * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      * 
      * URL: GET /api/exchange/convert?amount=100&from=USD&to=KRW
-     * 
-     * 파라미터:
-     * - amount: 변환할 금액
-     * - from: 원본 통화 (USD 또는 KRW)
-     * - to: 대상 통화 (KRW 또는 USD)
-     * 
-     * 사용 예시:
-     * // USD $100 → KRW
-     * fetch('/api/exchange/convert?amount=100&from=USD&to=KRW')
-     *   .then(response => response.json())
-     *   .then(data => {
-     *       console.log('변환 금액:', data.convertedAmount);
-     *   });
-     * 
-     * @param amount 변환할 금액
-     * @param from 원본 통화
-     * @param to 대상 통화
-     * @return 변환 결과
      */
     @GetMapping("/convert")
     public ResponseEntity<Map<String, Object>> convertCurrency(
@@ -120,15 +89,15 @@ public class ExchangeRateApiController {
         
         try {
             BigDecimal convertedAmount;
-            BigDecimal rate = exchangeRateService.getCurrentExchangeRate();
+            BigDecimal rate = exchangeRateService.getUSDToKRW();
             
             // USD → KRW
             if ("USD".equalsIgnoreCase(from) && "KRW".equalsIgnoreCase(to)) {
-                convertedAmount = exchangeRateService.convertUsdToKrw(amount);
+                convertedAmount = exchangeRateService.convertUSDToKRW(amount);
                 
             // KRW → USD
             } else if ("KRW".equalsIgnoreCase(from) && "USD".equalsIgnoreCase(to)) {
-                convertedAmount = exchangeRateService.convertKrwToUsd(amount);
+                convertedAmount = exchangeRateService.convertKRWToUSD(amount);
                 
             } else {
                 result.put("success", false);

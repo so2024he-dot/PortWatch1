@@ -1,28 +1,34 @@
 package com.portwatch.controller;
 
-import com.portwatch.domain.StockVO;
-import com.portwatch.service.ExchangeRateService;
-import com.portwatch.service.StockService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.portwatch.domain.StockVO;
+import com.portwatch.service.ExchangeRateService;
+import com.portwatch.service.StockService;
+
+import lombok.extern.log4j.Log4j;
+
 /**
- * 종목 정보 API Controller
- * 
- * Spring 5.0.7 RELEASE + MySQL 8.0 완전 호환
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * StockApiController - 주식 정보 API (환율 기능 추가!)
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * 
  * @author PortWatch
- * @version 2.0
+ * @version 2.0 - 2026.01.16
  */
 @RestController
 @RequestMapping("/api/stock")
+@Log4j
 public class StockApiController {
     
     @Autowired
@@ -32,158 +38,173 @@ public class StockApiController {
     private ExchangeRateService exchangeRateService;
     
     /**
-     * 종목 정보 조회 API
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * ✅ 주식 정보 조회
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      * 
-     * GET /api/stock/info/{stockCode}
-     * 
-     * Spring 5.0.7 완전 호환 버전
-     * - produces = MediaType.APPLICATION_JSON_UTF8_VALUE (Spring 5.0.7 권장)
-     * - 명시적 타입 변환
-     * - NULL 안전 처리
+     * URL: GET /api/stock/info/{stockCode}
      */
-    @GetMapping(value = "/info/{stockCode}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ResponseEntity<Map<String, Object>> getStockInfo(@PathVariable("stockCode") String stockCode) {
-        Map<String, Object> response = new HashMap<String, Object>();
+    @GetMapping(value = "/info/{stockCode}", produces = "application/json;charset=UTF-8")
+    public ResponseEntity<Map<String, Object>> getStockInfo(@PathVariable String stockCode) {
+        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        log.info("📊 [API] 주식 정보 조회");
+        log.info("  - stockCode: " + stockCode);
         
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("🔍 종목 정보 API 호출: " + stockCode);
+        Map<String, Object> result = new HashMap<>();
         
         try {
-            // 종목 정보 조회
             StockVO stock = stockService.getStockByCode(stockCode);
             
             if (stock == null) {
-                System.err.println("❌ 종목을 찾을 수 없음: " + stockCode);
-                response.put("success", Boolean.FALSE);
-                response.put("message", "종목을 찾을 수 없습니다: " + stockCode);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+                result.put("success", false);
+                result.put("message", "주식을 찾을 수 없습니다.");
+                log.warn("⚠️ 주식을 찾을 수 없음: " + stockCode);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(result);
             }
             
-            System.out.println("✅ 종목 조회 성공: " + stock.getStockName());
+            result.put("success", true);
+            result.put("stock", stock);
+            result.put("timestamp", System.currentTimeMillis());
             
-            // 기본 정보
-            response.put("success", Boolean.TRUE);
-            response.put("stockCode", stock.getStockCode());
-            response.put("stockName", stock.getStockName());
-            response.put("marketType", stock.getMarketType());
+            log.info("✅ 주식 정보 조회 완료: " + stock.getStockName());
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             
-            // industry는 NULL일 수 있음
-            if (stock.getIndustry() != null) {
-                response.put("industry", stock.getIndustry());
-            } else {
-                response.put("industry", "");
-            }
-            
-            // 현재가 - NULL 체크 필수!
-            if (stock.getCurrentPrice() != null) {
-                // BigDecimal을 Double로 변환 (JSON 직렬화 안전)
-                double currentPriceValue = stock.getCurrentPrice().doubleValue();
-                response.put("currentPrice", Double.valueOf(currentPriceValue));
-                System.out.println("💰 현재가: " + currentPriceValue);
-            } else {
-                response.put("currentPrice", null);
-                System.out.println("⚠️ 현재가 정보 없음");
-            }
-            
-            // 미국 주식 여부 확인
-            String marketType = stock.getMarketType();
-            boolean isUSStock = false;
-            
-            if (marketType != null) {
-                isUSStock = marketType.equals("NASDAQ") || 
-                           marketType.equals("NYSE") || 
-                           marketType.equals("AMEX");
-            }
-            
-            response.put("isUSStock", Boolean.valueOf(isUSStock));
-            System.out.println("🌎 미국 주식 여부: " + isUSStock);
-            
-            // 분할 매입 가능 여부 (미국 주식만)
-            response.put("fractionalTrading", Boolean.valueOf(isUSStock));
-            
-            // 미국 주식이면 환율 정보 추가
-            if (isUSStock) {
-                try {
-                    BigDecimal exchangeRate = exchangeRateService.getUSDToKRW();
-                    double exchangeRateValue = exchangeRate.doubleValue();
-                    response.put("exchangeRate", Double.valueOf(exchangeRateValue));
-                    System.out.println("💱 환율: " + exchangeRateValue);
-                    
-                    // 현재가가 있으면 한화로 변환
-                    if (stock.getCurrentPrice() != null) {
-                        BigDecimal krwPrice = exchangeRateService.convertUSDToKRW(stock.getCurrentPrice());
-                        double krwPriceValue = krwPrice.doubleValue();
-                        response.put("currentPriceKRW", Double.valueOf(krwPriceValue));
-                        System.out.println("💴 한화 환산: " + krwPriceValue);
-                    }
-                } catch (Exception e) {
-                    // 환율 조회 실패해도 계속 진행
-                    System.err.println("⚠️ 환율 조회 실패: " + e.getMessage());
-                    response.put("exchangeRate", Double.valueOf(1310.0));
-                }
-            }
-            
-            // 추천 매입 단위
-            if (isUSStock) {
-                response.put("minQuantity", Double.valueOf(0.01));
-                response.put("stepQuantity", Double.valueOf(0.01));
-            } else {
-                response.put("minQuantity", Integer.valueOf(1));
-                response.put("stepQuantity", Integer.valueOf(1));
-            }
-            
-            // 가격 변동 정보
-            if (stock.getPriceChange() != null) {
-                response.put("priceChange", Double.valueOf(stock.getPriceChange().doubleValue()));
-            }
-            
-            if (stock.getPriceChangeRate() != null) {
-                response.put("priceChangeRate", Double.valueOf(stock.getPriceChangeRate().doubleValue()));
-            }
-            
-            System.out.println("✅ API 응답 생성 완료");
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(result);
             
         } catch (Exception e) {
-            System.err.println("❌ 종목 정보 조회 중 오류 발생");
-            e.printStackTrace();
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            log.error("❌ 주식 정보 조회 실패", e);
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             
-            response.put("success", Boolean.FALSE);
-            response.put("message", "종목 정보 조회 중 오류가 발생했습니다: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            result.put("success", false);
+            result.put("message", "주식 정보 조회에 실패했습니다: " + e.getMessage());
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
         }
     }
     
     /**
-     * 현재가만 간단히 조회
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * ✅ 현재가 조회
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      * 
-     * GET /api/stock/current-price/{stockCode}
+     * URL: GET /api/stock/current-price/{stockCode}
      */
-    @GetMapping(value = "/current-price/{stockCode}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ResponseEntity<Map<String, Object>> getCurrentPrice(@PathVariable("stockCode") String stockCode) {
-        Map<String, Object> response = new HashMap<String, Object>();
+    @GetMapping(value = "/current-price/{stockCode}", produces = "application/json;charset=UTF-8")
+    public ResponseEntity<Map<String, Object>> getCurrentPrice(@PathVariable String stockCode) {
+        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        log.info("💰 [API] 현재가 조회");
+        log.info("  - stockCode: " + stockCode);
+        
+        Map<String, Object> result = new HashMap<>();
         
         try {
             StockVO stock = stockService.getStockByCode(stockCode);
             
-            if (stock == null || stock.getCurrentPrice() == null) {
-                response.put("success", Boolean.FALSE);
-                response.put("message", "현재가를 찾을 수 없습니다.");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            if (stock == null) {
+                result.put("success", false);
+                result.put("message", "주식을 찾을 수 없습니다.");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(result);
             }
             
-            response.put("success", Boolean.TRUE);
-            response.put("currentPrice", Double.valueOf(stock.getCurrentPrice().doubleValue()));
+            result.put("success", true);
+            result.put("stockCode", stock.getStockCode());
+            result.put("stockName", stock.getStockName());
+            result.put("currentPrice", stock.getCurrentPrice());
+            result.put("country", stock.getCountry());
+            result.put("timestamp", System.currentTimeMillis());
             
-            return ResponseEntity.ok(response);
+            log.info("✅ 현재가: " + stock.getCurrentPrice());
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            return ResponseEntity.ok(result);
             
         } catch (Exception e) {
-            response.put("success", Boolean.FALSE);
-            response.put("message", "현재가 조회 실패: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            log.error("❌ 현재가 조회 실패", e);
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            result.put("success", false);
+            result.put("message", "현재가 조회에 실패했습니다: " + e.getMessage());
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
+        }
+    }
+    
+    /**
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * ✅ USD → KRW 환율 조회 (신규 추가!)
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * 
+     * URL: GET /api/stock/exchange-rate
+     */
+    @GetMapping(value = "/exchange-rate", produces = "application/json;charset=UTF-8")
+    public ResponseEntity<Map<String, Object>> getUSDToKRW() {
+        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        log.info("💱 [API] 환율 조회 (Stock API)");
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            BigDecimal rate = exchangeRateService.getUSDToKRW();
+            
+            result.put("success", true);
+            result.put("rate", rate);
+            result.put("currency", "USD/KRW");
+            result.put("timestamp", System.currentTimeMillis());
+            
+            log.info("✅ 환율: " + rate);
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            return ResponseEntity.ok(result);
+            
+        } catch (Exception e) {
+            log.error("❌ 환율 조회 실패", e);
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            result.put("success", false);
+            result.put("message", "환율 조회에 실패했습니다");
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
+        }
+    }
+    
+    /**
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * ✅ USD → KRW 변환 (신규 추가!)
+     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     * 
+     * URL: GET /api/stock/convert-usd-krw/{usdAmount}
+     */
+    @GetMapping(value = "/convert-usd-krw/{usdAmount}", produces = "application/json;charset=UTF-8")
+    public ResponseEntity<Map<String, Object>> convertUSDToKRW(@PathVariable BigDecimal usdAmount) {
+        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        log.info("💱 [API] USD → KRW 변환 (Stock API)");
+        log.info("  - USD: " + usdAmount);
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            BigDecimal krwAmount = exchangeRateService.convertUSDToKRW(usdAmount);
+            BigDecimal rate = exchangeRateService.getUSDToKRW();
+            
+            result.put("success", true);
+            result.put("usdAmount", usdAmount);
+            result.put("krwAmount", krwAmount);
+            result.put("rate", rate);
+            result.put("timestamp", System.currentTimeMillis());
+            
+            log.info("✅ 변환 완료: " + krwAmount + "원");
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            return ResponseEntity.ok(result);
+            
+        } catch (Exception e) {
+            log.error("❌ 변환 실패", e);
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            result.put("success", false);
+            result.put("message", "변환에 실패했습니다");
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
         }
     }
 }
