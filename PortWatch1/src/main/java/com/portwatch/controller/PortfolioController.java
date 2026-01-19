@@ -191,7 +191,7 @@ public class PortfolioController {
             portfolioVO.setMemberId(member.getMemberId());
             
             // 포트폴리오 생성
-            portfolioService.createPortfolio(portfolioVO);
+            portfolioService.updatePortfolio(portfolioVO);
             
             rttr.addFlashAttribute("successMessage", "포트폴리오가 생성되었습니다.");
             
