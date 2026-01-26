@@ -2,10 +2,6 @@ package com.portwatch.domain;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.util.List;
-
-import org.apache.ibatis.javassist.bytecode.stackmap.TypeData.UninitThis;
-import org.eclipse.jdt.internal.compiler.ast.ThisReference;
 
 import lombok.Data;
 

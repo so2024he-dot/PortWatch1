@@ -1,57 +1,41 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx" xmlns:task="http://www.springframework.org/schema/task" xsi:schemaLocation=" http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd">
-<!--  ========================================
-         ✅ MySQL 8.0.33 데이터소스 설정 (HikariCP)
-         ========================================  -->
+<beans xmlns="http://www.springframework.org/schema/beans" 
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+       xmlns:context="http://www.springframework.org/schema/context" 
+       xmlns:tx="http://www.springframework.org/schema/tx" 
+       xmlns:task="http://www.springframework.org/schema/task" 
+       xsi:schemaLocation="
+           http://www.springframework.org/schema/beans 
+           http://www.springframework.org/schema/beans/spring-beans.xsd 
+           http://www.springframework.org/schema/context 
+           http://www.springframework.org/schema/context/spring-context.xsd 
+           http://www.springframework.org/schema/tx 
+           http://www.springframework.org/schema/tx/spring-tx.xsd 
+           http://www.springframework.org/schema/task 
+           http://www.springframework.org/schema/task/spring-task.xsd">
+
+    <!-- MySQL 8.0.33 데이터소스 설정 (HikariCP) -->
     <bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
-        <!-- MySQL 8.0 드라이버 -->
         <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
-        
-        <!-- 
-            ✅ MySQL 8.0 필수 설정:
-            - useSSL=false: SSL 비활성화 (로컬 개발 환경)
-            - serverTimezone=Asia/Seoul: 한국 시간대 설정 (필수!)
-            - allowPublicKeyRetrieval=true: MySQL 8.0 인증 방식 지원
-            - useUnicode=true&characterEncoding=UTF-8: 한글 인코딩
-        -->
-        <property name="jdbcUrl" value="jdbc:mysql://itwillbs.com:3306/c6d2507t2p2?
-        useSSL=false&amp;
-        serverTimezone=Asia/Seoul&amp;
-        allowPublicKeyRetrieval=true&amp;
-        useUnicode=true&amp;
-        characterEncoding=UTF-8"/>
-        
-        <!-- ✅ 수정: root 계정 사용 (본인의 MySQL root 비밀번호로 변경하세요!) -->
-        <property name="username" value="c6d2507t2p2"/>
-        <property name="password" value="1234"/>
-        
-        <!-- HikariCP 성능 최적화 설정 -->
-        <property name="maximumPoolSize" value="20"/>        <!-- 최대 커넥션 수 -->
-        <property name="minimumIdle" value="5"/>            <!-- 최소 유휴 커넥션 수 -->
-        <property name="connectionTimeout" value="30000"/>  <!-- 연결 타임아웃 (30초) -->
-        <property name="idleTimeout" value="600000"/>       <!-- 유휴 타임아웃 (10분) -->
-        <property name="maxLifetime" value="1800000"/>      <!-- 최대 수명 (30분) -->
+        <property name="jdbcUrl" value="jdbc:mysql://localhost:3306/portwatch_db?useSSL=false&amp;serverTimezone=Asia/Seoul&amp;allowPublicKeyRetrieval=true&amp;useUnicode=true&amp;characterEncoding=UTF-8"/>
+        <property name="username" value="portwatch"/>
+        <property name="password" value="PortWatch2026!"/>
+        <property name="maximumPoolSize" value="20"/>
+        <property name="minimumIdle" value="5"/>
+        <property name="connectionTimeout" value="30000"/>
+        <property name="idleTimeout" value="600000"/>
+        <property name="maxLifetime" value="1800000"/>
         <property name="connectionTestQuery" value="SELECT 1"/>
-        
-        <!-- 추가 설정 -->
         <property name="poolName" value="PortWatchHikariPool"/>
         <property name="autoCommit" value="true"/>
         <property name="leakDetectionThreshold" value="60000"/>
     </bean>
     
-    <!-- ========================================
-         MyBatis SqlSessionFactory 설정
-         ======================================== -->
+    <!-- MyBatis SqlSessionFactory 설정 -->
     <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
         <property name="dataSource" ref="dataSource"/>
-        
-        <!-- MyBatis 설정 파일 -->
         <property name="configLocation" value="classpath:mybatis-config.xml"/>
-        
-        <!-- Mapper XML 파일 위치 -->
         <property name="mapperLocations" value="classpath:mappers/*.xml"/>
-        
-        <!-- Type Aliases 패키지 -->
         <property name="typeAliasesPackage" value="com.portwatch.domain"/>
     </bean>
     
@@ -60,27 +44,19 @@
         <constructor-arg ref="sqlSessionFactory"/>
     </bean>
     
-    <!-- ========================================
-         MyBatis Mapper 스캔 설정
-         ======================================== -->
+    <!-- MyBatis Mapper 스캔 설정 -->
     <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
         <property name="basePackage" value="com.portwatch.persistence"/>
         <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
     </bean>
     
-    <!-- ========================================
-         트랜잭션 관리자
-         ======================================== -->
+    <!-- 트랜잭션 관리자 -->
     <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
         <property name="dataSource" ref="dataSource"/>
     </bean>
     
     <!-- 트랜잭션 어노테이션 활성화 -->
     <tx:annotation-driven transaction-manager="transactionManager"/>
-    
-    <!-- ========================================
-         스케줄링 및 비동기 작업 설정 (중복 제거!)
-         ======================================== -->
     
     <!-- TaskExecutor (비동기 작업용) -->
     <bean id="taskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
@@ -100,15 +76,13 @@
         <property name="awaitTerminationSeconds" value="60"/>
     </bean>
     
-    <!-- ✅ 스케줄링 어노테이션 활성화 - 단 한 번만! (@Scheduled, @Async 지원) -->
+    <!-- 스케줄링 어노테이션 활성화 -->
     <task:annotation-driven executor="taskExecutor" scheduler="taskScheduler"/>
     
-    <!-- ========================================
-         컴포넌트 스캔
-         ======================================== -->
+    <!-- 컴포넌트 스캔 -->
     <context:component-scan base-package="com.portwatch.service"/>
     <context:component-scan base-package="com.portwatch.persistence"/>
     <context:component-scan base-package="com.portwatch.scheduler"/>
     <context:component-scan base-package="com.portwatch"/>
-	
+    
 </beans>

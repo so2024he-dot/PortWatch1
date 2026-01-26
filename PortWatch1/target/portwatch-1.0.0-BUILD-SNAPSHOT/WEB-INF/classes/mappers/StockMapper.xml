@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+StockMapper - 주식 SQL 매퍼
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Spring 5.0.7 + MySQL 8.0.33 호환
+
+수정 내역:
+- 2026-01-19: selectStockByCode 쿼리 추가 (에러 수정)
+- 2025-12-29: selectByCountryAndMarket 쿼리 추가
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-->
+
+<mapper namespace="com.portwatch.persistence.StockDAO">
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         ResultMap 정의
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <resultMap id="StockResultMap" type="com.portwatch.domain.StockVO">
+        <id property="stockId" column="stock_id"/>
+        <result property="stockCode" column="stock_code"/>
+        <result property="stockName" column="stock_name"/>
+        <result property="country" column="country"/>
+        <result property="marketType" column="market_type"/>
+        <result property="industry" column="industry"/>
+        <result property="currentPrice" column="current_price"/>
+        <result property="changeRate" column="change_rate"/>
+        <result property="volume" column="volume"/>
+        <result property="marketCap" column="market_cap"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         전체 주식 조회
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <select id="selectAll" resultMap="StockResultMap">
+        SELECT 
+            stock_id,
+            stock_code,
+            stock_name,
+            country,
+            market_type,
+            industry,
+            current_price,
+            change_rate,
+            volume,
+            market_cap,
+            updated_at
+        FROM stock
+        ORDER BY stock_name ASC
+    </select>
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         종목 코드로 조회 (selectByCode)
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <select id="selectByCode" parameterType="string" resultMap="StockResultMap">
+        SELECT 
+            stock_id,
+            stock_code,
+            stock_name,
+            country,
+            market_type,
+            industry,
+            current_price,
+            change_rate,
+            volume,
+            market_cap,
+            updated_at
+        FROM stock
+        WHERE stock_code = #{stockCode}
+    </select>
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         ✅ 종목 코드로 조회 (selectStockByCode) - 신규 추가!
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         
+         에러 해결: Invalid bound statement (not found): 
+                   com.portwatch.persistence.StockDAO.selectStockByCode
+         
+         이 쿼리는 PortfolioServiceImpl.addStockToPortfolio()에서 호출됩니다.
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <select id="selectStockByCode" parameterType="string" resultMap="StockResultMap">
+        SELECT 
+            stock_id,
+            stock_code,
+            stock_name,
+            country,
+            market_type,
+            industry,
+            current_price,
+            change_rate,
+            volume,
+            market_cap,
+            updated_at
+        FROM stock
+        WHERE stock_code = #{stockCode}
+    </select>
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         국가별 조회
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <select id="selectByCountry" parameterType="string" resultMap="StockResultMap">
+        SELECT 
+            stock_id,
+            stock_code,
+            stock_name,
+            country,
+            market_type,
+            industry,
+            current_price,
+            change_rate,
+            volume,
+            market_cap,
+            updated_at
+        FROM stock
+        WHERE country = #{country}
+        ORDER BY stock_name ASC
+    </select>
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         시장별 조회
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <select id="selectByMarket" parameterType="string" resultMap="StockResultMap">
+        SELECT 
+            stock_id,
+            stock_code,
+            stock_name,
+            country,
+            market_type,
+            industry,
+            current_price,
+            change_rate,
+            volume,
+            market_cap,
+            updated_at
+        FROM stock
+        WHERE market_type = #{marketType}
+        ORDER BY stock_name ASC
+    </select>
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         ✅ 국가 + 시장별 조회
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         
+         파라미터:
+         - country: 국가 코드 (KR, US)
+         - market: 시장 코드 (KOSPI, KOSDAQ, NASDAQ, NYSE)
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <select id="selectByCountryAndMarket" resultMap="StockResultMap">
+        SELECT 
+            stock_id,
+            stock_code,
+            stock_name,
+            country,
+            market_type,
+            industry,
+            current_price,
+            change_rate,
+            volume,
+            market_cap,
+            updated_at
+        FROM stock
+        WHERE country = #{country}
+          AND market_type = #{market}
+        ORDER BY stock_name ASC
+    </select>
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         주식 검색
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <select id="search" parameterType="string" resultMap="StockResultMap">
+        SELECT 
+            stock_id,
+            stock_code,
+            stock_name,
+            country,
+            market_type,
+            industry,
+            current_price,
+            change_rate,
+            volume,
+            market_cap,
+            updated_at
+        FROM stock
+        WHERE stock_name LIKE CONCAT('%', #{keyword}, '%')
+           OR stock_code LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY stock_name ASC
+    </select>
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         주식 정보 업데이트
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <update id="update" parameterType="com.portwatch.domain.StockVO">
+        UPDATE stock
+        SET stock_name = #{stockName},
+            country = #{country},
+            market_type = #{marketType},
+            industry = #{industry},
+            current_price = #{currentPrice},
+            change_rate = #{changeRate},
+            volume = #{volume},
+            market_cap = #{marketCap},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE stock_code = #{stockCode}
+    </update>
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         주식 가격 업데이트
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <update id="updatePrice">
+        UPDATE stock
+        SET current_price = #{currentPrice},
+            change_rate = #{changeRate},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE stock_code = #{stockCode}
+    </update>
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         주식 등록
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <insert id="insert" parameterType="com.portwatch.domain.StockVO">
+        INSERT INTO stock (
+            stock_code,
+            stock_name,
+            country,
+            market_type,
+            industry,
+            current_price,
+            change_rate,
+            volume,
+            market_cap
+        ) VALUES (
+            #{stockCode},
+            #{stockName},
+            #{country},
+            #{marketType},
+            #{industry},
+            #{currentPrice},
+            #{changeRate},
+            #{volume},
+            #{marketCap}
+        )
+    </insert>
+
+</mapper>
