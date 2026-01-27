@@ -1,41 +1,45 @@
 package com.portwatch.controller;
 
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
+import java.text.DateFormat;
+import java.util.Date;
+import java.util.Locale;
 
-/**
- * 홈 컨트롤러
- * 
- * @author PortWatch
- * @version 1.0
- */
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+
 @Controller
 public class HomeController {
     
-    /**
-     * 루트 경로 - 메인 페이지로 리다이렉트
-     * http://localhost:8088/
-     */
-    @GetMapping("/")
-    public String home() {
-        return "redirect:/main";
+    private static final Logger logger = LoggerFactory.getLogger(HomeController.class);
+    
+    @RequestMapping(value = "/", method = RequestMethod.GET)
+    public String home(Locale locale, Model model) {
+        logger.info("Welcome home! The client locale is {}.", locale);
+        
+        Date date = new Date();
+        DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG, locale);
+        
+        String formattedDate = dateFormat.format(date);
+        
+        model.addAttribute("serverTime", formattedDate);
+        model.addAttribute("message", "PortWatch 주식 포트폴리오 관리 시스템");
+        
+        return "index";
     }
     
-    /**
-     * 메인 페이지
-     * http://localhost:8088/main
-     */
-    @GetMapping("/main")
+    @RequestMapping(value = "/main", method = RequestMethod.GET)
     public String main() {
-        return "main/index";
+        logger.info("Main page requested");
+        return "redirect:/";
     }
     
-    /**
-     * 대시보드 페이지
-     * http://localhost:8088/dashboard
-     */
-    @GetMapping("/dashboard")
-    public String dashboard() {
-        return "dashboard/index";
+    @RequestMapping(value = "/home", method = RequestMethod.GET)
+    public String homeRedirect() {
+        logger.info("Home page requested");
+        return "redirect:/";
     }
 }

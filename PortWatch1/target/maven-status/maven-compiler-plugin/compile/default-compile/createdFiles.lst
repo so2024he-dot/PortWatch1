@@ -49,7 +49,6 @@ com\portwatch\domain\PortfolioStockVO.class
 com\portwatch\util\SessionUtils.class
 com\portwatch\interceptor\LoginInterceptor.class
 com\portwatch\scheduler\NewsScheduler.class
-com\portwatch\controller\DashboardController$1.class
 com\portwatch\domain\MemberVO.class
 com\portwatch\persistence\PaymentDAO.class
 com\portwatch\controller\StockPurchaseApiController.class
