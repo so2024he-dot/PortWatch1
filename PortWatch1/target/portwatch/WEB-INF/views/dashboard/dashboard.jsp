@@ -1,205 +1,308 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PortWatch - Dashboard</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/common.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/dashboard.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .dashboard-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 1200px;
+            
+            
+            width: 100%;
+            padding: 40px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .header h1 {
+            color: #667eea;
+            font-size: 32px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .user-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .welcome-message {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .welcome-message h2 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .welcome-message p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 4px solid #667eea;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        
+        .stat-card .value {
+            color: #333;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .action-btn {
+            padding: 15px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .logout-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .portfolio-section {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+        
+        .portfolio-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        
+        .empty-portfolio {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .empty-portfolio i {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
+    <div class="dashboard-container">
         <!-- Header -->
-        <header class="dashboard-header">
-            <h1>📊 PortWatch Dashboard</h1>
+        <div class="header">
+            <h1>📊 PortWatch</h1>
             <div class="user-info">
-                <span>환영합니다, <strong>${loginMember.memberName}</strong>님</span>
-                <a href="${pageContext.request.contextPath}/member/logout" class="btn-logout">로그아웃</a>
+                <div class="user-avatar">
+                    ${member.memberName.substring(0, 1)}
+                </div>
+                <div>
+                    <div class="user-name">${member.memberName}</div>
+                    <small style="color: #999;">${member.memberEmail}</small>
+                </div>
             </div>
-        </header>
-
-        <!-- Navigation -->
-        <nav class="dashboard-nav">
-            <ul>
-                <li><a href="${pageContext.request.contextPath}/dashboard" class="active">대시보드</a></li>
-                <li><a href="${pageContext.request.contextPath}/portfolio/list">포트폴리오</a></li>
-                <li><a href="${pageContext.request.contextPath}/stock/list">종목 조회</a></li>
-                <li><a href="${pageContext.request.contextPath}/watchlist/list">관심 종목</a></li>
-                <li><a href="${pageContext.request.contextPath}/news/list">뉴스</a></li>
-            </ul>
-        </nav>
-
-        <!-- Main Content -->
-        <main class="dashboard-main">
-            <!-- Portfolio Summary -->
-            <section class="portfolio-summary">
-                <h2>📈 포트폴리오 요약</h2>
-                <div class="summary-cards">
-                    <div class="card">
-                        <h3>총 평가액</h3>
-                        <p class="value">
-                            <c:choose>
-                                <c:when test="${empty portfolioList}">
-                                    0원
-                                </c:when>
-                                <c:otherwise>
-                                    <fmt:formatNumber value="${totalValue}" pattern="#,##0"/>원
-                                </c:otherwise>
-                            </c:choose>
-                        </p>
-                    </div>
-                    <div class="card">
-                        <h3>총 손익</h3>
-                        <p class="value profit">
-                            <c:choose>
-                                <c:when test="${empty portfolioList}">
-                                    0원 (0%)
-                                </c:when>
-                                <c:otherwise>
-                                    <fmt:formatNumber value="${totalProfit}" pattern="#,##0"/>원 
-                                    (<fmt:formatNumber value="${totalProfitRate}" pattern="#,##0.00"/>%)
-                                </c:otherwise>
-                            </c:choose>
-                        </p>
-                    </div>
-                    <div class="card">
-                        <h3>보유 종목</h3>
-                        <p class="value">
-                            <c:choose>
-                                <c:when test="${empty portfolioList}">
-                                    0개
-                                </c:when>
-                                <c:otherwise>
-                                    ${portfolioList.size()}개
-                                </c:otherwise>
-                            </c:choose>
-                        </p>
-                    </div>
+        </div>
+        
+        <!-- Welcome Message -->
+        <div class="welcome-message">
+            <h2>환영합니다, ${member.memberName}님! 🎉</h2>
+            <p>PortWatch에서 포트폴리오를 관리하세요</p>
+        </div>
+        
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>총 포트폴리오</h3>
+                <div class="value">
+                    <c:choose>
+                        <c:when test="${portfolioList != null}">
+                            ${portfolioList.size()}개
+                        </c:when>
+                        <c:otherwise>
+                            0개
+                        </c:otherwise>
+                    </c:choose>
                 </div>
-            </section>
-
-            <!-- Portfolio List -->
-            <section class="portfolio-list">
-                <h2>📋 보유 종목 목록</h2>
-                <c:choose>
-                    <c:when test="${empty portfolioList}">
-                        <div class="empty-state">
-                            <p>보유 중인 종목이 없습니다.</p>
-                            <a href="${pageContext.request.contextPath}/stock/list" class="btn-primary">종목 구매하기</a>
-                        </div>
-                    </c:when>
-                    <c:otherwise>
-                        <table class="portfolio-table">
-                            <thead>
-                                <tr>
-                                    <th>종목명</th>
-                                    <th>종목코드</th>
-                                    <th>보유 수량</th>
-                                    <th>평균 단가</th>
-                                    <th>현재가</th>
-                                    <th>평가액</th>
-                                    <th>손익</th>
-                                    <th>수익률</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <c:forEach items="${portfolioList}" var="portfolio">
-                                    <tr>
-                                        <td>${portfolio.stockName}</td>
-                                        <td>${portfolio.stockCode}</td>
-                                        <td><fmt:formatNumber value="${portfolio.quantity}" pattern="#,##0.####"/></td>
-                                        <td><fmt:formatNumber value="${portfolio.avgPrice}" pattern="#,##0.00"/>원</td>
-                                        <td><fmt:formatNumber value="${portfolio.currentPrice}" pattern="#,##0.00"/>원</td>
-                                        <td><fmt:formatNumber value="${portfolio.totalValue}" pattern="#,##0"/>원</td>
-                                        <td class="${portfolio.profit >= 0 ? 'profit' : 'loss'}">
-                                            <fmt:formatNumber value="${portfolio.profit}" pattern="#,##0"/>원
-                                        </td>
-                                        <td class="${portfolio.profitRate >= 0 ? 'profit' : 'loss'}">
-                                            <fmt:formatNumber value="${portfolio.profitRate}" pattern="#,##0.00"/>%
-                                        </td>
-                                    </tr>
-                                </c:forEach>
-                            </tbody>
-                        </table>
-                    </c:otherwise>
-                </c:choose>
-            </section>
-
-            <!-- Chart Section -->
-            <section class="chart-section">
-                <h2>📊 포트폴리오 차트</h2>
-                <div class="chart-container">
-                    <canvas id="portfolioChart"></canvas>
+            </div>
+            
+            <div class="stat-card">
+                <h3>회원 상태</h3>
+                <div class="value" style="font-size: 20px;">
+                    <c:choose>
+                        <c:when test="${member.memberStatus == 'ACTIVE'}">
+                            ✅ 활성
+                        </c:when>
+                        <c:otherwise>
+                            ⚠️ ${member.memberStatus}
+                        </c:otherwise>
+                    </c:choose>
                 </div>
-            </section>
-
-            <!-- Quick Actions -->
-            <section class="quick-actions">
-                <h2>⚡ 빠른 작업</h2>
-                <div class="action-buttons">
-                    <a href="${pageContext.request.contextPath}/stock/list" class="btn-action">종목 구매</a>
-                    <a href="${pageContext.request.contextPath}/portfolio/list" class="btn-action">포트폴리오 관리</a>
-                    <a href="${pageContext.request.contextPath}/watchlist/list" class="btn-action">관심 종목</a>
-                    <a href="${pageContext.request.contextPath}/news/list" class="btn-action">뉴스 보기</a>
+            </div>
+            
+            <div class="stat-card">
+                <h3>회원 권한</h3>
+                <div class="value" style="font-size: 20px;">
+                    <c:choose>
+                        <c:when test="${member.memberRole == 'ADMIN'}">
+                            👑 관리자
+                        </c:when>
+                        <c:otherwise>
+                            👤 일반 회원
+                        </c:otherwise>
+                    </c:choose>
                 </div>
-            </section>
-        </main>
-
-        <!-- Footer -->
-        <footer class="dashboard-footer">
-            <p>&copy; 2026 PortWatch. All rights reserved.</p>
-        </footer>
+            </div>
+            
+            <div class="stat-card">
+                <h3>가입일</h3>
+                <div class="value" style="font-size: 16px;">
+                    ${member.createdAt != null ? member.createdAt : 'N/A'}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="${pageContext.request.contextPath}/portfolio/list" class="action-btn">
+                📈 포트폴리오 보기
+            </a>
+            <a href="${pageContext.request.contextPath}/portfolio/create" class="action-btn">
+                ➕ 포트폴리오 추가
+            </a>
+            <a href="${pageContext.request.contextPath}/news/list" class="action-btn">
+                📰 뉴스 보기
+            </a>
+            <a href="${pageContext.request.contextPath}/stock/list" class="action-btn">
+                📊 종목 검색
+            </a>
+            <a href="${pageContext.request.contextPath}/member/profile" class="action-btn">
+                ⚙️ 프로필 설정
+            </a>
+            <a href="${pageContext.request.contextPath}/member/logout" class="action-btn logout-btn">
+                🚪 로그아웃
+            </a>
+        </div>
+        
+        <!-- Portfolio Section -->
+        <div class="portfolio-section">
+            <h2>내 포트폴리오</h2>
+            <c:choose>
+                <c:when test="${portfolioList != null && portfolioList.size() > 0}">
+                    <div style="color: #333;">
+                        <p>✅ ${portfolioList.size()}개의 포트폴리오가 있습니다.</p>
+                        <a href="${pageContext.request.contextPath}/portfolio/list" 
+                           style="color: #667eea; text-decoration: none; font-weight: 600; margin-top: 10px; display: inline-block;">
+                            자세히 보기 →
+                        </a>
+                    </div>
+                </c:when>
+                <c:otherwise>
+                    <div class="empty-portfolio">
+                        <div style="font-size: 48px; margin-bottom: 15px;">📊</div>
+                        <p style="font-size: 18px; margin-bottom: 20px;">아직 포트폴리오가 없습니다</p>
+                        <a href="${pageContext.request.contextPath}/portfolio/create" 
+                           class="action-btn" 
+                           style="display: inline-block; width: auto;">
+                            첫 포트폴리오 만들기
+                        </a>
+                    </div>
+                </c:otherwise>
+            </c:choose>
+        </div>
     </div>
-
-    <script>
-        // Portfolio Chart
-        <c:if test="${not empty portfolioList}">
-        const ctx = document.getElementById('portfolioChart').getContext('2d');
-        const portfolioChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: [
-                    <c:forEach items="${portfolioList}" var="portfolio" varStatus="status">
-                        '${portfolio.stockName}'<c:if test="${!status.last}">,</c:if>
-                    </c:forEach>
-                ],
-                datasets: [{
-                    label: '평가액',
-                    data: [
-                        <c:forEach items="${portfolioList}" var="portfolio" varStatus="status">
-                            ${portfolio.totalValue}<c:if test="${!status.last}">,</c:if>
-                        </c:forEach>
-                    ],
-                    backgroundColor: [
-                        '#FF6384',
-                        '#36A2EB',
-                        '#FFCE56',
-                        '#4BC0C0',
-                        '#9966FF',
-                        '#FF9F40',
-                        '#FF6384',
-                        '#C9CBCF'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    },
-                    title: {
-                        display: true,
-                        text: '종목별 비중'
-                    }
-                }
-            }
-        });
-        </c:if>
-    </script>
 </body>
 </html>
