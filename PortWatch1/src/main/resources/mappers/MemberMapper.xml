@@ -1,32 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper
-    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-
-<!-- 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-MemberMapper.xml - MEMBER 테이블 (Spring 5.0.7 + MySQL 8.0.33)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-수정 내역:
-- selectById, selectByEmail 메서드 추가 (MemberServiceImpl 호환)
-- 기존 selectMemberById, selectMemberByEmail 유지
-
-✅ 핵심 수정:
-member (소문자) → MEMBER (대문자)
-
-✅ 에러 해결:
-Table 'c6d2507t2p2.member' doesn't exist
-→ Table 'c6d2507t2p2.MEMBER' exists!
-
-@version FINAL FIXED - 2026.01.14
--->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.portwatch.persistence.MemberDAO">
     
-    <!-- ========================================
-         Result Map - 회원 정보 매핑
-         ======================================== -->
     <resultMap id="MemberResultMap" type="MemberVO">
         <id property="memberId" column="member_id"/>
         <result property="memberEmail" column="member_email"/>
@@ -42,209 +18,50 @@ Table 'c6d2507t2p2.member' doesn't exist
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
     
-    <!-- ========================================
-         로그인 ⭐⭐⭐
-         ======================================== -->
+    <!-- 로그인 -->
     <select id="login" resultMap="MemberResultMap">
-        SELECT 
-            member_id,
-            member_email,
-            member_pass,
-            member_name,
-            member_phone,
-            member_address,
-            member_gender,
-            member_birth,
-            member_role,
-            member_status,
-            created_at,
-            updated_at
+        SELECT member_id, member_email, member_pass, member_name, member_phone,
+               member_role, member_status, created_at, updated_at
         FROM MEMBER
-        WHERE member_email = #{param1}
-          AND member_pass = #{param2}
-          AND member_status = 'ACTIVE'
+        WHERE member_email = #{param1} AND member_pass = #{param2} AND member_status = 'ACTIVE'
     </select>
     
-    <!-- ========================================
-         회원가입 ⭐⭐⭐
-         ======================================== -->
+    <!-- 회원가입 -->
     <insert id="insertMember">
-        INSERT INTO MEMBER (
-            member_id,
-            member_email,
-            member_pass,
-            member_name,
-            member_phone,
-            member_address,
-            member_gender,
-            member_birth,
-            member_role,
-            member_status
-        ) VALUES (
-            #{memberId},
-            #{memberEmail},
-            #{memberPass},
-            #{memberName},
-            #{memberPhone},
-            #{memberAddress},
-            #{memberGender},
-            #{memberBirth},
-            COALESCE(#{memberRole}, 'USER'),
-            COALESCE(#{memberStatus}, 'ACTIVE')
-        )
+        INSERT INTO MEMBER (member_id, member_email, member_pass, member_name, member_phone, member_role, member_status)
+        VALUES (#{memberId}, #{memberEmail}, #{memberPass}, #{memberName}, #{memberPhone}, 'USER', 'ACTIVE')
     </insert>
     
-    <!-- ========================================
-         이메일 중복 체크
-         ======================================== -->
-    <select id="checkEmailDuplicate" resultType="int">
-        SELECT COUNT(*)
-        FROM MEMBER
-        WHERE member_email = #{memberEmail}
-    </select>
-    
-    <!-- ========================================
-         ID 중복 체크
-         ======================================== -->
-    <select id="checkIdDuplicate" resultType="int">
-        SELECT COUNT(*)
-        FROM MEMBER
-        WHERE member_id = #{memberId}
-    </select>
-    
-    <!-- ========================================
-         회원 조회 (ID로) - 기존 메서드
-         ======================================== -->
-    <select id="selectMemberById" resultMap="MemberResultMap">
-        SELECT 
-            member_id,
-            member_email,
-            member_pass,
-            member_name,
-            member_phone,
-            member_address,
-            member_gender,
-            member_birth,
-            member_role,
-            member_status,
-            created_at,
-            updated_at
-        FROM MEMBER
-        WHERE member_id = #{memberId}
-    </select>
-    
-    <!-- ========================================
-         회원 조회 (이메일로) - 기존 메서드
-         ======================================== -->
-    <select id="selectMemberByEmail" resultMap="MemberResultMap">
-        SELECT 
-            member_id,
-            member_email,
-            member_pass,
-            member_name,
-            member_phone,
-            member_address,
-            member_gender,
-            member_birth,
-            member_role,
-            member_status,
-            created_at,
-            updated_at
-        FROM MEMBER
-        WHERE member_email = #{memberEmail}
-    </select>
-    
-    <!-- ========================================
-         ✅ 회원 조회 (ID로) - MemberServiceImpl 호환
-         ======================================== -->
-    <select id="selectById" resultMap="MemberResultMap">
-        SELECT 
-            member_id,
-            member_email,
-            member_pass,
-            member_name,
-            member_phone,
-            member_address,
-            member_gender,
-            member_birth,
-            member_role,
-            member_status,
-            created_at,
-            updated_at
-        FROM MEMBER
-        WHERE member_id = #{memberId}
-    </select>
-    
-    <!-- ========================================
-         ✅ 회원 조회 (이메일로) - MemberServiceImpl 호환
-         ======================================== -->
+    <!-- 이메일로 조회 -->
     <select id="selectByEmail" resultMap="MemberResultMap">
-        SELECT 
-            member_id,
-            member_email,
-            member_pass,
-            member_name,
-            member_phone,
-            member_address,
-            member_gender,
-            member_birth,
-            member_role,
-            member_status,
-            created_at,
-            updated_at
-        FROM MEMBER
-        WHERE member_email = #{memberEmail}
+        SELECT member_id, member_email, member_pass, member_name, member_phone,
+               member_role, member_status, created_at, updated_at
+        FROM MEMBER WHERE member_email = #{memberEmail}
     </select>
     
-    <!-- ========================================
-         전체 회원 조회
-         ======================================== -->
-    <select id="selectAllMembers" resultMap="MemberResultMap">
-        SELECT 
-            member_id,
-            member_email,
-            member_pass,
-            member_name,
-            member_phone,
-            member_address,
-            member_gender,
-            member_birth,
-            member_role,
-            member_status,
-            created_at,
-            updated_at
-        FROM MEMBER
-        ORDER BY created_at DESC
+    <!-- ID로 조회 -->
+    <select id="selectById" resultMap="MemberResultMap">
+        SELECT member_id, member_email, member_pass, member_name, member_phone,
+               member_role, member_status, created_at, updated_at
+        FROM MEMBER WHERE member_id = #{memberId}
     </select>
     
-    <!-- ========================================
-         회원 정보 수정
-         ======================================== -->
+    <!-- 이메일 중복 체크 -->
+    <select id="checkEmailDuplicate" resultType="int">
+        SELECT COUNT(*) FROM MEMBER WHERE member_email = #{memberEmail}
+    </select>
+    
+    <!-- 회원 수정 -->
     <update id="updateMember">
-        UPDATE MEMBER
-        SET member_name = #{memberName},
-            member_phone = #{memberPhone},
-            member_address = #{memberAddress},
-            member_gender = #{memberGender},
-            member_birth = #{memberBirth}
+        UPDATE MEMBER SET member_name = #{memberName}, member_phone = #{memberPhone},
+               member_address = #{memberAddress}, updated_at = CURRENT_TIMESTAMP
         WHERE member_id = #{memberId}
     </update>
     
-    <!-- ========================================
-         비밀번호 변경
-         ======================================== -->
+    <!-- 비밀번호 변경 -->
     <update id="updatePassword">
-        UPDATE MEMBER
-        SET member_pass = #{param2}
-        WHERE member_id = #{param1}
-    </update>
-    
-    <!-- ========================================
-         회원 삭제
-         ======================================== -->
-    <delete id="deleteMember">
-        DELETE FROM MEMBER
+        UPDATE MEMBER SET member_pass = #{newPassword}, updated_at = CURRENT_TIMESTAMP
         WHERE member_id = #{memberId}
-    </delete>
+    </update>
     
 </mapper>

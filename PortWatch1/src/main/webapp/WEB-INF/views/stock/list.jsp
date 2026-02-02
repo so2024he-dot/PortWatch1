@@ -64,6 +64,20 @@
             font-size: 0.8em;
         }
     </style>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; }
+        h1 { color: #667eea; margin-bottom: 30px; }
+        .search-box { margin-bottom: 20px; }
+        .search-box input { padding: 10px; width: 300px; border: 2px solid #ddd; border-radius: 5px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #667eea; color: white; }
+        tr:hover { background: #f0f0f0; }
+        .kr { color: #e74c3c; font-weight: bold; }
+        .us { color: #3498db; font-weight: bold; }
+    </style>
 </head>
 <body>
     <!-- 네비게이션 바 -->
@@ -451,5 +465,36 @@
         StockFilter.init();
     });
     </script>
+    
+       <div class="container">
+        <h1>📊 주식 목록 (200개 기업)</h1>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="종목 코드 또는 이름 검색...">
+        </div>
+        <table id="stockTable">
+            <thead>
+                <tr>
+                    <th>종목코드</th>
+                    <th>종목명</th>
+                    <th>시장</th>
+                    <th>국가</th>
+                    <th>업종</th>
+                    <th>현재가</th>
+                </tr>
+            </thead>
+            <tbody>
+                <c:forEach items="${stockList}" var="stock">
+                    <tr>
+                        <td>${stock.stockCode}</td>
+                        <td>${stock.stockName}</td>
+                        <td>${stock.marketType}</td>
+                        <td class="${stock.country == 'KR' ? 'kr' : 'us'}">${stock.country}</td>
+                        <td>${stock.industry}</td>
+                        <td>${stock.currentPrice}</td>
+                    </tr>
+                </c:forEach>
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>

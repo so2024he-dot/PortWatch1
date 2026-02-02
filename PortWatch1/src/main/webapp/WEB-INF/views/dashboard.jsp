@@ -179,9 +179,66 @@
             font-size: 48px;
             margin-bottom: 15px;
         }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; }
+        .header { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; }
+        .container { max-width: 1400px; margin: 20px auto; padding: 0 20px; }
+        .welcome { background: white; padding: 30px; border-radius: 10px; margin-bottom: 20px; }
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px; }
+        .stat-card { background: white; padding: 20px; border-radius: 10px; text-align: center; }
+        .stat-card h3 { color: #667eea; font-size: 32px; margin-bottom: 10px; }
+        .stat-card p { color: #666; }
+        .quick-links { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .link-card { background: white; padding: 30px; border-radius: 10px; text-align: center; cursor: pointer; }
+        .link-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .link-card h3 { color: #667eea; margin-bottom: 10px; }
     </style>
 </head>
 <body>
+ <div class="header">
+        <div class="container">
+            <h1>🎯 PortWatch Dashboard</h1>
+            <p>환영합니다, ${sessionScope.member.memberName}님!</p>
+        </div>
+    </div>
+    <div class="container">
+        <div class="welcome">
+            <h2>안녕하세요! PortWatch에 오신 것을 환영합니다.</h2>
+            <p>주식 포트폴리오를 효율적으로 관리하세요.</p>
+        </div>
+        <div class="stats">
+            <div class="stat-card">
+                <h3>200</h3>
+                <p>등록된 기업</p>
+            </div>
+            <div class="stat-card">
+                <h3>100</h3>
+                <p>한국 기업</p>
+            </div>
+            <div class="stat-card">
+                <h3>100</h3>
+                <p>미국 기업</p>
+            </div>
+            <div class="stat-card">
+                <h3>0</h3>
+                <p>내 포트폴리오</p>
+            </div>
+        </div>
+        <div class="quick-links">
+            <div class="link-card" onclick="location.href='${pageContext.request.contextPath}/stock/list'">
+                <h3>📊 주식 목록</h3>
+                <p>200개 기업 확인</p>
+            </div>
+            <div class="link-card" onclick="location.href='${pageContext.request.contextPath}/portfolio/list'">
+                <h3>💼 포트폴리오</h3>
+                <p>내 보유 종목</p>
+            </div>
+            <div class="link-card" onclick="location.href='${pageContext.request.contextPath}/watchlist/list'">
+                <h3>⭐ 관심종목</h3>
+                <p>즐겨찾기 관리</p>
+            </div>
+        </div>
+    </div>
     <div class="dashboard-container">
         <!-- Header -->
         <div class="header">

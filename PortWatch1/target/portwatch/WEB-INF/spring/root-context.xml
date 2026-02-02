@@ -13,6 +13,10 @@
            http://www.springframework.org/schema/task
            http://www.springframework.org/schema/task/spring-task.xsd">
 
+    <!-- ============================================================ -->
+    <!-- DataSource (HikariCP - MySQL 8.0.33) -->
+    <!-- ⭐ portwatch_db 사용! -->
+    <!-- ============================================================ -->
     <bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
         <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
         <property name="jdbcUrl">
@@ -31,27 +35,42 @@
         <property name="leakDetectionThreshold" value="60000"/>
     </bean>
     
+    <!-- ============================================================ -->
+    <!-- SqlSessionFactory -->
+    <!-- ============================================================ -->
     <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
         <property name="dataSource" ref="dataSource"/>
         <property name="configLocation" value="classpath:mybatis-config.xml"/>
         <property name="mapperLocations" value="classpath:mappers/*.xml"/>
     </bean>
     
+    <!-- ============================================================ -->
+    <!-- SqlSessionTemplate -->
+    <!-- ============================================================ -->
     <bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate" destroy-method="clearCache">
         <constructor-arg ref="sqlSessionFactory"/>
     </bean>
     
+    <!-- ============================================================ -->
+    <!-- MyBatis Mapper Scanner -->
+    <!-- ============================================================ -->
     <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
         <property name="basePackage" value="com.portwatch.persistence"/>
         <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
     </bean>
     
+    <!-- ============================================================ -->
+    <!-- Transaction Manager -->
+    <!-- ============================================================ -->
     <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
         <property name="dataSource" ref="dataSource"/>
     </bean>
     
     <tx:annotation-driven transaction-manager="transactionManager"/>
     
+    <!-- ============================================================ -->
+    <!-- Task Executor -->
+    <!-- ============================================================ -->
     <bean id="taskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
         <property name="corePoolSize" value="5"/>
         <property name="maxPoolSize" value="10"/>
@@ -61,6 +80,9 @@
         <property name="awaitTerminationSeconds" value="60"/>
     </bean>
     
+    <!-- ============================================================ -->
+    <!-- Task Scheduler -->
+    <!-- ============================================================ -->
     <bean id="taskScheduler" class="org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler">
         <property name="poolSize" value="5"/>
         <property name="threadNamePrefix" value="PortWatch-Scheduler-"/>
@@ -70,9 +92,12 @@
     
     <task:annotation-driven executor="taskExecutor" scheduler="taskScheduler"/>
     
-    <context:component-scan base-package="com.portwatch.service"/>
-    <context:component-scan base-package="com.portwatch.persistence"/>
-    <context:component-scan base-package="com.portwatch.scheduler"/>
-    <context:component-scan base-package="com.portwatch"/>
+    <!-- ============================================================ -->
+    <!-- Component Scan -->
+    <!-- ============================================================ -->
+    <context:component-scan base-package="com.portwatch">
+        <context:exclude-filter type="annotation" 
+            expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
     
 </beans>
