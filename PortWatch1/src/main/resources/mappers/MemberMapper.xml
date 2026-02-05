@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.portwatch.persistence.MemberDAO">
+<mapper namespace="com.portwatch.persistence.MemberMapper">
     
-    <resultMap id="MemberResultMap" type="MemberVO">
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <!-- Result Map -->
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <resultMap id="MemberResultMap" type="com.portwatch.domain.MemberVO">
         <id property="memberId" column="member_id"/>
         <result property="memberEmail" column="member_email"/>
         <result property="memberPass" column="member_pass"/>
@@ -18,50 +22,110 @@
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
     
-    <!-- 로그인 -->
-    <select id="login" resultMap="MemberResultMap">
-        SELECT member_id, member_email, member_pass, member_name, member_phone,
-               member_role, member_status, created_at, updated_at
-        FROM MEMBER
-        WHERE member_email = #{param1} AND member_pass = #{param2} AND member_status = 'ACTIVE'
-    </select>
-    
-    <!-- 회원가입 -->
-    <insert id="insertMember">
-        INSERT INTO MEMBER (member_id, member_email, member_pass, member_name, member_phone, member_role, member_status)
-        VALUES (#{memberId}, #{memberEmail}, #{memberPass}, #{memberName}, #{memberPhone}, 'USER', 'ACTIVE')
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <!-- 회원 등록 -->
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <insert id="insert" parameterType="com.portwatch.domain.MemberVO">
+        INSERT INTO MEMBER (
+            member_id,
+            member_email,
+            member_pass,
+            member_name,
+            member_phone,
+            member_address,
+            member_gender,
+            member_birth,
+            member_role,
+            member_status
+        ) VALUES (
+            #{memberId},
+            #{memberEmail},
+            #{memberPass},
+            #{memberName},
+            #{memberPhone},
+            #{memberAddress},
+            #{memberGender},
+            #{memberBirth},
+            #{memberRole},
+            #{memberStatus}
+        )
     </insert>
     
-    <!-- 이메일로 조회 -->
-    <select id="selectByEmail" resultMap="MemberResultMap">
-        SELECT member_id, member_email, member_pass, member_name, member_phone,
-               member_role, member_status, created_at, updated_at
-        FROM MEMBER WHERE member_email = #{memberEmail}
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <!-- 이메일로 회원 조회 -->
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <select id="findByEmail" resultMap="MemberResultMap">
+        SELECT 
+            member_id,
+            member_email,
+            member_pass,
+            member_name,
+            member_phone,
+            member_address,
+            member_gender,
+            member_birth,
+            member_role,
+            member_status,
+            created_at,
+            updated_at
+        FROM MEMBER
+        WHERE member_email = #{memberEmail}
+          AND member_status = 'ACTIVE'
     </select>
     
-    <!-- ID로 조회 -->
-    <select id="selectById" resultMap="MemberResultMap">
-        SELECT member_id, member_email, member_pass, member_name, member_phone,
-               member_role, member_status, created_at, updated_at
-        FROM MEMBER WHERE member_id = #{memberId}
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <!-- 회원 ID로 조회 -->
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <select id="findById" resultMap="MemberResultMap">
+        SELECT 
+            member_id,
+            member_email,
+            member_pass,
+            member_name,
+            member_phone,
+            member_address,
+            member_gender,
+            member_birth,
+            member_role,
+            member_status,
+            created_at,
+            updated_at
+        FROM MEMBER
+        WHERE member_id = #{memberId}
     </select>
     
-    <!-- 이메일 중복 체크 -->
-    <select id="checkEmailDuplicate" resultType="int">
-        SELECT COUNT(*) FROM MEMBER WHERE member_email = #{memberEmail}
-    </select>
-    
-    <!-- 회원 수정 -->
-    <update id="updateMember">
-        UPDATE MEMBER SET member_name = #{memberName}, member_phone = #{memberPhone},
-               member_address = #{memberAddress}, updated_at = CURRENT_TIMESTAMP
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <!-- 회원 정보 수정 -->
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <update id="update" parameterType="com.portwatch.domain.MemberVO">
+        UPDATE MEMBER
+        SET
+            member_name = #{memberName},
+            member_phone = #{memberPhone},
+            member_address = #{memberAddress},
+            member_gender = #{memberGender},
+            member_birth = #{memberBirth},
+            updated_at = CURRENT_TIMESTAMP
         WHERE member_id = #{memberId}
     </update>
     
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <!-- 비밀번호 변경 -->
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <update id="updatePassword">
-        UPDATE MEMBER SET member_pass = #{newPassword}, updated_at = CURRENT_TIMESTAMP
+        UPDATE MEMBER
+        SET
+            member_pass = #{memberPass},
+            updated_at = CURRENT_TIMESTAMP
         WHERE member_id = #{memberId}
     </update>
+    
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <!-- 회원 삭제 -->
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <delete id="delete">
+        DELETE FROM MEMBER
+        WHERE member_id = #{memberId}
+    </delete>
     
 </mapper>

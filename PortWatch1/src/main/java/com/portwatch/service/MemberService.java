@@ -1,112 +1,58 @@
 package com.portwatch.service;
 
-import java.util.List;
-
 import com.portwatch.domain.MemberVO;
 
-/**
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * ✅ 회원 Service 인터페이스 (수정 버전)
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * 
- * 핵심 수정:
- * - Line 45: changePassword(3개 파라미터) 반환 타입을 void -> boolean 변경
- * 
- * @author PortWatch
- * @version FIXED - 2026.01.16
- */
 public interface MemberService {
     
     /**
+     * 로그인
+     * @param memberEmail 이메일
+     * @param memberPass 비밀번호
+     * @return 회원 정보 (로그인 실패 시 null)
+     */
+    MemberVO login(String memberEmail, String memberPass);
+    
+    /**
      * 회원가입
+     * @param member 회원 정보
+     * @throws Exception 회원가입 실패 시
      */
     void signup(MemberVO member) throws Exception;
     
     /**
-     * 로그인
+     * 회원 ID로 조회
+     * @param memberId 회원 ID
+     * @return 회원 정보
      */
-    MemberVO login(String memberEmail, String memberPass) throws Exception;
+    MemberVO getMemberById(String memberId);
     
     /**
-     * 이메일로 회원 조회
-     */
-    MemberVO getMemberByEmail(String memberEmail) throws Exception;
-    
-    /**
-     * ID로 회원 조회
-     */
-    MemberVO getMemberById(String memberId) throws Exception;
-    
-    /**
-     * 회원 정보 업데이트
+     * 회원 정보 수정
+     * @param member 수정할 회원 정보
+     * @throws Exception 수정 실패 시
      */
     void updateMember(MemberVO member) throws Exception;
     
     /**
-     * ✅ 비밀번호 변경 (현재 비밀번호 확인 포함)
-     * 
+     * 비밀번호 확인
      * @param memberId 회원 ID
-     * @param oldPassword 현재 비밀번호
-     * @param newPassword 새 비밀번호
-     * @return 성공 여부 (true: 성공, false: 현재 비밀번호 불일치)
+     * @param password 확인할 비밀번호
+     * @return 일치 여부
      */
-    boolean changePassword(String memberId, String oldPassword, String newPassword) throws Exception;
+    boolean checkPassword(String memberId, String password);
     
     /**
-     * 회원 탈퇴 (논리 삭제)
-     */
-    void withdrawMember(String memberId) throws Exception;
-    
-    /**
-     * 이메일 중복 체크
-     */
-    boolean isEmailDuplicate(String memberEmail) throws Exception;
-    
-    /**
-     * ID 중복 체크
-     */
-    boolean isIdDuplicate(String memberId) throws Exception;
-
-    /**
-     * 이메일 사용 가능 여부 확인
-     */
-    boolean checkEmailAvailable(String email) throws Exception;
-
-    /**
-     * 인증 코드 생성
-     */
-    String generateVerificationCode() throws Exception;
-
-    /**
-     * 인증 코드 검증
-     */
-    boolean verifyCode(String email, String code) throws Exception;
-
-    /**
-     * ✅ 인증 코드 저장
-     * 
-     * @param email 이메일
-     * @param code 인증 코드
-     */
-    void saveVerificationCode(String email, String code) throws Exception;
-
-    /**
-     * ✅ 비밀번호 변경 (현재 비밀번호 확인 없이)
-     * 
+     * 비밀번호 변경
      * @param memberId 회원 ID
      * @param newPassword 새 비밀번호
+     * @throws Exception 변경 실패 시
      */
-    void changePassword(String memberId, String newPassword) throws Exception;
-
+    void updatePassword(String memberId, String newPassword) throws Exception;
+    
     /**
-     * ✅ 회원 탈퇴 (하드 삭제)
-     * 
+     * 회원 탈퇴
      * @param memberId 회원 ID
+     * @throws Exception 탈퇴 실패 시
      */
     void deleteMember(String memberId) throws Exception;
-
-    /**
-     * ✅ 전체 회원 조회
-     */
-    List<MemberVO> getAllMembers() throws Exception;
 }

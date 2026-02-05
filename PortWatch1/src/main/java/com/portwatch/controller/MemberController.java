@@ -2,440 +2,343 @@ package com.portwatch.controller;
 
 import javax.servlet.http.HttpSession;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.portwatch.domain.MemberVO;
 import com.portwatch.service.MemberService;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * MemberController - /member/register 매핑 추가 버전
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * 
- * ✅ 핵심 수정:
- * 1. /member/register 매핑 추가 (GET, POST)
- * 2. register와 signup 모두 지원
- * 
- * @version 2.0 - 2026.01.19
- * @author PortWatch
+ * 회원 관련 컨트롤러
  */
 @Controller
 @RequestMapping("/member")
 public class MemberController {
     
+    private static final Logger logger = LoggerFactory.getLogger(MemberController.class);
+    
     @Autowired
     private MemberService memberService;
     
-    /**
-     * ✅ 로그인 페이지
-     */
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 로그인 페이지
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     @GetMapping("/login")
-    public String loginForm(HttpSession session, Model model) {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("🔐 로그인 페이지 접근");
+    public String loginPage(HttpSession session) {
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        logger.info("🔐 로그인 페이지 접근");
+        logger.info("  → 로그인 페이지 표시");
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         
-        MemberVO member = (MemberVO) session.getAttribute("member");
-        if (member != null) {
-            System.out.println("  이미 로그인된 사용자: " + member.getMemberId());
-            System.out.println("  → 대시보드로 리다이렉트");
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        // 이미 로그인되어 있으면 대시보드로 리다이렉트
+        MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
+        if (loginMember != null) {
             return "redirect:/dashboard";
         }
         
-        System.out.println("  → 로그인 페이지 표시");
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         return "member/login";
     }
     
-    /**
-     * ✅ 로그인 처리
-     */
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 로그인 처리
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     @PostMapping("/login")
-    public String login(
-            @RequestParam("memberEmail") String memberEmail,
-            @RequestParam("memberPass") String memberPass,
-            HttpSession session,
-            RedirectAttributes rttr) {
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> login(
+            @RequestParam String memberEmail,
+            @RequestParam String memberPass,
+            HttpSession session) {
         
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("🔐 로그인");
-        System.out.println("  - 이메일: " + memberEmail);
+        Map<String, Object> result = new HashMap<>();
+        
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        logger.info("🔐 로그인");
+        logger.info("  - 이메일: {}", memberEmail);
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         
         try {
             MemberVO member = memberService.login(memberEmail, memberPass);
             
             if (member != null) {
-                session.setAttribute("member", member);
-                session.setAttribute("memberId", member.getMemberId());
+                // 세션에 저장
                 session.setAttribute("loginMember", member);
+                session.setAttribute("memberId", member.getMemberId());
+                session.setAttribute("memberName", member.getMemberName());
                 
-                System.out.println("✅ 로그인 성공");
-                System.out.println("  - 회원 ID: " + member.getMemberId());
-                System.out.println("  - 이름: " + member.getMemberName());
-                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                logger.info("✅ 로그인 성공");
+                logger.info("  - 회원 ID: {}", member.getMemberId());
+                logger.info("  - 이름: {}", member.getMemberName());
+                logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
                 
-                return "redirect:/dashboard";
+                result.put("success", true);
+                result.put("message", "로그인 성공");
+                result.put("memberId", member.getMemberId());
+                result.put("memberName", member.getMemberName());
+                return ResponseEntity.ok(result);
             } else {
-                System.out.println("❌ 로그인 실패: 잘못된 이메일 또는 비밀번호");
-                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                logger.warn("❌ 로그인 실패: 이메일 또는 비밀번호 불일치");
+                logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
                 
-                rttr.addFlashAttribute("error", "이메일 또는 비밀번호가 올바르지 않습니다.");
+                result.put("success", false);
+                result.put("message", "이메일 또는 비밀번호가 일치하지 않습니다.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(result);
+            }
+        } catch (Exception e) {
+            logger.error("❌ 로그인 오류: {}", e.getMessage());
+            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            result.put("success", false);
+            result.put("message", "로그인 처리 중 오류가 발생했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
+        }
+    }
+    
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 로그아웃
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    @GetMapping("/logout")
+    public String logout(HttpSession session) {
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        logger.info("🔓 로그아웃");
+        
+        MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
+        if (loginMember != null) {
+            logger.info("  - 회원 ID: {}", loginMember.getMemberId());
+        }
+        
+        session.invalidate();
+        
+        logger.info("  ✅ 로그아웃 완료");
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        
+        return "redirect:/member/login";
+    }
+    
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 회원가입 페이지
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    @GetMapping("/signup")
+    public String signupPage() {
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        logger.info("📝 회원가입 페이지 접근");
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        return "member/signup";
+    }
+    
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 회원가입 처리
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    @PostMapping("/signup")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> signup(@RequestBody MemberVO member) {
+        Map<String, Object> result = new HashMap<>();
+        
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        logger.info("📝 회원가입 요청");
+        logger.info("  - 이메일: {}", member.getMemberEmail());
+        logger.info("  - 이름: {}", member.getMemberName());
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        
+        try {
+            memberService.signup(member);
+            
+            logger.info("✅ 회원가입 성공");
+            logger.info("  - 회원 ID: {}", member.getMemberId());
+            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            result.put("success", true);
+            result.put("message", "회원가입이 완료되었습니다.");
+            result.put("memberId", member.getMemberId());
+            return ResponseEntity.ok(result);
+            
+        } catch (Exception e) {
+            logger.error("❌ 회원가입 오류: {}", e.getMessage());
+            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            result.put("success", false);
+            result.put("message", "회원가입 처리 중 오류가 발생했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
+        }
+    }
+    
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ⭐ 프로필 페이지 (NEW!)
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    @GetMapping("/profile")
+    public String profilePage(HttpSession session, Model model) {
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        logger.info("👤 프로필 페이지 접근");
+        
+        // 로그인 확인
+        MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
+        if (loginMember == null) {
+            logger.warn("❌ 로그인 필요 → /member/login으로 리다이렉트");
+            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            return "redirect:/member/login";
+        }
+        
+        logger.info("  ✅ 로그인 상태 확인");
+        logger.info("  회원 ID: {}", loginMember.getMemberId());
+        logger.info("  회원 이름: {}", loginMember.getMemberName());
+        logger.info("  이메일: {}", loginMember.getMemberEmail());
+        
+        try {
+            // 최신 회원 정보 조회
+            MemberVO member = memberService.getMemberById(loginMember.getMemberId());
+            
+            if (member != null) {
+                model.addAttribute("member", member);
+                
+                logger.info("  ✅ 회원 정보 조회 완료");
+                logger.info("  → 프로필 페이지 표시");
+                logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                
+                return "member/profile";
+            } else {
+                logger.warn("❌ 회원 정보 없음 → 로그인 페이지로 리다이렉트");
+                logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                session.invalidate();
                 return "redirect:/member/login";
             }
-            
         } catch (Exception e) {
-            System.err.println("❌ 로그인 처리 중 오류: " + e.getMessage());
-            e.printStackTrace();
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            rttr.addFlashAttribute("error", "로그인 처리 중 오류가 발생했습니다.");
+            logger.error("❌ 프로필 조회 오류: {}", e.getMessage());
+            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             return "redirect:/member/login";
         }
     }
     
-    /**
-     * ✅ 로그아웃
-     */
-    @GetMapping("/logout")
-    public String logout(HttpSession session, RedirectAttributes rttr) {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("🚪 로그아웃");
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ⭐ 프로필 수정 (NEW!)
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    @PostMapping("/profile/update")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateProfile(
+            @RequestBody MemberVO member,
+            HttpSession session) {
         
-        try {
-            MemberVO member = (MemberVO) session.getAttribute("member");
-            if (member != null) {
-                System.out.println("  - 회원 ID: " + member.getMemberId());
-            }
-            
-            session.invalidate();
-            
-            System.out.println("✅ 로그아웃 완료");
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            rttr.addFlashAttribute("message", "로그아웃되었습니다.");
-        } catch (Exception e) {
-            System.err.println("❌ 로그아웃 처리 중 오류: " + e.getMessage());
-            e.printStackTrace();
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        }
-        return "redirect:/";
-    }
-    
-    /**
-     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     * ✅ 회원가입 페이지 - /member/register (신규 추가!)
-     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     * 
-     * /member/register와 /member/signup 모두 지원
-     */
-    @GetMapping("/register")
-    public String registerForm(HttpSession session) {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("📝 회원가입 페이지 접근 (/register)");
+        Map<String, Object> result = new HashMap<>();
         
-        MemberVO member = (MemberVO) session.getAttribute("member");
-        if (member != null) {
-            System.out.println("  이미 로그인된 사용자: " + member.getMemberId());
-            System.out.println("  → 대시보드로 리다이렉트");
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            return "redirect:/dashboard";
-        }
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        logger.info("✏️ 프로필 수정 요청");
+        logger.info("  - 회원 ID: {}", member.getMemberId());
+        logger.info("  - 이름: {}", member.getMemberName());
+        logger.info("  - 전화번호: {}", member.getMemberPhone());
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         
-        System.out.println("  → 회원가입 페이지 표시");
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        return "member/signup";
-    }
-    
-    /**
-     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     * ✅ 회원가입 처리 - /member/register (신규 추가!)
-     * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     */
-    @PostMapping("/register")
-    public String register(MemberVO member, RedirectAttributes rttr) {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("📝 회원가입 처리 (/register)");
-        System.out.println("  - 이메일: " + member.getMemberEmail());
-        System.out.println("  - 이름: " + member.getMemberName());
-        
-        try {
-            // 이메일 중복 검사
-            if (memberService.isEmailDuplicate(member.getMemberEmail())) {
-                System.out.println("❌ 이메일 중복");
-                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                
-                rttr.addFlashAttribute("error", "이미 사용 중인 이메일입니다.");
-                return "redirect:/member/register";
-            }
-            
-            // 아이디 중복 검사
-            if (member.getMemberId() != null && memberService.isIdDuplicate(member.getMemberId())) {
-                System.out.println("❌ 아이디 중복");
-                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                
-                rttr.addFlashAttribute("error", "이미 사용 중인 아이디입니다.");
-                return "redirect:/member/register";
-            }
-            
-            // 회원가입 처리
-            memberService.signup(member);
-            
-            System.out.println("✅ 회원가입 성공");
-            System.out.println("  - 생성된 회원 ID: " + member.getMemberId());
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            rttr.addFlashAttribute("message", "회원가입이 완료되었습니다. 로그인해주세요.");
-            return "redirect:/member/login";
-            
-        } catch (Exception e) {
-            System.err.println("❌ 회원가입 처리 중 오류: " + e.getMessage());
-            e.printStackTrace();
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            rttr.addFlashAttribute("error", "회원가입 처리 중 오류가 발생했습니다.");
-            return "redirect:/member/register";
-        }
-    }
-    
-    /**
-     * ✅ 회원가입 페이지 - /member/signup (기존 유지)
-     */
-    @GetMapping("/signup")
-    public String signupForm(HttpSession session) {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("📝 회원가입 페이지 접근 (/signup)");
-        
-        MemberVO member = (MemberVO) session.getAttribute("member");
-        if (member != null) {
-            System.out.println("  이미 로그인된 사용자: " + member.getMemberId());
-            System.out.println("  → 대시보드로 리다이렉트");
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            return "redirect:/dashboard";
-        }
-        
-        System.out.println("  → 회원가입 페이지 표시");
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        return "member/signup";
-    }
-    
-    /**
-     * ✅ 회원가입 처리 - /member/signup (기존 유지)
-     */
-    @PostMapping("/signup")
-    public String signup(MemberVO member, RedirectAttributes rttr) {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("📝 회원가입 처리 (/signup)");
-        System.out.println("  - 이메일: " + member.getMemberEmail());
-        System.out.println("  - 이름: " + member.getMemberName());
-        
-        try {
-            // 이메일 중복 검사
-            if (memberService.isEmailDuplicate(member.getMemberEmail())) {
-                System.out.println("❌ 이메일 중복");
-                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                
-                rttr.addFlashAttribute("error", "이미 사용 중인 이메일입니다.");
-                return "redirect:/member/signup";
-            }
-            
-            // 아이디 중복 검사
-            if (member.getMemberId() != null && memberService.isIdDuplicate(member.getMemberId())) {
-                System.out.println("❌ 아이디 중복");
-                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                
-                rttr.addFlashAttribute("error", "이미 사용 중인 아이디입니다.");
-                return "redirect:/member/signup";
-            }
-            
-            // 회원가입 처리
-            memberService.signup(member);
-            
-            System.out.println("✅ 회원가입 성공");
-            System.out.println("  - 생성된 회원 ID: " + member.getMemberId());
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            rttr.addFlashAttribute("message", "회원가입이 완료되었습니다. 로그인해주세요.");
-            return "redirect:/member/login";
-            
-        } catch (Exception e) {
-            System.err.println("❌ 회원가입 처리 중 오류: " + e.getMessage());
-            e.printStackTrace();
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            rttr.addFlashAttribute("error", "회원가입 처리 중 오류가 발생했습니다.");
-            return "redirect:/member/signup";
-        }
-    }
-    
-    /**
-     * ✅ 마이페이지
-     */
-    @GetMapping("/mypage")
-    public String mypage(HttpSession session, Model model) {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("👤 마이페이지 접근");
-        
-        MemberVO member = (MemberVO) session.getAttribute("member");
-        if (member == null) {
-            System.out.println("  비로그인 상태");
-            System.out.println("  → 로그인 페이지로 리다이렉트");
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            return "redirect:/member/login";
-        }
-        
-        try {
-            System.out.println("  - 회원 ID: " + member.getMemberId());
-            
-            MemberVO updatedMember = memberService.getMemberById(member.getMemberId());
-            model.addAttribute("member", updatedMember);
-            
-            System.out.println("✅ 마이페이지 로드 완료");
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            return "member/mypage";
-            
-        } catch (Exception e) {
-            System.err.println("❌ 마이페이지 로드 중 오류: " + e.getMessage());
-            e.printStackTrace();
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            return "redirect:/dashboard";
-        }
-    }
-    
-    /**
-     * ✅ 회원정보 수정 처리
-     */
-    @PostMapping("/update")
-    public String update(
-            MemberVO member,
-            HttpSession session,
-            RedirectAttributes rttr) {
-        
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("✏️  회원정보 수정");
-        
-        MemberVO loginMember = (MemberVO) session.getAttribute("member");
+        // 로그인 확인
+        MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
         if (loginMember == null) {
-            System.out.println("  비로그인 상태");
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            return "redirect:/member/login";
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(result);
+        }
+        
+        // 본인 확인
+        if (!loginMember.getMemberId().equals(member.getMemberId())) {
+            result.put("success", false);
+            result.put("message", "본인의 정보만 수정할 수 있습니다.");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(result);
         }
         
         try {
-            System.out.println("  - 회원 ID: " + loginMember.getMemberId());
-            
-            member.setMemberId(loginMember.getMemberId());
             memberService.updateMember(member);
             
+            // 세션 정보 업데이트
             MemberVO updatedMember = memberService.getMemberById(member.getMemberId());
-            session.setAttribute("member", updatedMember);
             session.setAttribute("loginMember", updatedMember);
+            session.setAttribute("memberName", updatedMember.getMemberName());
             
-            System.out.println("✅ 회원정보 수정 완료");
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            logger.info("✅ 프로필 수정 완료");
+            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             
-            rttr.addFlashAttribute("message", "회원정보가 수정되었습니다.");
+            result.put("success", true);
+            result.put("message", "프로필이 수정되었습니다.");
+            result.put("member", updatedMember);
+            return ResponseEntity.ok(result);
             
         } catch (Exception e) {
-            System.err.println("❌ 회원정보 수정 중 오류: " + e.getMessage());
-            e.printStackTrace();
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            logger.error("❌ 프로필 수정 오류: {}", e.getMessage());
+            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             
-            rttr.addFlashAttribute("error", "회원정보 수정 중 오류가 발생했습니다.");
+            result.put("success", false);
+            result.put("message", "프로필 수정 중 오류가 발생했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
         }
-        
-        return "redirect:/member/mypage";
     }
     
-    /**
-     * ✅ 비밀번호 변경 페이지
-     */
-    @GetMapping("/change-password")
-    public String changePasswordForm(HttpSession session) {
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("🔑 비밀번호 변경 페이지 접근");
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ⭐ 비밀번호 변경 (NEW!)
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    @PostMapping("/profile/password")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> changePassword(
+            @RequestParam String currentPassword,
+            @RequestParam String newPassword,
+            HttpSession session) {
         
-        MemberVO member = (MemberVO) session.getAttribute("member");
-        if (member == null) {
-            System.out.println("  비로그인 상태");
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            return "redirect:/member/login";
+        Map<String, Object> result = new HashMap<>();
+        
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        logger.info("🔐 비밀번호 변경 요청");
+        
+        // 로그인 확인
+        MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
+        if (loginMember == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(result);
         }
         
-        System.out.println("  - 회원 ID: " + member.getMemberId());
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        return "member/change-password";
-    }
-    
-    /**
-     * ✅ 비밀번호 변경 처리
-     */
-    @PostMapping("/change-password")
-    public String changePassword(
-            @RequestParam("currentPassword") String currentPassword,
-            @RequestParam("newPassword") String newPassword,
-            @RequestParam("confirmPassword") String confirmPassword,
-            HttpSession session,
-            RedirectAttributes rttr) {
-        
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        System.out.println("🔑 비밀번호 변경 처리");
-        
-        MemberVO member = (MemberVO) session.getAttribute("member");
-        if (member == null) {
-            System.out.println("  비로그인 상태");
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            return "redirect:/member/login";
-        }
+        logger.info("  - 회원 ID: {}", loginMember.getMemberId());
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         
         try {
-            System.out.println("  - 회원 ID: " + member.getMemberId());
+            // 현재 비밀번호 확인
+            boolean isValid = memberService.checkPassword(
+                loginMember.getMemberId(), 
+                currentPassword
+            );
             
-            // 새 비밀번호 확인
-            if (!newPassword.equals(confirmPassword)) {
-                System.out.println("❌ 새 비밀번호 불일치");
-                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            if (!isValid) {
+                logger.warn("❌ 현재 비밀번호 불일치");
+                logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
                 
-                rttr.addFlashAttribute("error", "새 비밀번호가 일치하지 않습니다.");
-                return "redirect:/member/change-password";
+                result.put("success", false);
+                result.put("message", "현재 비밀번호가 일치하지 않습니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
             }
             
             // 비밀번호 변경
-            boolean success = memberService.changePassword(
-                member.getMemberId(),
-                currentPassword,
-                newPassword
-            );
+            memberService.updatePassword(loginMember.getMemberId(), newPassword);
             
-            if (success) {
-                System.out.println("✅ 비밀번호 변경 성공");
-                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                
-                rttr.addFlashAttribute("message", "비밀번호가 변경되었습니다.");
-                return "redirect:/member/mypage";
-            } else {
-                System.out.println("❌ 현재 비밀번호 불일치");
-                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                
-                rttr.addFlashAttribute("error", "현재 비밀번호가 올바르지 않습니다.");
-                return "redirect:/member/change-password";
-            }
+            logger.info("✅ 비밀번호 변경 완료");
+            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            result.put("success", true);
+            result.put("message", "비밀번호가 변경되었습니다.");
+            return ResponseEntity.ok(result);
             
         } catch (Exception e) {
-            System.err.println("❌ 비밀번호 변경 중 오류: " + e.getMessage());
-            e.printStackTrace();
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            logger.error("❌ 비밀번호 변경 오류: {}", e.getMessage());
+            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             
-            rttr.addFlashAttribute("error", "비밀번호 변경 중 오류가 발생했습니다.");
-            return "redirect:/member/change-password";
+            result.put("success", false);
+            result.put("message", "비밀번호 변경 중 오류가 발생했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
         }
     }
 }
