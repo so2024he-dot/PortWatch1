@@ -6,53 +6,61 @@ public interface MemberService {
     
     /**
      * 로그인
-     * @param memberEmail 이메일
-     * @param memberPass 비밀번호
-     * @return 회원 정보 (로그인 실패 시 null)
      */
     MemberVO login(String memberEmail, String memberPass);
     
     /**
      * 회원가입
-     * @param member 회원 정보
-     * @throws Exception 회원가입 실패 시
      */
     void signup(MemberVO member) throws Exception;
     
     /**
      * 회원 ID로 조회
-     * @param memberId 회원 ID
-     * @return 회원 정보
      */
     MemberVO getMemberById(String memberId);
     
     /**
      * 회원 정보 수정
-     * @param member 수정할 회원 정보
-     * @throws Exception 수정 실패 시
      */
     void updateMember(MemberVO member) throws Exception;
     
     /**
      * 비밀번호 확인
-     * @param memberId 회원 ID
-     * @param password 확인할 비밀번호
-     * @return 일치 여부
      */
     boolean checkPassword(String memberId, String password);
     
     /**
      * 비밀번호 변경
-     * @param memberId 회원 ID
-     * @param newPassword 새 비밀번호
-     * @throws Exception 변경 실패 시
      */
     void updatePassword(String memberId, String newPassword) throws Exception;
     
     /**
      * 회원 탈퇴
-     * @param memberId 회원 ID
-     * @throws Exception 탈퇴 실패 시
      */
     void deleteMember(String memberId) throws Exception;
+    
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ⭐ 이메일 인증 관련 메서드 (MemberApiController용)
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    
+    /**
+     * 이메일 사용 가능 여부 확인
+     * @param email 확인할 이메일
+     * @return true: 사용 가능, false: 이미 존재
+     */
+    boolean checkEmailAvailable(String email);
+    
+    /**
+     * 이메일 인증 코드 생성
+     * @return 6자리 인증 코드
+     */
+    String generateVerificationCode();
+    
+    /**
+     * 인증 코드 검증
+     * @param email 이메일
+     * @param code 인증 코드
+     * @return true: 인증 성공, false: 인증 실패
+     */
+    boolean verifyCode(String email, String code);
 }

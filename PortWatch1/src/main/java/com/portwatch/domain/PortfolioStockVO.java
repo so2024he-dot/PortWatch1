@@ -1,6 +1,7 @@
 package com.portwatch.domain;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Timestamp;
 
 import lombok.Data;
@@ -203,7 +204,7 @@ public class PortfolioStockVO {
             profitLoss = currentValue.subtract(totalPurchaseAmount);
             
             // 수익률 = (손익 / 매입 총액) × 100
-            profitLossRate = profitLoss.divide(totalPurchaseAmount, 4, BigDecimal.ROUND_HALF_UP)
+            profitLossRate = profitLoss.divide(totalPurchaseAmount, 2, RoundingMode.HALF_UP)
                                       .multiply(new BigDecimal(100))
                                       .doubleValue();
         }
@@ -235,10 +236,10 @@ public class PortfolioStockVO {
         
         if (isKoreanStock()) {
             // 한국 주식: 정수만 표시
-            return stockQuantity.setScale(0, BigDecimal.ROUND_DOWN).toString();
+            return stockQuantity.setScale(0, RoundingMode.DOWN).toString();
         } else {
             // 미국 주식: 소수점 3자리까지 표시
-            return stockQuantity.setScale(3, BigDecimal.ROUND_HALF_UP).toString();
+            return stockQuantity.setScale(2, RoundingMode.HALF_UP).toString();
         }
     }
     

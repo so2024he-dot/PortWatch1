@@ -1,49 +1,73 @@
 package com.portwatch.domain;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
-
-import lombok.Data;
+import java.util.Date;
 
 /**
- * 결제 VO
- * 
- * ✅ String memberId 사용
- * @author PortWatch
- * @version 2.0 - Spring 5.0.7 + MySQL 8.0.33 호환
+ * 결제 정보 VO (완전판)
+ * PaymentController에서 필요한 모든 setter 포함
  */
-@Data
 public class PaymentVO {
     
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 기본 정보
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     private Long paymentId;              // 결제 ID
-    private String memberId;             // 회원 ID (String)
-    private Integer stockId;             // 종목 ID
-    private String stockCode;            // 종목 코드
-    private String stockName;            // 종목명
-    private BigDecimal quantity;         // 수량
-    private BigDecimal purchasePrice;    // 매입 가격
-    private BigDecimal totalAmount;      // 총 결제 금액
-    private String paymentMethod;        // 결제 수단 (CARD, BANK_TRANSFER)
-    private String paymentStatus;        // 결제 상태 (PENDING, COMPLETED, CANCELLED)
-    private String cardNumber;           // 카드 번호 (마스킹)
-    private String cardCompany;          // 카드사
-    private String pgProvider;           // PG사 (TOSS, STRIPE, INICIS)
-    private String transactionId;        // 거래 ID (PG사 거래번호)
-    private Long portfolioId;            // 연결된 포트폴리오 ID
-    private String country;              // 국가 (KR, US)
-    private String currency;             // 통화 (KRW, USD)
-    private BigDecimal exchangeRate;     // 환율
-    private BigDecimal localAmount;      // 원화 환산 금액
-    private Timestamp createdAt;         // 생성일시
-    private Timestamp updatedAt;         // 수정일시
-    private Timestamp completedAt;       // 완료일시
-    private Timestamp cancelledAt;       // 취소일시
-    private BigDecimal amount;           // 총계
-    // 기본 생성자
+    private String memberId;             // 회원 ID
+    private BigDecimal amount;           // 결제 금액
+    private String paymentMethod;        // 결제 수단
+    private String paymentStatus;        // 결제 상태
+    
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ⭐ PaymentController에서 필요한 추가 필드
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    private BigDecimal purchasePrice;    // 구매 가격
+    private BigDecimal totalAmount;      // 총 금액
+    private String cardNumber;           // 카드 번호
+    private String cardCompany;          // 카드 회사
+    private String pgProvider;           // PG사
+    private String country;              // 국가
+    private String currency;             // 통화
+    
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 결제 세부 정보
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    private String paymentKey;           // 결제 고유 키
+    private String orderId;              // 주문 ID
+    private String orderName;            // 주문명
+    private String customerEmail;        // 고객 이메일
+    private String customerName;         // 고객 이름
+    
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 날짜 정보
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    private Date requestedAt;            // 결제 요청 시간
+    private Date approvedAt;             // 결제 승인 시간
+    private Date cancelledAt;            // 결제 취소 시간
+    private String cancelReason;         // 취소 사유
+    private String failReason;           // 실패 사유
+    private Date createdAt;              // 생성 시간
+    private Date updatedAt;              // 수정 시간
+    
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Constructors
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    
     public PaymentVO() {
     }
     
+    public PaymentVO(String memberId, BigDecimal amount, String paymentMethod) {
+        this.memberId = memberId;
+        this.amount = amount;
+        this.paymentMethod = paymentMethod;
+        this.paymentStatus = "PENDING";
+    }
+    
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // Getters and Setters
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    
+    // 기본 정보
     public Long getPaymentId() {
         return paymentId;
     }
@@ -60,52 +84,12 @@ public class PaymentVO {
         this.memberId = memberId;
     }
     
-    public Integer getStockId() {
-        return stockId;
+    public BigDecimal getAmount() {
+        return amount;
     }
     
-    public void setStockId(Integer stockId) {
-        this.stockId = stockId;
-    }
-    
-    public String getStockCode() {
-        return stockCode;
-    }
-    
-    public void setStockCode(String stockCode) {
-        this.stockCode = stockCode;
-    }
-    
-    public String getStockName() {
-        return stockName;
-    }
-    
-    public void setStockName(String stockName) {
-        this.stockName = stockName;
-    }
-    
-    public BigDecimal getQuantity() {
-        return quantity;
-    }
-    
-    public void setQuantity(BigDecimal quantity) {
-        this.quantity = quantity;
-    }
-    
-    public BigDecimal getPurchasePrice() {
-        return purchasePrice;
-    }
-    
-    public void setPurchasePrice(BigDecimal purchasePrice) {
-        this.purchasePrice = purchasePrice;
-    }
-    
-    public BigDecimal getTotalAmount() {
-        return totalAmount;
-    }
-    
-    public void setTotalAmount(BigDecimal totalAmount) {
-        this.totalAmount = totalAmount;
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
     }
     
     public String getPaymentMethod() {
@@ -122,6 +106,23 @@ public class PaymentVO {
     
     public void setPaymentStatus(String paymentStatus) {
         this.paymentStatus = paymentStatus;
+    }
+    
+    // ⭐ PaymentController 필수 Setters
+    public BigDecimal getPurchasePrice() {
+        return purchasePrice;
+    }
+    
+    public void setPurchasePrice(BigDecimal purchasePrice) {
+        this.purchasePrice = purchasePrice;
+    }
+    
+    public BigDecimal getTotalAmount() {
+        return totalAmount;
+    }
+    
+    public void setTotalAmount(BigDecimal totalAmount) {
+        this.totalAmount = totalAmount;
     }
     
     public String getCardNumber() {
@@ -148,22 +149,6 @@ public class PaymentVO {
         this.pgProvider = pgProvider;
     }
     
-    public String getTransactionId() {
-        return transactionId;
-    }
-    
-    public void setTransactionId(String transactionId) {
-        this.transactionId = transactionId;
-    }
-    
-    public Long getPortfolioId() {
-        return portfolioId;
-    }
-    
-    public void setPortfolioId(Long portfolioId) {
-        this.portfolioId = portfolioId;
-    }
-    
     public String getCountry() {
         return country;
     }
@@ -180,67 +165,145 @@ public class PaymentVO {
         this.currency = currency;
     }
     
-    public BigDecimal getExchangeRate() {
-        return exchangeRate;
+    // 결제 세부 정보
+    public String getPaymentKey() {
+        return paymentKey;
     }
     
-    public void setExchangeRate(BigDecimal exchangeRate) {
-        this.exchangeRate = exchangeRate;
+    public void setPaymentKey(String paymentKey) {
+        this.paymentKey = paymentKey;
     }
     
-    public BigDecimal getLocalAmount() {
-        return localAmount;
+    public String getOrderId() {
+        return orderId;
     }
     
-    public void setLocalAmount(BigDecimal localAmount) {
-        this.localAmount = localAmount;
+    public void setOrderId(String orderId) {
+        this.orderId = orderId;
     }
     
-    public Timestamp getCreatedAt() {
+    public String getOrderName() {
+        return orderName;
+    }
+    
+    public void setOrderName(String orderName) {
+        this.orderName = orderName;
+    }
+    
+    public String getCustomerEmail() {
+        return customerEmail;
+    }
+    
+    public void setCustomerEmail(String customerEmail) {
+        this.customerEmail = customerEmail;
+    }
+    
+    public String getCustomerName() {
+        return customerName;
+    }
+    
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
+    }
+    
+    // 날짜 정보
+    public Date getRequestedAt() {
+        return requestedAt;
+    }
+    
+    public void setRequestedAt(Date requestedAt) {
+        this.requestedAt = requestedAt;
+    }
+    
+    public Date getApprovedAt() {
+        return approvedAt;
+    }
+    
+    public void setApprovedAt(Date approvedAt) {
+        this.approvedAt = approvedAt;
+    }
+    
+    public Date getCancelledAt() {
+        return cancelledAt;
+    }
+    
+    public void setCancelledAt(Date cancelledAt) {
+        this.cancelledAt = cancelledAt;
+    }
+    
+    public String getCancelReason() {
+        return cancelReason;
+    }
+    
+    public void setCancelReason(String cancelReason) {
+        this.cancelReason = cancelReason;
+    }
+    
+    public String getFailReason() {
+        return failReason;
+    }
+    
+    public void setFailReason(String failReason) {
+        this.failReason = failReason;
+    }
+    
+    public Date getCreatedAt() {
         return createdAt;
     }
     
-    public void setCreatedAt(Timestamp createdAt) {
+    public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
     }
     
-    public Timestamp getUpdatedAt() {
+    public Date getUpdatedAt() {
         return updatedAt;
     }
     
-    public void setUpdatedAt(Timestamp updatedAt) {
+    public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
     }
     
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Utility Methods
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     
-	public void setCompletedAt(Timestamp timestamp) {
-		this.completedAt = timestamp;
-	}	
-
-	public void setCancelledAt(Timestamp timestamp) {
-		this.cancelledAt = timestamp;
-		
-	}
-
-	public void getAmount(BigDecimal amount) {
-		this.amount = amount;		
-	}	
-	
-	@Override
-	public String toString() {
-		return "PaymentVO [paymentId=" + paymentId + ", memberId=" + memberId + ", stockId=" + stockId + ", stockCode="
-				+ stockCode + ", stockName=" + stockName + ", quantity=" + quantity + ", purchasePrice=" + purchasePrice
-				+ ", totalAmount=" + totalAmount + ", paymentMethod=" + paymentMethod + ", paymentStatus="
-				+ paymentStatus + ", cardNumber=" + cardNumber + ", cardCompany=" + cardCompany + ", pgProvider="
-				+ pgProvider + ", transactionId=" + transactionId + ", portfolioId=" + portfolioId + ", country="
-				+ country + ", currency=" + currency + ", exchangeRate=" + exchangeRate + ", localAmount=" + localAmount
-				+ ", createdAt=" + createdAt + ", updatedAt=" + updatedAt + ", completedAt=" + completedAt
-				+ ", cancelledAt=" + cancelledAt + ", amount=" + amount + "]";
-	}
-
-	
-
-	
-	
-	
+    public void completePayment(String paymentKey) {
+        this.paymentKey = paymentKey;
+        this.paymentStatus = "COMPLETED";
+        this.approvedAt = new Date();
+    }
+    
+    public void failPayment(String reason) {
+        this.paymentStatus = "FAILED";
+        this.failReason = reason;
+    }
+    
+    public void cancelPayment(String reason) {
+        this.paymentStatus = "CANCELLED";
+        this.cancelReason = reason;
+        this.cancelledAt = new Date();
+    }
+    
+    public boolean isCompleted() {
+        return "COMPLETED".equals(this.paymentStatus);
+    }
+    
+    public boolean isPending() {
+        return "PENDING".equals(this.paymentStatus);
+    }
+    
+    @Override
+    public String toString() {
+        return "PaymentVO{" +
+                "paymentId=" + paymentId +
+                ", memberId='" + memberId + '\'' +
+                ", amount=" + amount +
+                ", paymentMethod='" + paymentMethod + '\'' +
+                ", paymentStatus='" + paymentStatus + '\'' +
+                ", totalAmount=" + totalAmount +
+                ", cardCompany='" + cardCompany + '\'' +
+                ", country='" + country + '\'' +
+                ", currency='" + currency + '\'' +
+                '}';
+    }
 }

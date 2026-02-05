@@ -1,116 +1,76 @@
 package com.portwatch.domain;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
 
-import lombok.Data;
-
-
 /**
- * 대시보드 통계 VO
- * 여러 테이블의 통계 정보를 담는 집계용 VO
+ * Dashboard 요약 정보 VO
  */
-@Data
 public class DashboardVO {
     
-    // 전체 통계
-    private Integer totalPortfolios;        // 총 포트폴리오 수
-    private Integer totalStocks;            // 총 보유 종목 수
-    private Integer totalWatchlist;         // 총 관심종목 수
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 포트폴리오 통계
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    private int portfolioCount;          // 포트폴리오 수
+    private BigDecimal totalValue;       // 총 평가액
+    private BigDecimal totalInvestment;  // 총 투자원금
+    private BigDecimal totalProfit;      // ⭐ 총 손익 (필수!)
+    private BigDecimal returnRate;       // 수익률
     
-    // 투자 금액 통계
-    private BigDecimal totalInvestment;     // 총 투자금액
-    private BigDecimal totalCurrentValue;   // 총 평가금액
-    private BigDecimal totalProfitLoss;     // 총 손익
-    private Double totalProfitLossRate;     // 총 수익률
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 주식 통계
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    private int stockCount;              // 보유 종목 수
+    private int koreanStockCount;        // 한국 종목 수
+    private int usStockCount;            // 미국 종목 수
     
-    // 포트폴리오별 통계 리스트
-    private List<PortfolioSummaryVO> portfolioSummaries;
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 상위 종목
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    private List<PortfolioStockVO> topGainers;    // 수익 상위 종목
+    private List<PortfolioStockVO> topLosers;     // 손실 상위 종목
+    private List<PortfolioStockVO> topHoldings;   // 보유액 상위 종목
     
-    // 보유 종목 Top 5
-    private List<PortfolioStockVO> topStocks;
-    
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // 최근 뉴스
-    private List<NewsVO> recentNews;
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    private List<NewsVO> recentNews;     // 최근 뉴스
     
-    // 기본 생성자
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Constructors
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    
     public DashboardVO() {
-        this.totalPortfolios = 0;
-        this.totalStocks = 0;
-        this.totalWatchlist = 0;
+        this.totalValue = BigDecimal.ZERO;
         this.totalInvestment = BigDecimal.ZERO;
-        this.totalCurrentValue = BigDecimal.ZERO;
-        this.totalProfitLoss = BigDecimal.ZERO;
-        this.totalProfitLossRate = 0.0;
+        this.totalProfit = BigDecimal.ZERO;        // ⭐ 초기화!
+        this.returnRate = BigDecimal.ZERO;
+        this.topGainers = new ArrayList<>();
+        this.topLosers = new ArrayList<>();
+        this.topHoldings = new ArrayList<>();
+        this.recentNews = new ArrayList<>();
     }
     
-    // 수익률 계산 메서드
-    public void calculateProfitLossRate() {
-        if (totalInvestment != null && totalInvestment.compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal rate = totalProfitLoss.divide(totalInvestment, 4, BigDecimal.ROUND_HALF_UP)
-                                            .multiply(BigDecimal.valueOf(100));
-            this.totalProfitLossRate = rate.doubleValue();
-        } else {
-            this.totalProfitLossRate = 0.0;
-        }
-    }
-    
-    // 내부 클래스: 포트폴리오 요약
-    public static class PortfolioSummaryVO {
-        private Integer portfolioId;
-        private String portfolioName;
-        private BigDecimal investment;
-        private BigDecimal currentValue;
-        private BigDecimal profitLoss;
-        private Double profitLossRate;
-        private Integer stockCount;
-        
-        // Getters and Setters
-        public Integer getPortfolioId() { return portfolioId; }
-        public void setPortfolioId(Integer portfolioId) { this.portfolioId = portfolioId; }
-        
-        public String getPortfolioName() { return portfolioName; }
-        public void setPortfolioName(String portfolioName) { this.portfolioName = portfolioName; }
-        
-        public BigDecimal getInvestment() { return investment; }
-        public void setInvestment(BigDecimal investment) { this.investment = investment; }
-        
-        public BigDecimal getCurrentValue() { return currentValue; }
-        public void setCurrentValue(BigDecimal currentValue) { this.currentValue = currentValue; }
-        
-        public BigDecimal getProfitLoss() { return profitLoss; }
-        public void setProfitLoss(BigDecimal profitLoss) { this.profitLoss = profitLoss; }
-        
-        public Double getProfitLossRate() { return profitLossRate; }
-        public void setProfitLossRate(Double profitLossRate) { this.profitLossRate = profitLossRate; }
-        
-        public Integer getStockCount() { return stockCount; }
-        public void setStockCount(Integer stockCount) { this.stockCount = stockCount; }
-    }
-    
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // Getters and Setters
-    public Integer getTotalPortfolios() {
-        return totalPortfolios;
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    
+    public int getPortfolioCount() {
+        return portfolioCount;
     }
     
-    public void setTotalPortfolios(Integer totalPortfolios) {
-        this.totalPortfolios = totalPortfolios;
+    public void setPortfolioCount(int portfolioCount) {
+        this.portfolioCount = portfolioCount;
     }
     
-    public Integer getTotalStocks() {
-        return totalStocks;
+    public BigDecimal getTotalValue() {
+        return totalValue;
     }
     
-    public void setTotalStocks(Integer totalStocks) {
-        this.totalStocks = totalStocks;
-    }
-    
-    public Integer getTotalWatchlist() {
-        return totalWatchlist;
-    }
-    
-    public void setTotalWatchlist(Integer totalWatchlist) {
-        this.totalWatchlist = totalWatchlist;
+    public void setTotalValue(BigDecimal totalValue) {
+        this.totalValue = totalValue;
     }
     
     public BigDecimal getTotalInvestment() {
@@ -121,44 +81,69 @@ public class DashboardVO {
         this.totalInvestment = totalInvestment;
     }
     
-    public BigDecimal getTotalCurrentValue() {
-        return totalCurrentValue;
+    // ⭐ totalProfit Getter/Setter (필수!)
+    public BigDecimal getTotalProfit() {
+        return totalProfit;
     }
     
-    public void setTotalCurrentValue(BigDecimal totalCurrentValue) {
-        this.totalCurrentValue = totalCurrentValue;
+    public void setTotalProfit(BigDecimal totalProfit) {
+        this.totalProfit = totalProfit;
     }
     
-    public BigDecimal getTotalProfitLoss() {
-        return totalProfitLoss;
+    public BigDecimal getReturnRate() {
+        return returnRate;
     }
     
-    public void setTotalProfitLoss(BigDecimal totalProfitLoss) {
-        this.totalProfitLoss = totalProfitLoss;
+    public void setReturnRate(BigDecimal returnRate) {
+        this.returnRate = returnRate;
     }
     
-    public Double getTotalProfitLossRate() {
-        return totalProfitLossRate;
+    public int getStockCount() {
+        return stockCount;
     }
     
-    public void setTotalProfitLossRate(Double totalProfitLossRate) {
-        this.totalProfitLossRate = totalProfitLossRate;
+    public void setStockCount(int stockCount) {
+        this.stockCount = stockCount;
     }
     
-    public List<PortfolioSummaryVO> getPortfolioSummaries() {
-        return portfolioSummaries;
+    public int getKoreanStockCount() {
+        return koreanStockCount;
     }
     
-    public void setPortfolioSummaries(List<PortfolioSummaryVO> portfolioSummaries) {
-        this.portfolioSummaries = portfolioSummaries;
+    public void setKoreanStockCount(int koreanStockCount) {
+        this.koreanStockCount = koreanStockCount;
     }
     
-    public List<PortfolioStockVO> getTopStocks() {
-        return topStocks;
+    public int getUsStockCount() {
+        return usStockCount;
     }
     
-    public void setTopStocks(List<PortfolioStockVO> topStocks) {
-        this.topStocks = topStocks;
+    public void setUsStockCount(int usStockCount) {
+        this.usStockCount = usStockCount;
+    }
+    
+    public List<PortfolioStockVO> getTopGainers() {
+        return topGainers;
+    }
+    
+    public void setTopGainers(List<PortfolioStockVO> topGainers) {
+        this.topGainers = topGainers;
+    }
+    
+    public List<PortfolioStockVO> getTopLosers() {
+        return topLosers;
+    }
+    
+    public void setTopLosers(List<PortfolioStockVO> topLosers) {
+        this.topLosers = topLosers;
+    }
+    
+    public List<PortfolioStockVO> getTopHoldings() {
+        return topHoldings;
+    }
+    
+    public void setTopHoldings(List<PortfolioStockVO> topHoldings) {
+        this.topHoldings = topHoldings;
     }
     
     public List<NewsVO> getRecentNews() {
@@ -168,15 +153,69 @@ public class DashboardVO {
     public void setRecentNews(List<NewsVO> recentNews) {
         this.recentNews = recentNews;
     }
-
-	@Override
-	public String toString() {
-		return "DashboardVO [totalPortfolios=" + totalPortfolios + ", totalStocks=" + totalStocks + ", totalWatchlist="
-				+ totalWatchlist + ", totalInvestment=" + totalInvestment + ", totalCurrentValue=" + totalCurrentValue
-				+ ", totalProfitLoss=" + totalProfitLoss + ", totalProfitLossRate=" + totalProfitLossRate
-				+ ", portfolioSummaries=" + portfolioSummaries + ", topStocks=" + topStocks + ", recentNews="
-				+ recentNews + "]";
-	}
     
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Utility Methods
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     
+    /**
+     * 수익률 계산 (RoundingMode 사용)
+     */
+    public void calculateReturnRate() {
+        if (totalInvestment == null || totalInvestment.compareTo(BigDecimal.ZERO) == 0) {
+            this.returnRate = BigDecimal.ZERO;
+            return;
+        }
+        
+        // ⭐ RoundingMode 사용 (Deprecated 해결!)
+        this.returnRate = totalProfit
+            .divide(totalInvestment, 4, RoundingMode.HALF_UP)
+            .multiply(new BigDecimal(100))
+            .setScale(2, RoundingMode.HALF_UP);
+    }
+    
+    /**
+     * 총 손익 계산
+     */
+    public void calculateTotalProfit() {
+        if (totalValue != null && totalInvestment != null) {
+            this.totalProfit = totalValue.subtract(totalInvestment);
+        } else {
+            this.totalProfit = BigDecimal.ZERO;
+        }
+    }
+    
+    /**
+     * 통계 자동 계산
+     */
+    public void calculateAll() {
+        calculateTotalProfit();
+        calculateReturnRate();
+    }
+    
+    /**
+     * 수익 여부
+     */
+    public boolean isProfit() {
+        return totalProfit != null && totalProfit.compareTo(BigDecimal.ZERO) > 0;
+    }
+    
+    /**
+     * 손실 여부
+     */
+    public boolean isLoss() {
+        return totalProfit != null && totalProfit.compareTo(BigDecimal.ZERO) < 0;
+    }
+    
+    @Override
+    public String toString() {
+        return "DashboardVO{" +
+                "portfolioCount=" + portfolioCount +
+                ", totalValue=" + totalValue +
+                ", totalInvestment=" + totalInvestment +
+                ", totalProfit=" + totalProfit +
+                ", returnRate=" + returnRate +
+                ", stockCount=" + stockCount +
+                '}';
+    }
 }
