@@ -15,6 +15,7 @@ import com.portwatch.domain.NewsVO;
 import com.portwatch.persistence.NewsDAO;
 
 import lombok.extern.log4j.Log4j;
+import lombok.extern.log4j.Log4j2;
 
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
