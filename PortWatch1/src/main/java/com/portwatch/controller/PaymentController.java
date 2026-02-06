@@ -28,9 +28,6 @@ import com.portwatch.service.StockService;
 
 /**
  * 결제 컨트롤러
- * 
- * @author PortWatch
- * @version 1.0 - 한글 인코딩 수정
  */
 @Controller
 @RequestMapping("/payment")
@@ -44,7 +41,6 @@ public class PaymentController {
     
     /**
      * 결제 페이지 이동
-     * /payment/checkout?stockId=1&quantity=10&price=75000
      */
     @GetMapping("/checkout")
     public String checkoutPage(
@@ -104,7 +100,6 @@ public class PaymentController {
     
     /**
      * 결제 처리 API
-     * POST /payment/process
      */
     @PostMapping("/process")
     @ResponseBody
@@ -158,7 +153,6 @@ public class PaymentController {
     
     /**
      * 결제 내역 조회
-     * GET /payment/history
      */
     @GetMapping("/history")
     public String paymentHistory(HttpSession session, Model model) {
@@ -188,7 +182,6 @@ public class PaymentController {
     
     /**
      * 결제 취소 API
-     * POST /payment/cancel/{paymentId}
      */
     @PostMapping("/cancel/{paymentId}")
     @ResponseBody
@@ -224,8 +217,7 @@ public class PaymentController {
     }
     
     /**
-     * PG사 결제 승인 콜백 (Webhook)
-     * POST /payment/webhook/approval
+     * PG사 결제 승인 콜백
      */
     @PostMapping("/webhook/approval")
     @ResponseBody

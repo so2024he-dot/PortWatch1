@@ -1,63 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:context="http://www.springframework.org/schema/context"
-       xmlns:tx="http://www.springframework.org/schema/tx"
-       xmlns:task="http://www.springframework.org/schema/task"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans
-           http://www.springframework.org/schema/beans/spring-beans.xsd
-           http://www.springframework.org/schema/context
-           http://www.springframework.org/schema/context/spring-context.xsd
-           http://www.springframework.org/schema/tx
-           http://www.springframework.org/schema/tx/spring-tx.xsd
-           http://www.springframework.org/schema/task
-           http://www.springframework.org/schema/task/spring-task.xsd">
-
-    <!-- ============================================================ -->
-    <!-- DataSource (HikariCP - MySQL 8.0.33) -->
-    <!-- ⭐ portwatch_db 사용! -->
-    <!-- ============================================================ -->
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans 
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://mybatis.org/schema/mybatis-spring 
+        http://mybatis.org/schema/mybatis-spring-1.2.xsd">
+    <!-- Root Context: defines shared resources visible to all other web components -->
+    
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <!-- DataSource 설정 (HikariCP) -->
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
-        <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
-        <property name="jdbcUrl">
-            <value><![CDATA[jdbc:mysql://localhost:3306/portwatch_db?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8]]></value>
-        </property>
-        <property name="username" value="root"/>
-        <property name="password" value="1234"/>
-        <property name="maximumPoolSize" value="20"/>
+         <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
+        <property name="jdbcUrl" value="jdbc:mysql://localhost:3306/portwatch_db?useSSL=false&amp;serverTimezone=Asia/Seoul&amp;characterEncoding=UTF-8"/>
+        <property name="username" value="portwatch_user"/>
+        <property name="password" value="PortWatch2026!@#"/>
+        
+        <!-- HikariCP 설정 -->
+        <property name="maximumPoolSize" value="10"/>
         <property name="minimumIdle" value="5"/>
         <property name="connectionTimeout" value="30000"/>
         <property name="idleTimeout" value="600000"/>
         <property name="maxLifetime" value="1800000"/>
-        <property name="connectionTestQuery" value="SELECT 1"/>
-        <property name="poolName" value="PortWatchHikariPool"/>
-        <property name="autoCommit" value="true"/>
-        <property name="leakDetectionThreshold" value="60000"/>
     </bean>
-    
-    <!-- ============================================================ -->
-    <!-- SqlSessionFactory -->
-    <!-- ============================================================ -->
+  
+  
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <!-- MyBatis 설정 -->
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
         <property name="dataSource" ref="dataSource"/>
-        <property name="configLocation" value="classpath:mybatis-config.xml"/>
-        <property name="mapperLocations" value="classpath:mappers/*.xml"/>
-    </bean>
+        <property name="configLocation" value="classpath:/mybatis-config.xml"/>
+        <property name="mapperLocations" value="classpath:/mappers/**/*.xml"/>
+    </bean>   
     
-    <!-- ============================================================ -->
-    <!-- SqlSessionTemplate -->
-    <!-- ============================================================ -->
-    <bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate" destroy-method="clearCache">
-        <constructor-arg ref="sqlSessionFactory"/>
-    </bean>
     
-    <!-- ============================================================ -->
-    <!-- MyBatis Mapper Scanner -->
-    <!-- ============================================================ -->
-    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
-        <property name="basePackage" value="com.portwatch.persistence"/>
-        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
-    </bean>
+    <!-- MyBatis Mapper 스캔 -->
+    <mybatis-spring:scan base-package="com.portwatch.mapper"/>
+    
     
     <!-- ============================================================ -->
     <!-- Transaction Manager -->
@@ -66,38 +51,15 @@
         <property name="dataSource" ref="dataSource"/>
     </bean>
     
-    <tx:annotation-driven transaction-manager="transactionManager"/>
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <!-- ⭐ BCryptPasswordEncoder Bean (필수!) -->
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <bean id="passwordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"/>
     
-    <!-- ============================================================ -->
-    <!-- Task Executor -->
-    <!-- ============================================================ -->
-    <bean id="taskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
-        <property name="corePoolSize" value="5"/>
-        <property name="maxPoolSize" value="10"/>
-        <property name="queueCapacity" value="25"/>
-        <property name="threadNamePrefix" value="PortWatch-Async-"/>
-        <property name="waitForTasksToCompleteOnShutdown" value="true"/>
-        <property name="awaitTerminationSeconds" value="60"/>
-    </bean>
-    
-    <!-- ============================================================ -->
-    <!-- Task Scheduler -->
-    <!-- ============================================================ -->
-    <bean id="taskScheduler" class="org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler">
-        <property name="poolSize" value="5"/>
-        <property name="threadNamePrefix" value="PortWatch-Scheduler-"/>
-        <property name="waitForTasksToCompleteOnShutdown" value="true"/>
-        <property name="awaitTerminationSeconds" value="60"/>
-    </bean>
-    
-    <task:annotation-driven executor="taskExecutor" scheduler="taskScheduler"/>
-    
-    <!-- ============================================================ -->
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <!-- Component Scan -->
-    <!-- ============================================================ -->
-    <context:component-scan base-package="com.portwatch">
-        <context:exclude-filter type="annotation" 
-            expression="org.springframework.stereotype.Controller"/>
-    </context:component-scan>
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <context:component-scan base-package="com.portwatch.service"/>
+    <context:component-scan base-package="com.portwatch.mapper"/>
     
 </beans>
