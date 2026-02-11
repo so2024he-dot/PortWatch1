@@ -20,6 +20,7 @@
     </properties>
     
     <dependencies>
+    
         <!-- Spring Framework -->
         <dependency>
             <groupId>org.springframework</groupId>
@@ -166,6 +167,7 @@
             <version>1.14.3</version>
         </dependency>
         
+        
         <!-- JSON Simple -->
         <dependency>
             <groupId>com.googlecode.json-simple</groupId>
@@ -180,6 +182,13 @@
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
+        
+        <!-- ⭐ Log4j 추가 -->
+		<dependency>
+		    <groupId>log4j</groupId>
+		    <artifactId>log4j</artifactId>
+		    <version>1.2.17</version>
+		</dependency>
         
         <dependency>
             <groupId>org.springframework</groupId>

@@ -145,4 +145,10 @@
         GROUP BY country
     </select>
     
+    <!-- 국가별 주식 삭제 -->
+	<delete id="deleteByCountry" parameterType="string">
+	    DELETE FROM STOCK 
+	    WHERE country = #{country}
+	</delete>
+
 </mapper>

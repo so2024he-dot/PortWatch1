@@ -1,4 +1,4 @@
-package com.portwatch.persistence;
+package com.portwatch.mapper;
 
 import java.util.List;
 import java.util.Map;
@@ -70,4 +70,9 @@ public interface StockMapper {
      * 국가별 종목 수
      */
     List<Map<String, Object>> countByCountry();
+    
+    /**
+     * 국가별 주식 데이터 삭제
+     */
+    public int deleteByCountry(String country);
 }

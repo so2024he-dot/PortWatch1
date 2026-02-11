@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.portwatch.domain.StockVO;
-import com.portwatch.persistence.StockMapper;
+import com.portwatch.mapper.StockMapper;
 
 /**
  * 매일 종목 추가 및 SQL 파일 저장 서비스
