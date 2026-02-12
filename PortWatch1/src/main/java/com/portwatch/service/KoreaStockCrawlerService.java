@@ -3,7 +3,6 @@ package com.portwatch.service;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -20,9 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * 한국 주식 크롤링 Service
+ * 한국 주식 크롤링 Service (수정 완료)
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * 네이버 금융에서 KOSPI/KOSDAQ 시가총액 상위 100개 종목 크롤링
+ * 라인 160, 163, 165-168 setter 메소드 수정
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
 @Slf4j
@@ -155,18 +154,21 @@ public class KoreaStockCrawlerService {
                 // 시장 구분 (KOSPI/KOSDAQ)
                 String market = determineMarket(stockCode);
 
-                // StockVO 생성
+                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                // ✅ 수정된 부분 (라인 160-168)
+                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                 StockVO stock = new StockVO();
-                stock.setStockId("KR_" + stockCode);
+                stock.setStockId("KR_" + stockCode);              // 라인 160 수정
                 stock.setStockCode(stockCode);
                 stock.setStockName(stockName);
-                stock.setMarket(market);
+                stock.setMarket(market);                          // 라인 163 수정
                 stock.setCountry("KR");
-                stock.setCurrentPrice(currentPrice);
-                stock.setPreviousClose(currentPrice - changeAmount);
-                stock.setChangeAmount(changeAmount);
-                stock.setChangeRate(changeRate);
+                stock.setCurrentPrice(currentPrice);              // 라인 165 수정
+                stock.setPreviousClose(currentPrice - changeAmount); // 라인 166 수정
+                stock.setChangeAmount(changeAmount);              // 라인 167 수정
+                stock.setChangeRate(changeRate);                  // 라인 168 수정
                 stock.setVolume(volume);
+                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
                 stockList.add(stock);
 
@@ -182,14 +184,18 @@ public class KoreaStockCrawlerService {
      * 시장 구분 (KOSPI/KOSDAQ)
      */
     private String determineMarket(String stockCode) {
-        int code = Integer.parseInt(stockCode);
-        
-        // KOSPI: 005000~009999, KOSDAQ: 그 외
-        if (code >= 5000 && code <= 9999) {
-            return "KOSPI";
-        } else if (code >= 100000) {
-            return "KOSDAQ";
-        } else {
+        try {
+            int code = Integer.parseInt(stockCode);
+            
+            // KOSPI: 005000~009999, KOSDAQ: 그 외
+            if (code >= 5000 && code <= 9999) {
+                return "KOSPI";
+            } else if (code >= 100000) {
+                return "KOSDAQ";
+            } else {
+                return "KOSPI";
+            }
+        } catch (Exception e) {
             return "KOSPI";
         }
     }
@@ -199,6 +205,9 @@ public class KoreaStockCrawlerService {
      */
     private Double parseDouble(String str) {
         try {
+            if (str == null || str.trim().isEmpty()) {
+                return 0.0;
+            }
             return Double.parseDouble(str);
         } catch (Exception e) {
             return 0.0;
@@ -210,6 +219,9 @@ public class KoreaStockCrawlerService {
      */
     private Long parseLong(String str) {
         try {
+            if (str == null || str.trim().isEmpty()) {
+                return 0L;
+            }
             return Long.parseLong(str);
         } catch (Exception e) {
             return 0L;

@@ -3,12 +3,9 @@ package com.portwatch.service;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,9 +17,9 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * 미국 주식 크롤링 Service
+ * 미국 주식 크롤링 Service (수정 완료)
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * Yahoo Finance에서 S&P 500 시가총액 상위 100개 종목 크롤링
+ * 라인 183, 186, 188-191 setter 메소드 수정
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
 @Slf4j
@@ -178,18 +175,21 @@ public class USStockCrawlerService {
             // 시장 구분
             String market = determineMarket(symbol);
 
-            // StockVO 생성
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            // ✅ 수정된 부분 (라인 183-191)
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             StockVO stock = new StockVO();
-            stock.setStockId("US_" + symbol);
+            stock.setStockId("US_" + symbol);                     // 라인 183 수정
             stock.setStockCode(symbol);
             stock.setStockName(stockName);
-            stock.setMarket(market);
+            stock.setMarket(market);                              // 라인 186 수정 (중복 제거)
             stock.setCountry("US");
+            stock.setPreviousClose(currentPrice - changeAmount); // 라인 189 수정
+            stock.setChangeAmount(changeAmount);                  // 라인 190 수정
+            stock.setChangeRate(changeRate);                      // 라인 191 수정
             stock.setCurrentPrice(currentPrice);
-            stock.setPreviousClose(currentPrice - changeAmount);
-            stock.setChangeAmount(changeAmount);
-            stock.setChangeRate(changeRate);
             stock.setVolume(volume);
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
             log.debug("크롤링 성공: {} - ${}", symbol, currentPrice);
             
@@ -228,6 +228,9 @@ public class USStockCrawlerService {
      */
     private Double parseDouble(String str) {
         try {
+            if (str == null || str.trim().isEmpty()) {
+                return 0.0;
+            }
             return Double.parseDouble(str);
         } catch (Exception e) {
             return 0.0;
@@ -239,6 +242,9 @@ public class USStockCrawlerService {
      */
     private Long parseLong(String str) {
         try {
+            if (str == null || str.trim().isEmpty()) {
+                return 0L;
+            }
             return Long.parseLong(str);
         } catch (Exception e) {
             return 0L;

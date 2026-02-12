@@ -2,138 +2,179 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.portwatch.persistence.StockMapper">
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<!-- 수정된 StockMapper.xml -->
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<!-- 
+    주요 수정 사항:
+    1. namespace 변경: persistence → mapper
+    2. 컬럼명 수정: VO 필드와 일치
+    3. insert 문 수정: 크롤링 데이터 구조에 맞춤
+    4. 테이블명 통일: STOCK (대문자)
+-->
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+
+<mapper namespace="com.portwatch.mapper.StockMapper">
     
-    <!-- Result Map -->
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <!-- Result Map (VO 필드와 정확히 매칭) -->
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <resultMap id="StockResultMap" type="com.portwatch.domain.StockVO">
         <id property="stockId" column="stock_id"/>
         <result property="stockCode" column="stock_code"/>
         <result property="stockName" column="stock_name"/>
-        <result property="marketType" column="market_type"/>
+        <result property="market" column="market"/>
         <result property="country" column="country"/>
-        <result property="industry" column="industry"/>
         <result property="currentPrice" column="current_price"/>
+        <result property="previousClose" column="previous_close"/>
+        <result property="changeAmount" column="change_amount"/>
         <result property="changeRate" column="change_rate"/>
         <result property="volume" column="volume"/>
-        <result property="marketCap" column="market_cap"/>
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
     
-    <!-- 종목 등록 -->
-    <insert id="insert" parameterType="com.portwatch.domain.StockVO" 
-            useGeneratedKeys="true" keyProperty="stockId">
-        INSERT INTO stock (
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <!-- 종목 등록 (크롤링 데이터용) -->
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <insert id="insert" parameterType="com.portwatch.domain.StockVO">
+        INSERT INTO STOCK (
+            stock_id,
             stock_code,
             stock_name,
-            market_type,
+            market,
             country,
-            industry,
             current_price,
+            previous_close,
+            change_amount,
             change_rate,
-            volume,
-            market_cap
+            volume
         ) VALUES (
+            #{stockId},
             #{stockCode},
             #{stockName},
-            #{marketType},
+            #{market},
             #{country},
-            #{industry},
             #{currentPrice},
+            #{previousClose},
+            #{changeAmount},
             #{changeRate},
-            #{volume},
-            #{marketCap}
+            #{volume}
         )
     </insert>
     
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <!-- 조회 쿼리 -->
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    
     <!-- 종목 코드로 조회 -->
     <select id="findByCode" resultMap="StockResultMap">
-        SELECT * FROM stock
+        SELECT * FROM STOCK
         WHERE stock_code = #{stockCode}
     </select>
     
     <!-- 종목 ID로 조회 -->
     <select id="findById" resultMap="StockResultMap">
-        SELECT * FROM stock
+        SELECT * FROM STOCK
         WHERE stock_id = #{stockId}
     </select>
     
-    <!-- ⭐ 모든 종목 조회 (백업용) -->
+    <!-- 모든 종목 조회 -->
     <select id="findAll" resultMap="StockResultMap">
         SELECT 
             stock_id,
             stock_code,
             stock_name,
-            market_type,
+            market,
             country,
-            industry,
             current_price,
+            previous_close,
+            change_amount,
             change_rate,
             volume,
-            market_cap,
             created_at,
             updated_at
-        FROM stock
+        FROM STOCK
         ORDER BY 
             country,
-            market_type,
+            market,
             stock_code
     </select>
     
     <!-- 국가별 종목 조회 -->
     <select id="findByCountry" resultMap="StockResultMap">
-        SELECT * FROM stock
+        SELECT * FROM STOCK
         WHERE country = #{country}
         ORDER BY stock_code
     </select>
     
     <!-- 시장별 종목 조회 -->
-    <select id="findByMarketType" resultMap="StockResultMap">
-        SELECT * FROM stock
-        WHERE market_type = #{marketType}
+    <select id="findByMarket" resultMap="StockResultMap">
+        SELECT * FROM STOCK
+        WHERE market = #{market}
         ORDER BY stock_code
     </select>
     
     <!-- 종목 검색 -->
     <select id="searchStocks" resultMap="StockResultMap">
-        SELECT * FROM stock
+        SELECT * FROM STOCK
         WHERE stock_code LIKE CONCAT('%', #{keyword}, '%')
            OR stock_name LIKE CONCAT('%', #{keyword}, '%')
         ORDER BY stock_code
         LIMIT 50
     </select>
     
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <!-- 업데이트 쿼리 -->
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    
     <!-- 종목 정보 수정 -->
     <update id="update" parameterType="com.portwatch.domain.StockVO">
-        UPDATE stock
+        UPDATE STOCK
         SET
             stock_name = #{stockName},
-            market_type = #{marketType},
+            market = #{market},
             country = #{country},
-            industry = #{industry},
             updated_at = CURRENT_TIMESTAMP
         WHERE stock_id = #{stockId}
     </update>
     
     <!-- 주가 정보 업데이트 -->
-    <update id="updatePrice">
-        UPDATE stock
+    <update id="updatePrice" parameterType="com.portwatch.domain.StockVO">
+        UPDATE STOCK
         SET
             current_price = #{currentPrice},
+            previous_close = #{previousClose},
+            change_amount = #{changeAmount},
             change_rate = #{changeRate},
+            volume = #{volume},
             updated_at = CURRENT_TIMESTAMP
         WHERE stock_id = #{stockId}
     </update>
     
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <!-- 삭제 쿼리 -->
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    
     <!-- 종목 삭제 -->
     <delete id="delete">
-        DELETE FROM stock
+        DELETE FROM STOCK
         WHERE stock_id = #{stockId}
     </delete>
     
+    <!-- 국가별 주식 삭제 (크롤링 업데이트용) -->
+    <delete id="deleteByCountry" parameterType="string">
+        DELETE FROM STOCK 
+        WHERE country = #{country}
+    </delete>
+    
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <!-- 통계 쿼리 -->
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    
     <!-- 총 종목 수 -->
     <select id="count" resultType="int">
-        SELECT COUNT(*) FROM stock
+        SELECT COUNT(*) FROM STOCK
     </select>
     
     <!-- 국가별 종목 수 -->
@@ -141,14 +182,8 @@
         SELECT 
             country,
             COUNT(*) as count
-        FROM stock
+        FROM STOCK
         GROUP BY country
     </select>
-    
-    <!-- 국가별 주식 삭제 -->
-	<delete id="deleteByCountry" parameterType="string">
-	    DELETE FROM STOCK 
-	    WHERE country = #{country}
-	</delete>
 
 </mapper>
