@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.portwatch.persistence.NewsDAO">
+    
+    <resultMap id="NewsResultMap" type="NewsVO">
+        <id property="newsId" column="news_id"/>
+        <result property="title" column="title"/>
+        <result property="stockId" column="stock_id"/>
+        <result property="stockCode" column="stock_code"/>
+        <result property="newsCode" column="news_code"/>
+        <result property="newsTitle" column="news_title"/>
+        <result property="newsUrl" column="news_url"/>
+        <result property="publishedDate" column="published_date"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="name" column="name"/>
+    </resultMap>
+    
+    <!-- 뉴스 삽입 -->
+    <insert id="insertNews">
+        INSERT INTO news (title, stock_id, stock_code, news_url, published_date, name)
+        VALUES (#{title}, #{stockId}, #{stockCode}, #{newsUrl}, #{publishedDate}, #{name})
+    </insert>
+    
+    <!-- URL로 존재 여부 확인 (⭐ news_url 사용) -->
+    <select id="existsByUrl" resultType="boolean">
+        SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END
+        FROM news WHERE news_url = #{newsUrl}
+    </select>
+    
+    <!-- 최신 뉴스 조회 -->
+    <select id="selectRecentNews" resultMap="NewsResultMap">
+        SELECT news_id, title, stock_code, news_url, published_date, name
+        FROM news ORDER BY published_date DESC LIMIT #{limit}
+    </select>
+    
+    <!-- 종목별 뉴스 조회 -->
+    <select id="selectByStockCode" resultMap="NewsResultMap">
+        SELECT news_id, title, stock_code, news_url, published_date, name
+        FROM news WHERE stock_code = #{stockCode}
+        ORDER BY published_date DESC LIMIT 20
+    </select>
+    
+</mapper>

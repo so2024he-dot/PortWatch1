@@ -17,18 +17,14 @@ import com.portwatch.service.USStockCrawlerService;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * 주식 크롤링 Controller (프론트엔드 ↔ 백엔드 연결)
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * 크롤링 UI 페이지 + REST API 제공
- *
- * [URL 매핑]
- * GET  /crawler              → 크롤링 관리 UI 페이지
- * POST /crawler/korea        → 한국 주식 크롤링 실행
- * POST /crawler/us           → 미국 주식 크롤링 실행
- * POST /crawler/all          → 전체 크롤링 실행
- * GET  /crawler/status       → 크롤링 상태 확인
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * 주식 크롤링 Controller
+ * ══════════════════════════════════════════════════
+ * GET  /crawler        → 크롤링 UI 페이지 (JSP)
+ * POST /crawler/korea  → 한국 주식 크롤링
+ * POST /crawler/us     → 미국 주식 크롤링
+ * POST /crawler/all    → 전체 크롤링
+ * GET  /crawler/status → 상태 조회 (Ajax 폴링)
+ * ══════════════════════════════════════════════════
  */
 @Slf4j
 @Controller
@@ -36,161 +32,129 @@ import lombok.extern.slf4j.Slf4j;
 public class StockCrawlerController {
 
     @Autowired
-    private KoreaStockCrawlerService koreaStockCrawlerService;
+    private KoreaStockCrawlerService koreaService;
 
     @Autowired
-    private USStockCrawlerService usStockCrawlerService;
+    private USStockCrawlerService usService;
 
-    /** 크롤링 진행 상태 (스레드 안전) */
-    private volatile boolean isRunning = false;
-    private volatile String  lastStatus = "대기중";
-    private volatile int     lastKoreaCount = 0;
+    private volatile boolean isRunning   = false;
+    private volatile String  lastStatus  = "대기중";
+    private volatile int     lastKrCount = 0;
     private volatile int     lastUsCount = 0;
 
-    /* ============================================================
-     * GET /crawler → 크롤링 관리 페이지 (JSP)
-     * ============================================================ */
+    /** GET /crawler → views/crawler/stock-update.jsp */
     @GetMapping
-    public String crawlerPage() {
-        return "crawler/stock-update"; // /WEB-INF/views/crawler/stock-update.jsp
+    public String page() {
+        return "crawler/stock-update";
     }
 
-    /* ============================================================
-     * POST /crawler/korea → 한국 주식 크롤링
-     * ============================================================ */
+    /** POST /crawler/korea */
     @PostMapping("/korea")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> crawlKorea() {
-        Map<String, Object> result = new HashMap<>();
-
+        Map<String, Object> res = new HashMap<>();
         if (isRunning) {
-            result.put("success", false);
-            result.put("message", "현재 크롤링 진행 중입니다.");
-            return ResponseEntity.ok(result);
+            res.put("success", false);
+            res.put("message", "크롤링 진행 중입니다.");
+            return ResponseEntity.ok(res);
         }
-
         try {
-            isRunning = true;
-            lastStatus = "한국 주식 크롤링 중...";
-
-            log.info("한국 주식 크롤링 요청");
-            int count = koreaStockCrawlerService.crawlAndUpdateTop100Stocks();
-
-            lastKoreaCount = count;
-            lastStatus = "완료";
-            result.put("success", true);
-            result.put("message", "한국 주식 " + count + "개 업데이트 완료");
-            result.put("count", count);
-
+            isRunning   = true;
+            lastStatus  = "한국 주식 크롤링 중...";
+            int count   = koreaService.crawlAndUpdateTop100Stocks();
+            lastKrCount = count;
+            lastStatus  = "완료";
+            res.put("success", true);
+            res.put("message", "한국 주식 " + count + "개 AWS MySQL 저장 완료");
+            res.put("count",   count);
         } catch (Exception e) {
-            lastStatus = "오류: " + e.getMessage();
-            result.put("success", false);
-            result.put("message", "크롤링 실패: " + e.getMessage());
+            lastStatus = "오류";
+            res.put("success", false);
+            res.put("message", "실패: " + e.getMessage());
             log.error("한국 주식 크롤링 실패", e);
         } finally {
             isRunning = false;
         }
-
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(res);
     }
 
-    /* ============================================================
-     * POST /crawler/us → 미국 주식 크롤링
-     * ============================================================ */
+    /** POST /crawler/us */
     @PostMapping("/us")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> crawlUs() {
-        Map<String, Object> result = new HashMap<>();
-
+        Map<String, Object> res = new HashMap<>();
         if (isRunning) {
-            result.put("success", false);
-            result.put("message", "현재 크롤링 진행 중입니다.");
-            return ResponseEntity.ok(result);
+            res.put("success", false);
+            res.put("message", "크롤링 진행 중입니다.");
+            return ResponseEntity.ok(res);
         }
-
         try {
-            isRunning = true;
-            lastStatus = "미국 주식 크롤링 중...";
-
-            log.info("미국 주식 크롤링 요청");
-            int count = usStockCrawlerService.crawlAndUpdateTop100Stocks();
-
+            isRunning   = true;
+            lastStatus  = "미국 주식 크롤링 중...";
+            int count   = usService.crawlAndUpdateTop100Stocks();
             lastUsCount = count;
-            lastStatus = "완료";
-            result.put("success", true);
-            result.put("message", "미국 주식 " + count + "개 업데이트 완료");
-            result.put("count", count);
-
+            lastStatus  = "완료";
+            res.put("success", true);
+            res.put("message", "미국 주식 " + count + "개 AWS MySQL 저장 완료");
+            res.put("count",   count);
         } catch (Exception e) {
-            lastStatus = "오류: " + e.getMessage();
-            result.put("success", false);
-            result.put("message", "크롤링 실패: " + e.getMessage());
+            lastStatus = "오류";
+            res.put("success", false);
+            res.put("message", "실패: " + e.getMessage());
             log.error("미국 주식 크롤링 실패", e);
         } finally {
             isRunning = false;
         }
-
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(res);
     }
 
-    /* ============================================================
-     * POST /crawler/all → 한국 + 미국 전체 크롤링
-     * ============================================================ */
+    /** POST /crawler/all */
     @PostMapping("/all")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> crawlAll() {
-        Map<String, Object> result = new HashMap<>();
-
+        Map<String, Object> res = new HashMap<>();
         if (isRunning) {
-            result.put("success", false);
-            result.put("message", "현재 크롤링 진행 중입니다.");
-            return ResponseEntity.ok(result);
+            res.put("success", false);
+            res.put("message", "크롤링 진행 중입니다.");
+            return ResponseEntity.ok(res);
         }
-
         try {
             isRunning = true;
-
-            // 한국 주식
             lastStatus = "한국 주식 크롤링 중...";
-            int koreaCount = koreaStockCrawlerService.crawlAndUpdateTop100Stocks();
-            lastKoreaCount = koreaCount;
+            int kr = koreaService.crawlAndUpdateTop100Stocks();
+            lastKrCount = kr;
 
-            // 미국 주식
             lastStatus = "미국 주식 크롤링 중...";
-            int usCount = usStockCrawlerService.crawlAndUpdateTop100Stocks();
-            lastUsCount = usCount;
+            int us = usService.crawlAndUpdateTop100Stocks();
+            lastUsCount = us;
 
             lastStatus = "전체 완료";
-            result.put("success", true);
-            result.put("message", "전체 크롤링 완료 (한국: " + koreaCount + "개, 미국: " + usCount + "개)");
-            result.put("koreaCount", koreaCount);
-            result.put("usCount", usCount);
-            result.put("totalCount", koreaCount + usCount);
-
+            res.put("success",    true);
+            res.put("message",    "총 " + (kr + us) + "개 저장 완료");
+            res.put("koreaCount", kr);
+            res.put("usCount",    us);
+            res.put("totalCount", kr + us);
         } catch (Exception e) {
-            lastStatus = "오류: " + e.getMessage();
-            result.put("success", false);
-            result.put("message", "전체 크롤링 실패: " + e.getMessage());
+            lastStatus = "오류";
+            res.put("success", false);
+            res.put("message", "실패: " + e.getMessage());
             log.error("전체 크롤링 실패", e);
         } finally {
             isRunning = false;
         }
-
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(res);
     }
 
-    /* ============================================================
-     * GET /crawler/status → 크롤링 상태 확인
-     * ============================================================ */
+    /** GET /crawler/status */
     @GetMapping("/status")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> getStatus() {
-        Map<String, Object> result = new HashMap<>();
-        result.put("isRunning",   isRunning);
-        result.put("status",      lastStatus);
-        result.put("koreaCount",  lastKoreaCount);
-        result.put("usCount",     lastUsCount);
-        result.put("totalCount",  lastKoreaCount + lastUsCount);
-        return ResponseEntity.ok(result);
+    public ResponseEntity<Map<String, Object>> status() {
+        Map<String, Object> res = new HashMap<>();
+        res.put("isRunning",  isRunning);
+        res.put("status",     lastStatus);
+        res.put("koreaCount", lastKrCount);
+        res.put("usCount",    lastUsCount);
+        res.put("totalCount", lastKrCount + lastUsCount);
+        return ResponseEntity.ok(res);
     }
 }

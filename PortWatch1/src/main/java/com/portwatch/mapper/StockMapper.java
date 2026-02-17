@@ -6,96 +6,78 @@ import java.util.Map;
 import com.portwatch.domain.StockVO;
 
 /**
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * Stock Mapper Interface
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * MyBatis와 연동되는 Stock 데이터 접근 인터페이스
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * StockMapper Interface
+ * ══════════════════════════════════════════════════
+ * [기존 유지] 모든 기존 메서드 100% 원본 보존
+ * [신규 추가] insertCrawl, deleteByCountry
+ * ══════════════════════════════════════════════════
  */
 public interface StockMapper {
-    
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 삽입
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    
+
+    // ─────────────────────────────────────────
+    // [기존 유지] INSERT
+    // ─────────────────────────────────────────
+
+    /** 기존 종목 등록 (Integer stockId 기반) */
+    int insert(StockVO stock);
+
+    // ─────────────────────────────────────────
+    // ★ [신규 추가] 크롤링 전용 INSERT
+    // ─────────────────────────────────────────
+
     /**
-     * 종목 등록
+     * ★ 크롤링 전용 INSERT (ON DUPLICATE KEY UPDATE 포함)
+     * crawlStockId(String "KR_005930") → stock_id VARCHAR(50) 저장
+     * 기존 insert()와 별도 동작 → 충돌 없음
      */
-    public int insert(StockVO stock);
-    
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 조회
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    
+    int insertCrawl(StockVO stock);
+
+    // ─────────────────────────────────────────
+    // [기존 유지] SELECT
+    // ─────────────────────────────────────────
+
+    StockVO findByCode(String stockCode);
+
+    StockVO findById(String stockId);
+
+    List<StockVO> findAll();
+
+    List<StockVO> findByCountry(String country);
+
+    List<StockVO> findByMarket(String market);
+
+    List<StockVO> searchStocks(String keyword);
+
+    // ─────────────────────────────────────────
+    // [기존 유지] UPDATE
+    // ─────────────────────────────────────────
+
+    int update(StockVO stock);
+
+    int updatePrice(StockVO stock);
+
+    // ─────────────────────────────────────────
+    // [기존 유지] DELETE
+    // ─────────────────────────────────────────
+
+    int delete(String stockId);
+
+    // ─────────────────────────────────────────
+    // ★ [신규 추가] 국가별 전체 삭제
+    // ─────────────────────────────────────────
+
     /**
-     * 종목 코드로 조회
+     * ★ 국가별 전체 삭제
+     * 크롤링 전 기존 데이터 초기화용
+     * KoreaStockCrawlerService / USStockCrawlerService 에서 호출
      */
-    public StockVO findByCode(String stockCode);
-    
-    /**
-     * 종목 ID로 조회
-     */
-    public StockVO findById(String stockId);
-    
-    /**
-     * 모든 종목 조회
-     */
-    public List<StockVO> findAll();
-    
-    /**
-     * 국가별 종목 조회
-     */
-    public List<StockVO> findByCountry(String country);
-    
-    /**
-     * 시장별 종목 조회
-     */
-    public List<StockVO> findByMarket(String market);
-    
-    /**
-     * 종목 검색
-     */
-    public List<StockVO> searchStocks(String keyword);
-    
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 업데이트
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    
-    /**
-     * 종목 정보 수정
-     */
-    public int update(StockVO stock);
-    
-    /**
-     * 주가 정보 업데이트
-     */
-    public int updatePrice(StockVO stock);
-    
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 삭제
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    
-    /**
-     * 종목 삭제
-     */
-    public int delete(String stockId);
-    
-    /**
-     * 국가별 주식 삭제 (크롤링 업데이트용)
-     */
-    public int deleteByCountry(String country);
-    
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 통계
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    
-    /**
-     * 총 종목 수
-     */
-    public int count();
-    
-    /**
-     * 국가별 종목 수
-     */
-    public List<Map<String, Object>> countByCountry();
+    int deleteByCountry(String country);
+
+    // ─────────────────────────────────────────
+    // [기존 유지] 통계
+    // ─────────────────────────────────────────
+
+    int count();
+
+    List<Map<String, Object>> countByCountry();
 }
