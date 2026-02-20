@@ -1,229 +1,302 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <!--
-    ══════════════════════════════════════════════════════════════
-    StockMapper.xml
-    ══════════════════════════════════════════════════════════════
-    [유지] 기존 ResultMap, insert, select, update, delete, 통계 쿼리
-           → 기존 다른 파일의 어노테이션/참조 100% 호환
-    [추가] ★ insertCrawl  : 크롤링 전용 INSERT (crawlStockId 사용)
-           ★ deleteByCountry : 크롤링 전 국가별 기존 데이터 삭제
-    ══════════════════════════════════════════════════════════════
+  ══════════════════════════════════════════════════════════════
+  StockMapper.xml - 완전판
+  
+  총 35개 쿼리
+  크롤링 데이터: 한국 100개 + 미국 100개
+  ══════════════════════════════════════════════════════════════
 -->
 <mapper namespace="com.portwatch.mapper.StockMapper">
 
-    <!-- ════════════════════════════════════════════════════════
-         [기존 유지] ResultMap - 원본 100% 보존
-         ════════════════════════════════════════════════════════ -->
     <resultMap id="StockResultMap" type="com.portwatch.domain.StockVO">
-        <id     property="stockId"       column="stock_id"/>
-        <result property="stockCode"     column="stock_code"/>
-        <result property="stockName"     column="stock_name"/>
-        <result property="market"        column="market"/>
-        <result property="country"       column="country"/>
-        <result property="currentPrice"  column="current_price"/>
+        <id property="stockId" column="stock_id"/>
+        <result property="crawlStockId" column="stock_id"/>
+        <result property="stockCode" column="stock_code"/>
+        <result property="stockName" column="stock_name"/>
+        <result property="country" column="country"/>
+        <result property="market" column="market"/>
+        <result property="marketType" column="market"/>
+        <result property="industry" column="industry"/>
+        <result property="currentPrice" column="current_price"/>
         <result property="previousClose" column="previous_close"/>
-        <result property="changeAmount"  column="change_amount"/>
-        <result property="changeRate"    column="change_rate"/>
-        <result property="volume"        column="volume"/>
-        <result property="createdAt"     column="created_at"/>
-        <result property="updatedAt"     column="updated_at"/>
+        <result property="changeAmount" column="change_amount"/>
+        <result property="changeRate" column="change_rate"/>
+        <result property="volume" column="volume"/>
+        <result property="tradingVolume" column="volume"/>
+        <result property="updatedAt" column="updated_at"/>
     </resultMap>
 
-    <!-- ════════════════════════════════════════════════════════
-         [기존 유지] INSERT - 원본 100% 보존
-         기존 다른 파일에서 stockMapper.insert(stock) 호출 시 그대로 작동
-         ════════════════════════════════════════════════════════ -->
-    <insert id="insert" parameterType="com.portwatch.domain.StockVO">
-        INSERT INTO STOCK (
-            stock_id,
-            stock_code,
-            stock_name,
-            market,
-            country,
-            current_price,
-            previous_close,
-            change_amount,
-            change_rate,
-            volume
-        ) VALUES (
-            #{stockId},
-            #{stockCode},
-            #{stockName},
-            #{market},
-            #{country},
-            #{currentPrice},
-            #{previousClose},
-            #{changeAmount},
-            #{changeRate},
-            #{volume}
-        )
-    </insert>
-
-    <!-- ════════════════════════════════════════════════════════
-         ★ [신규 추가] insertCrawl - 크롤링 전용
-         기존 insert 와 별도 존재 → 충돌 없음
-         crawlStockId(String) → stock_id(VARCHAR 50) 에 저장
-         ON DUPLICATE KEY UPDATE: 중복 stock_id 시 가격 업데이트
-         ════════════════════════════════════════════════════════ -->
-    <insert id="insertCrawl" parameterType="com.portwatch.domain.StockVO">
-        INSERT INTO STOCK (
-            stock_id,
-            stock_code,
-            stock_name,
-            market,
-            country,
-            current_price,
-            previous_close,
-            change_amount,
-            change_rate,
-            volume
-        ) VALUES (
-            #{crawlStockId},
-            #{stockCode},
-            #{stockName},
-            #{market},
-            #{country},
-            #{currentPrice},
-            #{previousClose},
-            #{changeAmount},
-            #{changeRate},
-            #{volume}
-        )
-        ON DUPLICATE KEY UPDATE
-            stock_name     = VALUES(stock_name),
-            market         = VALUES(market),
-            current_price  = VALUES(current_price),
-            previous_close = VALUES(previous_close),
-            change_amount  = VALUES(change_amount),
-            change_rate    = VALUES(change_rate),
-            volume         = VALUES(volume),
-            updated_at     = CURRENT_TIMESTAMP
-    </insert>
-
-    <!-- ════════════════════════════════════════════════════════
-         [기존 유지] SELECT - 원본 100% 보존
-         ════════════════════════════════════════════════════════ -->
-
-    <!-- 종목 코드로 조회 -->
-    <select id="findByCode" resultMap="StockResultMap">
-        SELECT * FROM STOCK
-        WHERE stock_code = #{stockCode}
+    <!-- 1. findById - Integer stockId -->
+    <select id="findById" parameterType="int" resultMap="StockResultMap">
+        SELECT * FROM STOCK WHERE stock_id = #{stockId}
     </select>
 
-    <!-- 종목 ID로 조회 -->
-    <select id="findById" resultMap="StockResultMap">
-        SELECT * FROM STOCK
-        WHERE stock_id = #{stockId}
+    <!-- 2. findByCode - String stockCode -->
+    <select id="findByCode" parameterType="string" resultMap="StockResultMap">
+        SELECT * FROM STOCK WHERE stock_code = #{stockCode} LIMIT 1
     </select>
 
-    <!-- 모든 종목 조회 -->
+    <!-- 3. findAll - 전체 조회 -->
     <select id="findAll" resultMap="StockResultMap">
-        SELECT
-            stock_id,
-            stock_code,
-            stock_name,
-            market,
-            country,
-            current_price,
-            previous_close,
-            change_amount,
-            change_rate,
-            volume,
-            created_at,
-            updated_at
-        FROM STOCK
-        ORDER BY
-            country,
-            market,
-            stock_code
+        SELECT * FROM STOCK ORDER BY country ASC, stock_code ASC
     </select>
 
-    <!-- 국가별 종목 조회 -->
-    <select id="findByCountry" resultMap="StockResultMap">
-        SELECT * FROM STOCK
-        WHERE country = #{country}
-        ORDER BY stock_code
+    <!-- 4. findByCountry - 국가별 -->
+    <select id="findByCountry" parameterType="string" resultMap="StockResultMap">
+        SELECT * FROM STOCK WHERE country = #{country} ORDER BY stock_code ASC
     </select>
 
-    <!-- 시장별 종목 조회 -->
-    <select id="findByMarket" resultMap="StockResultMap">
-        SELECT * FROM STOCK
-        WHERE market = #{market}
-        ORDER BY stock_code
+    <!-- 5. findByMarket - 시장별 -->
+    <select id="findByMarket" parameterType="string" resultMap="StockResultMap">
+        SELECT * FROM STOCK WHERE market = #{market} ORDER BY stock_code ASC
     </select>
 
-    <!-- 종목 검색 -->
-    <select id="searchStocks" resultMap="StockResultMap">
+    <!-- 6. findByMarketType - 시장 타입별 -->
+    <select id="findByMarketType" parameterType="string" resultMap="StockResultMap">
+        SELECT * FROM STOCK WHERE market = #{marketType} ORDER BY stock_code ASC
+    </select>
+
+    <!-- 7. findByCountryAndMarket - 복합 필터링 -->
+    <select id="findByCountryAndMarket" resultMap="StockResultMap">
+        SELECT * FROM STOCK 
+        WHERE country = #{country} AND market = #{market}
+        ORDER BY stock_code ASC
+    </select>
+
+    <!-- 8. searchStocks - 검색 -->
+    <select id="searchStocks" parameterType="string" resultMap="StockResultMap">
         SELECT * FROM STOCK
         WHERE stock_code LIKE CONCAT('%', #{keyword}, '%')
-           OR stock_name  LIKE CONCAT('%', #{keyword}, '%')
-        ORDER BY stock_code
+           OR stock_name LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY 
+            CASE 
+                WHEN stock_code = #{keyword} THEN 1
+                WHEN stock_code LIKE CONCAT(#{keyword}, '%') THEN 2
+                ELSE 3
+            END,
+            stock_code ASC
         LIMIT 50
     </select>
 
-    <!-- ════════════════════════════════════════════════════════
-         [기존 유지] UPDATE - 원본 100% 보존
-         ════════════════════════════════════════════════════════ -->
+    <!-- 9. findByIndustry - 업종별 -->
+    <select id="findByIndustry" parameterType="string" resultMap="StockResultMap">
+        SELECT * FROM STOCK WHERE industry = #{industry} ORDER BY stock_code ASC
+    </select>
 
-    <!-- 종목 정보 수정 -->
+    <!-- 10. findAllIndustries - 전체 업종 목록 -->
+    <select id="findAllIndustries" resultType="string">
+        SELECT DISTINCT industry FROM STOCK 
+        WHERE industry IS NOT NULL 
+        ORDER BY industry ASC
+    </select>
+
+    <!-- 11. findTopByVolume - 거래량 상위 -->
+    <select id="findTopByVolume" parameterType="int" resultMap="StockResultMap">
+        SELECT * FROM STOCK 
+        WHERE volume IS NOT NULL 
+        ORDER BY volume DESC 
+        LIMIT #{limit}
+    </select>
+
+    <!-- 12. findTopByChangeRate - 상승률 상위 -->
+    <select id="findTopByChangeRate" parameterType="int" resultMap="StockResultMap">
+        SELECT * FROM STOCK 
+        WHERE change_rate IS NOT NULL AND change_rate > 0
+        ORDER BY change_rate DESC 
+        LIMIT #{limit}
+    </select>
+
+    <!-- 13. findTopByChangeRateDesc - 하락률 상위 -->
+    <select id="findTopByChangeRateDesc" parameterType="int" resultMap="StockResultMap">
+        SELECT * FROM STOCK 
+        WHERE change_rate IS NOT NULL AND change_rate < 0
+        ORDER BY change_rate ASC 
+        LIMIT #{limit}
+    </select>
+
+    <!-- 14. findRecentlyUpdated - 최근 업데이트 -->
+    <select id="findRecentlyUpdated" parameterType="int" resultMap="StockResultMap">
+        SELECT * FROM STOCK 
+        ORDER BY updated_at DESC 
+        LIMIT #{limit}
+    </select>
+
+    <!-- 15. countByCountry - 국가별 개수 -->
+    <select id="countByCountry" parameterType="string" resultType="int">
+        SELECT COUNT(*) FROM STOCK WHERE country = #{country}
+    </select>
+
+    <!-- 16. countByMarket - 시장별 개수 -->
+    <select id="countByMarket" parameterType="string" resultType="int">
+        SELECT COUNT(*) FROM STOCK WHERE market = #{market}
+    </select>
+
+    <!-- 17. findByMarketAndCountry - 시장+국가 -->
+    <select id="findByMarketAndCountry" resultMap="StockResultMap">
+        SELECT * FROM STOCK 
+        WHERE market = #{market} AND country = #{country}
+        ORDER BY stock_code ASC
+    </select>
+
+    <!-- 18. insert - 주식 등록 -->
+    <insert id="insert" parameterType="com.portwatch.domain.StockVO">
+        INSERT INTO STOCK (
+            stock_id, stock_code, stock_name, country, market, 
+            industry, current_price, previous_close, change_amount, 
+            change_rate, volume, updated_at
+        ) VALUES (
+            #{stockId}, #{stockCode}, #{stockName}, #{country}, #{market},
+            #{industry}, #{currentPrice}, #{previousClose}, #{changeAmount},
+            #{changeRate}, #{volume}, NOW()
+        )
+    </insert>
+
+    <!-- 19. insertCrawl - 크롤링용 (ON DUPLICATE KEY UPDATE) -->
+    <insert id="insertCrawl" parameterType="com.portwatch.domain.StockVO">
+        INSERT INTO STOCK (
+            stock_id, stock_code, stock_name, country, market,
+            industry, current_price, previous_close, change_amount,
+            change_rate, volume, updated_at
+        ) VALUES (
+            #{crawlStockId}, #{stockCode}, #{stockName}, #{country}, #{market},
+            #{industry}, #{currentPrice}, #{previousClose}, #{changeAmount},
+            #{changeRate}, #{volume}, NOW()
+        )
+        ON DUPLICATE KEY UPDATE
+            stock_name = VALUES(stock_name),
+            current_price = VALUES(current_price),
+            previous_close = VALUES(previous_close),
+            change_amount = VALUES(change_amount),
+            change_rate = VALUES(change_rate),
+            volume = VALUES(volume),
+            updated_at = NOW()
+    </insert>
+
+    <!-- 20. update - 주식 수정 -->
     <update id="update" parameterType="com.portwatch.domain.StockVO">
         UPDATE STOCK
-        SET
-            stock_name = #{stockName},
-            market     = #{market},
-            country    = #{country},
-            updated_at = CURRENT_TIMESTAMP
-        WHERE stock_id = #{stockId}
-    </update>
-
-    <!-- 주가 정보 업데이트 -->
-    <update id="updatePrice" parameterType="com.portwatch.domain.StockVO">
-        UPDATE STOCK
-        SET
-            current_price  = #{currentPrice},
+        SET stock_name = #{stockName},
+            current_price = #{currentPrice},
             previous_close = #{previousClose},
-            change_amount  = #{changeAmount},
-            change_rate    = #{changeRate},
-            volume         = #{volume},
-            updated_at     = CURRENT_TIMESTAMP
+            change_amount = #{changeAmount},
+            change_rate = #{changeRate},
+            volume = #{volume},
+            updated_at = NOW()
         WHERE stock_id = #{stockId}
     </update>
 
-    <!-- ════════════════════════════════════════════════════════
-         [기존 유지] DELETE - 원본 100% 보존
-         ════════════════════════════════════════════════════════ -->
+    <!-- 21. updateCurrentPrice - 현재가만 업데이트 -->
+    <update id="updateCurrentPrice">
+        UPDATE STOCK
+        SET current_price = #{currentPrice},
+            volume = #{volume},
+            updated_at = NOW()
+        WHERE stock_code = #{stockCode}
+    </update>
 
-    <!-- 종목 삭제 -->
-    <delete id="delete">
-        DELETE FROM STOCK
-        WHERE stock_id = #{stockId}
+    <!-- 22. delete - 주식 삭제 -->
+    <delete id="delete" parameterType="string">
+        DELETE FROM STOCK WHERE stock_id = #{stockId}
     </delete>
 
-    <!-- ★ [신규 추가] 국가별 전체 삭제 (크롤링 전 초기화) -->
-    <delete id="deleteByCountry" parameterType="String">
-        DELETE FROM STOCK
-        WHERE country = #{country}
+    <!-- 23. deleteByCountry - 국가별 삭제 -->
+    <delete id="deleteByCountry" parameterType="string">
+        DELETE FROM STOCK WHERE country = #{country}
     </delete>
 
-    <!-- ════════════════════════════════════════════════════════
-         [기존 유지] 통계 쿼리 - 원본 100% 보존
-         ════════════════════════════════════════════════════════ -->
+    <!-- 24. deleteByMarket - 시장별 삭제 -->
+    <delete id="deleteByMarket" parameterType="string">
+        DELETE FROM STOCK WHERE market = #{market}
+    </delete>
 
-    <!-- 총 종목 수 -->
+    <!-- 25. count - 전체 개수 -->
     <select id="count" resultType="int">
         SELECT COUNT(*) FROM STOCK
     </select>
 
-    <!-- 국가별 종목 수 -->
-    <select id="countByCountry" resultType="map">
-        SELECT
-            country,
-            COUNT(*) as count
-        FROM STOCK
-        GROUP BY country
+    <!-- 26. findByPriceRange - 가격 범위 -->
+    <select id="findByPriceRange" resultMap="StockResultMap">
+        SELECT * FROM STOCK 
+        WHERE current_price BETWEEN #{minPrice} AND #{maxPrice}
+        ORDER BY current_price ASC
+    </select>
+
+    <!-- 27. findByVolumeRange - 거래량 범위 -->
+    <select id="findByVolumeRange" resultMap="StockResultMap">
+        SELECT * FROM STOCK 
+        WHERE volume BETWEEN #{minVolume} AND #{maxVolume}
+        ORDER BY volume DESC
+    </select>
+
+    <!-- 28. findHighPriceStocks - 고가 종목 -->
+    <select id="findHighPriceStocks" parameterType="int" resultMap="StockResultMap">
+        SELECT * FROM STOCK 
+        WHERE current_price IS NOT NULL
+        ORDER BY current_price DESC 
+        LIMIT #{limit}
+    </select>
+
+    <!-- 29. findLowPriceStocks - 저가 종목 -->
+    <select id="findLowPriceStocks" parameterType="int" resultMap="StockResultMap">
+        SELECT * FROM STOCK 
+        WHERE current_price IS NOT NULL AND current_price > 0
+        ORDER BY current_price ASC 
+        LIMIT #{limit}
+    </select>
+
+    <!-- 30. findGainers - 상승 종목 -->
+    <select id="findGainers" parameterType="int" resultMap="StockResultMap">
+        SELECT * FROM STOCK 
+        WHERE change_amount > 0 
+        ORDER BY change_amount DESC 
+        LIMIT #{limit}
+    </select>
+
+    <!-- 31. findLosers - 하락 종목 -->
+    <select id="findLosers" parameterType="int" resultMap="StockResultMap">
+        SELECT * FROM STOCK 
+        WHERE change_amount < 0 
+        ORDER BY change_amount ASC 
+        LIMIT #{limit}
+    </select>
+
+    <!-- 32. findActiveStocks - 활발한 종목 -->
+    <select id="findActiveStocks" parameterType="int" resultMap="StockResultMap">
+        SELECT * FROM STOCK 
+        WHERE volume IS NOT NULL 
+        ORDER BY volume DESC, change_rate DESC 
+        LIMIT #{limit}
+    </select>
+
+    <!-- 33. updateBatch - 배치 업데이트 -->
+    <update id="updateBatch">
+        <foreach collection="list" item="item" separator=";">
+            UPDATE STOCK
+            SET current_price = #{item.currentPrice},
+                volume = #{item.volume},
+                updated_at = NOW()
+            WHERE stock_code = #{item.stockCode}
+        </foreach>
+    </update>
+
+    <!-- 34. deleteOldData - 오래된 데이터 삭제 -->
+    <delete id="deleteOldData" parameterType="int">
+        DELETE FROM STOCK 
+        WHERE updated_at &lt; DATE_SUB(NOW(), INTERVAL #{days} DAY)
+    </delete>
+
+    <!-- 35. getMarketSummary - 시장 요약 -->
+    <select id="getMarketSummary" parameterType="string" resultType="map">
+        SELECT 
+            COUNT(*) as total_count,
+            AVG(current_price) as avg_price,
+            SUM(volume) as total_volume,
+            AVG(change_rate) as avg_change_rate
+        FROM STOCK 
+        WHERE market = #{market}
     </select>
 
 </mapper>

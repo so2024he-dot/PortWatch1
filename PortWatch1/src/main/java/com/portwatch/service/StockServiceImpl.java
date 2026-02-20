@@ -11,10 +11,10 @@ import com.portwatch.mapper.StockMapper;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * StockServiceImpl
+ * StockServiceImpl - 완전판
  * ══════════════════════════════════════════════════════════════
- * ✅ StockMapper 기반 주식 서비스 구현
- * ✅ 크롤링된 한국/미국 주식 100개 데이터 조회
+ * ✅ 20개 메서드 완전 구현
+ * ✅ 크롤링 데이터 기반 (한국 100 + 미국 100)
  * ══════════════════════════════════════════════════════════════
  */
 @Slf4j
@@ -24,13 +24,10 @@ public class StockServiceImpl implements StockService {
     @Autowired
     private StockMapper stockMapper;
 
-    /**
-     * ✅ 종목 코드로 주식 조회
-     * StockPurchaseApiController 호출
-     * 
-     * MySQL STOCK 테이블에서 조회
-     * stock_id: "KR_005930", "US_AAPL" 형식
-     */
+    // ─────────────────────────────────────────
+    // 기본 조회 (8개)
+    // ─────────────────────────────────────────
+
     @Override
     public StockVO getStockByCode(String stockCode) {
         try {
@@ -41,12 +38,16 @@ public class StockServiceImpl implements StockService {
         }
     }
 
-    /**
-     * ✅ 전체 주식 목록 조회
-     * PortfolioController 호출 (생성/수정 폼용)
-     * 
-     * 크롤링된 한국 100개 + 미국 100개 = 총 200개 반환
-     */
+    @Override
+    public StockVO getStockById(Integer stockId) {
+        try {
+            return stockMapper.findById(stockId);
+        } catch (Exception e) {
+            log.error("종목 조회 실패 (stockId={}): {}", stockId, e.getMessage());
+            return null;
+        }
+    }
+
     @Override
     public List<StockVO> getAllStocks() {
         try {
@@ -57,10 +58,6 @@ public class StockServiceImpl implements StockService {
         }
     }
 
-    /**
-     * ✅ 국가별 주식 목록
-     * country: "KR" 또는 "US"
-     */
     @Override
     public List<StockVO> getStocksByCountry(String country) {
         try {
@@ -71,10 +68,6 @@ public class StockServiceImpl implements StockService {
         }
     }
 
-    /**
-     * ✅ 시장별 주식 목록
-     * market: "KOSPI", "KOSDAQ", "NYSE", "NASDAQ"
-     */
     @Override
     public List<StockVO> getStocksByMarket(String market) {
         try {
@@ -85,10 +78,26 @@ public class StockServiceImpl implements StockService {
         }
     }
 
-    /**
-     * ✅ 주식 검색
-     * keyword: 종목 코드 또는 종목명
-     */
+    @Override
+    public List<StockVO> getStocksByMarketType(String marketType) {
+        try {
+            return stockMapper.findByMarketType(marketType);
+        } catch (Exception e) {
+            log.error("시장 타입별 주식 조회 실패 (marketType={}): {}", marketType, e.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public List<StockVO> getStocksByCountryAndMarket(String country, String market) {
+        try {
+            return stockMapper.findByCountryAndMarket(country, market);
+        } catch (Exception e) {
+            log.error("국가+시장 주식 조회 실패 (country={}, market={}): {}", country, market, e.getMessage());
+            return null;
+        }
+    }
+
     @Override
     public List<StockVO> searchStocks(String keyword) {
         try {
@@ -99,9 +108,102 @@ public class StockServiceImpl implements StockService {
         }
     }
 
-    /**
-     * 주식 등록 (관리자 기능)
-     */
+    // ─────────────────────────────────────────
+    // 업종 관련 (2개)
+    // ─────────────────────────────────────────
+
+    @Override
+    public List<StockVO> getStocksByIndustry(String industry) {
+        try {
+            return stockMapper.findByIndustry(industry);
+        } catch (Exception e) {
+            log.error("업종별 주식 조회 실패 (industry={}): {}", industry, e.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public List<String> getAllIndustries() {
+        try {
+            return stockMapper.findAllIndustries();
+        } catch (Exception e) {
+            log.error("전체 업종 조회 실패: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    // ─────────────────────────────────────────
+    // 정렬 조회 (4개)
+    // ─────────────────────────────────────────
+
+    @Override
+    public List<StockVO> getStocksOrderByVolume(int limit) {
+        try {
+            return stockMapper.findTopByVolume(limit);
+        } catch (Exception e) {
+            log.error("거래량 상위 조회 실패 (limit={}): {}", limit, e.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public List<StockVO> getStocksOrderByChangeRate(int limit) {
+        try {
+            return stockMapper.findTopByChangeRate(limit);
+        } catch (Exception e) {
+            log.error("상승률 상위 조회 실패 (limit={}): {}", limit, e.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public List<StockVO> getStocksOrderByChangeRateDesc(int limit) {
+        try {
+            return stockMapper.findTopByChangeRateDesc(limit);
+        } catch (Exception e) {
+            log.error("하락률 상위 조회 실패 (limit={}): {}", limit, e.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public List<StockVO> findRecentlyUpdated(int limit) {
+        try {
+            return stockMapper.findRecentlyUpdated(limit);
+        } catch (Exception e) {
+            log.error("최근 업데이트 조회 실패 (limit={}): {}", limit, e.getMessage());
+            return null;
+        }
+    }
+
+    // ─────────────────────────────────────────
+    // 통계 (2개)
+    // ─────────────────────────────────────────
+
+    @Override
+    public int countByCountry(String country) {
+        try {
+            return stockMapper.countByCountry(country);
+        } catch (Exception e) {
+            log.error("국가별 개수 조회 실패 (country={}): {}", country, e.getMessage());
+            return 0;
+        }
+    }
+
+    @Override
+    public int countByMarket(String market) {
+        try {
+            return stockMapper.countByMarket(market);
+        } catch (Exception e) {
+            log.error("시장별 개수 조회 실패 (market={}): {}", market, e.getMessage());
+            return 0;
+        }
+    }
+
+    // ─────────────────────────────────────────
+    // CRUD (4개)
+    // ─────────────────────────────────────────
+
     @Override
     public int insertStock(StockVO stock) {
         try {
@@ -112,9 +214,6 @@ public class StockServiceImpl implements StockService {
         }
     }
 
-    /**
-     * 주식 수정 (관리자 기능)
-     */
     @Override
     public int updateStock(StockVO stock) {
         try {
@@ -125,9 +224,6 @@ public class StockServiceImpl implements StockService {
         }
     }
 
-    /**
-     * 주식 삭제 (관리자 기능)
-     */
     @Override
     public int deleteStock(String stockId) {
         try {
@@ -135,6 +231,16 @@ public class StockServiceImpl implements StockService {
         } catch (Exception e) {
             log.error("주식 삭제 실패: {}", e.getMessage());
             return 0;
+        }
+    }
+
+    @Override
+    public List<StockVO> findByMarketAndCountry(String market, String country) {
+        try {
+            return stockMapper.findByMarketAndCountry(market, country);
+        } catch (Exception e) {
+            log.error("시장+국가 조회 실패 (market={}, country={}): {}", market, country, e.getMessage());
+            return null;
         }
     }
 }

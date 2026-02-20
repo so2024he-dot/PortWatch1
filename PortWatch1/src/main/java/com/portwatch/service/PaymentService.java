@@ -1,94 +1,73 @@
 package com.portwatch.service;
 
-import com.portwatch.domain.PaymentVO;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
+import com.portwatch.domain.PaymentVO;
+
 /**
- * 결제 Service 인터페이스
+ * PaymentService Interface - 신규
+ * ══════════════════════════════════════════════════════════════
+ * ✅ PaymentController 호출 메서드 100% 커버
  * 
- * @author PortWatch
- * @version 1.0
+ * 총 10개 메서드
+ * ══════════════════════════════════════════════════════════════
  */
 public interface PaymentService {
-    
+
     /**
-     * 결제 요청 처리
-     * 1. 결제 정보 등록
-     * 2. PG사 API 호출
-     * 3. 결제 완료 시 포트폴리오 자동 생성
-     * 
-     * @param payment 결제 정보
-     * @return 결제 ID
+     * ✅ 결제 처리
+     * PaymentController 라인 95 호출
      */
-    Long processPayment(PaymentVO payment) throws Exception;
-    
+    Long processPayment(PaymentVO payment);
+
     /**
-     * 결제 승인 처리
-     * PG사로부터 결제 승인 콜백 받았을 때 호출
-     * 
-     * @param paymentId 결제 ID
-     * @param transactionId PG사 거래 ID
+     * ✅ 결제 내역 조회
+     * PaymentController 라인 114 호출
      */
-    void approvePayment(Long paymentId, String transactionId) throws Exception;
-    
+    List<PaymentVO> getPaymentHistory(String memberId);
+
     /**
-     * 결제 취소
-     * 
-     * @param paymentId 결제 ID
+     * ✅ 결제 요약 정보
+     * PaymentController 라인 115 호출
      */
-    void cancelPayment(Long paymentId) throws Exception;
-    
+    Map<String, Object> getPaymentSummary(String memberId);
+
     /**
-     * 결제 내역 조회
-     * 
-     * @param paymentId 결제 ID
-     * @return 결제 정보
+     * ✅ 결제 취소
+     * PaymentController 라인 141 호출
      */
-    PaymentVO getPayment(Long paymentId) throws Exception;
-    
+    void cancelPayment(Long paymentId);
+
     /**
-     * 회원의 결제 내역 조회
-     * 
-     * @param memberId 회원 ID
-     * @return 결제 내역 리스트
+     * ✅ 결제 승인
+     * PaymentController 라인 167 호출
      */
-    List<PaymentVO> getPaymentHistory(Integer memberId) throws Exception;
+    void approvePayment(Long paymentId, String transactionId);
 
-	Map<String, Object> getPaymentSummary(Integer memberId) throws Exception;
-
-	List<PaymentVO> getPaymentHistory(String memberId) throws Exception;
-
-	Map<String, Object> getPaymentSummary(String memberId) throws Exception;
-
-	/**
-	 * ✅ 결제 생성
-	 * 
-	 * @param payment 결제 정보
-	 */
-	void createPayment(PaymentVO payment) throws Exception;
-
-	/**
-	 * ✅ 결제 상태 업데이트
-	 * 
-	 * @param paymentId 결제 ID
-	 * @param status 결제 상태
-	 */
-	void updatePaymentStatus(Long paymentId, String status) throws Exception;
-
-	/**
-	 * ✅ 결제 조회 (ID로)
-	 * 
-	 * @param paymentId 결제 ID
-	 * @return 결제 정보
-	 */
-	PaymentVO getPaymentById(Long paymentId) throws Exception;
-    
     /**
-     * 회원의 결제 요약 정보 조회
-     * 
-     * @param memberId 회원 ID
-     * @return 결제 요약 정보
+     * 결제 단건 조회
      */
+    PaymentVO getPaymentById(Long paymentId);
 
+    /**
+     * 결제 상태 업데이트
+     */
+    int updatePaymentStatus(Long paymentId, String status);
+
+    /**
+     * 기간별 결제 내역
+     */
+    List<PaymentVO> getPaymentsByDateRange(String memberId, String startDate, String endDate);
+
+    /**
+     * 총 결제 금액
+     */
+    BigDecimal getTotalPaymentAmount(String memberId);
+
+    /**
+     * 결제 건수
+     */
+    int countPayments(String memberId);
 }

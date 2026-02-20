@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.portwatch.persistence.PaymentDAO">
+<!--
+  ══════════════════════════════════════════════════════════════
+  PaymentMapper.xml - 신규
+  
+  총 15개 쿼리
+  Toss Payments (한국) + Stripe (미국) 연동
+  ══════════════════════════════════════════════════════════════
+-->
+<mapper namespace="com.portwatch.mapper.PaymentMapper">
 
-    <!-- ============================================ -->
-    <!-- ResultMap 정의 -->
-    <!-- ============================================ -->
-    <resultMap id="PaymentResultMap" type="PaymentVO">
+    <resultMap id="PaymentResultMap" type="com.portwatch.domain.PaymentVO">
         <id property="paymentId" column="payment_id"/>
         <result property="memberId" column="member_id"/>
-        <result property="portfolioId" column="portfolio_id"/>
         <result property="stockId" column="stock_id"/>
         <result property="stockCode" column="stock_code"/>
         <result property="stockName" column="stock_name"/>
@@ -20,153 +23,132 @@
         <result property="paymentMethod" column="payment_method"/>
         <result property="cardNumber" column="card_number"/>
         <result property="cardCompany" column="card_company"/>
-        <result property="bankName" column="bank_name"/>
-        <result property="paymentStatus" column="payment_status"/>
-        <result property="transactionId" column="transaction_id"/>
         <result property="pgProvider" column="pg_provider"/>
+        <result property="transactionId" column="transaction_id"/>
+        <result property="status" column="status"/>
         <result property="country" column="country"/>
         <result property="currency" column="currency"/>
-        <result property="exchangeRate" column="exchange_rate"/>
-        <result property="localAmount" column="local_amount"/>
         <result property="createdAt" column="created_at"/>
-        <result property="paidAt" column="paid_at"/>
-        <result property="cancelledAt" column="cancelled_at"/>
-        <result property="memo" column="memo"/>
-        <result property="receiptUrl" column="receipt_url"/>
+        <result property="updatedAt" column="updated_at"/>
     </resultMap>
 
-    <!-- ============================================ -->
-    <!-- 1. 결제 정보 등록 -->
-    <!-- ============================================ -->
-    <insert id="insertPayment" parameterType="PaymentVO" useGeneratedKeys="true" keyProperty="paymentId">
-        INSERT INTO payment (
-            member_id,
-            stock_id,
-            stock_code,
-            stock_name,
-            quantity,
-            purchase_price,
-            total_amount,
-            payment_method,
-            card_number,
-            card_company,
-            bank_name,
-            payment_status,
-            pg_provider,
-            country,
-            currency,
-            exchange_rate,
-            local_amount,
-            memo
+    <!-- 1. insert - 결제 등록 -->
+    <insert id="insert" parameterType="com.portwatch.domain.PaymentVO" 
+            useGeneratedKeys="true" keyProperty="paymentId">
+        INSERT INTO PAYMENT (
+            member_id, stock_id, stock_code, stock_name, quantity,
+            purchase_price, total_amount, payment_method, card_number,
+            card_company, pg_provider, status, country, currency, created_at
         ) VALUES (
-            #{memberId},
-            #{stockId},
-            #{stockCode},
-            #{stockName},
-            #{quantity},
-            #{purchasePrice},
-            #{totalAmount},
-            #{paymentMethod},
-            #{cardNumber},
-            #{cardCompany},
-            #{bankName},
-            #{paymentStatus},
-            #{pgProvider},
-            #{country},
-            #{currency},
-            #{exchangeRate},
-            #{localAmount},
-            #{memo}
+            #{memberId}, #{stockId}, #{stockCode}, #{stockName}, #{quantity},
+            #{purchasePrice}, #{totalAmount}, #{paymentMethod}, #{cardNumber},
+            #{cardCompany}, #{pgProvider}, #{status}, #{country}, #{currency}, NOW()
         )
     </insert>
 
-    <!-- ============================================ -->
-    <!-- 2. 결제 ID로 조회 -->
-    <!-- ============================================ -->
-    <select id="selectPaymentById" parameterType="long" resultMap="PaymentResultMap">
-        SELECT * FROM payment
-        WHERE payment_id = #{paymentId}
+    <!-- 2. findById - 결제 ID 조회 -->
+    <select id="findById" parameterType="long" resultMap="PaymentResultMap">
+        SELECT * FROM PAYMENT WHERE payment_id = #{paymentId}
     </select>
 
-    <!-- ============================================ -->
-    <!-- 3. 회원의 결제 내역 조회 -->
-    <!-- ============================================ -->
-    <select id="selectPaymentsByMember" parameterType="int" resultMap="PaymentResultMap">
-        SELECT * FROM payment
+    <!-- 3. findByMemberId - 회원 결제 내역 -->
+    <select id="findByMemberId" parameterType="string" resultMap="PaymentResultMap">
+        SELECT * FROM PAYMENT 
         WHERE member_id = #{memberId}
         ORDER BY created_at DESC
     </select>
 
-    <!-- ============================================ -->
-    <!-- 4. 결제 상태 업데이트 -->
-    <!-- ============================================ -->
-    <update id="updatePaymentStatus">
-        UPDATE payment
-        SET payment_status = #{status},
-            transaction_id = #{transactionId},
-            paid_at = CASE WHEN #{status} = 'COMPLETED' THEN NOW() ELSE paid_at END
+    <!-- 4. findByDateRange - 기간별 조회 -->
+    <select id="findByDateRange" resultMap="PaymentResultMap">
+        SELECT * FROM PAYMENT
+        WHERE member_id = #{memberId}
+          AND created_at BETWEEN #{startDate} AND #{endDate}
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 5. updateStatus - 상태 업데이트 -->
+    <update id="updateStatus">
+        UPDATE PAYMENT
+        SET status = #{status},
+            updated_at = NOW()
         WHERE payment_id = #{paymentId}
     </update>
 
-    <!-- ============================================ -->
-    <!-- 5. 결제 완료 처리 -->
-    <!-- ============================================ -->
-    <update id="completePayment">
-        UPDATE payment
-        SET payment_status = 'COMPLETED',
-            portfolio_id = #{portfolioId},
-            transaction_id = #{transactionId},
-            paid_at = NOW()
+    <!-- 6. updateTransactionId - 거래 ID 업데이트 -->
+    <update id="updateTransactionId">
+        UPDATE PAYMENT
+        SET transaction_id = #{transactionId},
+            updated_at = NOW()
         WHERE payment_id = #{paymentId}
     </update>
 
-    <!-- ============================================ -->
-    <!-- 6. 결제 취소 -->
-    <!-- ============================================ -->
-    <update id="cancelPayment" parameterType="long">
-        UPDATE payment
-        SET payment_status = 'CANCELLED',
-            cancelled_at = NOW()
-        WHERE payment_id = #{paymentId}
-    </update>
+    <!-- 7. delete - 결제 삭제 -->
+    <delete id="delete" parameterType="long">
+        DELETE FROM PAYMENT WHERE payment_id = #{paymentId}
+    </delete>
 
-    <!-- ============================================ -->
-    <!-- 7. 회원의 결제 요약 정보 -->
-    <!-- ============================================ -->
-    <select id="getPaymentSummary" parameterType="int" resultType="map">
-        SELECT 
-            COUNT(*) as totalPayments,
-            SUM(CASE WHEN payment_status = 'COMPLETED' THEN 1 ELSE 0 END) as completedPayments,
-            SUM(CASE WHEN payment_status = 'COMPLETED' THEN total_amount ELSE 0 END) as totalAmount,
-            AVG(CASE WHEN payment_status = 'COMPLETED' THEN total_amount ELSE NULL END) as avgPayment
-        FROM payment
+    <!-- 8. getTotalAmount - 총 결제액 -->
+    <select id="getTotalAmount" parameterType="string" resultType="decimal">
+        SELECT COALESCE(SUM(total_amount), 0) 
+        FROM PAYMENT 
+        WHERE member_id = #{memberId} 
+          AND status = 'COMPLETED'
+    </select>
+
+    <!-- 9. countByMemberId - 결제 건수 -->
+    <select id="countByMemberId" parameterType="string" resultType="int">
+        SELECT COUNT(*) 
+        FROM PAYMENT 
         WHERE member_id = #{memberId}
     </select>
 
-    <!-- ============================================ -->
-    <!-- 8. 국가별 결제 통계 -->
-    <!-- ============================================ -->
-    <select id="getPaymentStatsByCountry" resultType="map">
-        SELECT 
-            country,
-            currency,
-            COUNT(*) as paymentCount,
-            SUM(total_amount) as totalSales,
-            AVG(total_amount) as avgPayment
-        FROM payment
-        WHERE payment_status = 'COMPLETED'
-        GROUP BY country, currency
-        ORDER BY totalSales DESC
+    <!-- 10. findRecent - 최근 결제 -->
+    <select id="findRecent" resultMap="PaymentResultMap">
+        SELECT * FROM PAYMENT
+        WHERE member_id = #{memberId}
+        ORDER BY created_at DESC
+        LIMIT #{limit}
     </select>
 
-    <!-- ============================================ -->
-    <!-- 9. 최근 결제 내역 조회 -->
-    <!-- ============================================ -->
-    <select id="selectRecentPayments" resultMap="PaymentResultMap">
-        SELECT * FROM payment
-        WHERE payment_status = 'COMPLETED'
-        ORDER BY paid_at DESC
-        LIMIT #{limit}
+    <!-- 11. findByStatus - 상태별 조회 -->
+    <select id="findByStatus" resultMap="PaymentResultMap">
+        SELECT * FROM PAYMENT
+        WHERE member_id = #{memberId} AND status = #{status}
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 12. findByStockCode - 종목별 결제 -->
+    <select id="findByStockCode" resultMap="PaymentResultMap">
+        SELECT * FROM PAYMENT
+        WHERE stock_code = #{stockCode}
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 13. countByStatus - 상태별 건수 -->
+    <select id="countByStatus" resultType="int">
+        SELECT COUNT(*) 
+        FROM PAYMENT 
+        WHERE member_id = #{memberId} AND status = #{status}
+    </select>
+
+    <!-- 14. findByCountry - 국가별 결제 -->
+    <select id="findByCountry" resultMap="PaymentResultMap">
+        SELECT * FROM PAYMENT
+        WHERE member_id = #{memberId} AND country = #{country}
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 15. getPaymentSummary - 결제 요약 -->
+    <select id="getPaymentSummary" parameterType="string" resultType="map">
+        SELECT 
+            COUNT(*) as total_count,
+            SUM(total_amount) as total_amount,
+            AVG(total_amount) as avg_amount,
+            COUNT(CASE WHEN status = 'COMPLETED' THEN 1 END) as completed_count,
+            COUNT(CASE WHEN status = 'CANCELLED' THEN 1 END) as cancelled_count,
+            COUNT(CASE WHEN status = 'PENDING' THEN 1 END) as pending_count
+        FROM PAYMENT
+        WHERE member_id = #{memberId}
     </select>
 
 </mapper>

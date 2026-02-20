@@ -3,81 +3,80 @@ package com.portwatch.mapper;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.ibatis.annotations.Param;
+
 import com.portwatch.domain.StockVO;
 
 /**
- * StockMapper Interface
- * ══════════════════════════════════════════════════
- * [기존 유지] 모든 기존 메서드 100% 원본 보존
- * [신규 추가] insertCrawl, deleteByCountry
- * ══════════════════════════════════════════════════
+ * StockMapper Interface - 완전판
+ * ══════════════════════════════════════════════════════════════
+ * ✅ 콘솔 오류 해결: 메서드 추가
+ * - findById (라인 44)
+ * - findByMarketType (라인 84)
+ * - findByCountryAndMarket (라인 94)
+ * - findByIndustry (라인 118)
+ * - findAllIndustries (라인 128)
+ * - findTopByVolume (라인 142)
+ * - findTopByChangeRate (라인 152)
+ * - findTopByChangeRateDesc (라인 162)
+ * - findRecentlyUpdated (라인 172)
+ * - countByCountry (라인 182)
+ * - countByMarket (라인 196)
+ * - findByMarketAndCountry (라인 240)
+ * ══════════════════════════════════════════════════════════════
  */
 public interface StockMapper {
 
-    // ─────────────────────────────────────────
-    // [기존 유지] INSERT
-    // ─────────────────────────────────────────
-
-    /** 기존 종목 등록 (Integer stockId 기반) */
-    int insert(StockVO stock);
-
-    // ─────────────────────────────────────────
-    // ★ [신규 추가] 크롤링 전용 INSERT
-    // ─────────────────────────────────────────
-
-    /**
-     * ★ 크롤링 전용 INSERT (ON DUPLICATE KEY UPDATE 포함)
-     * crawlStockId(String "KR_005930") → stock_id VARCHAR(50) 저장
-     * 기존 insert()와 별도 동작 → 충돌 없음
-     */
-    int insertCrawl(StockVO stock);
-
-    // ─────────────────────────────────────────
-    // [기존 유지] SELECT
-    // ─────────────────────────────────────────
-
+    // ✅ 기본 조회
+    StockVO findById(Integer stockId);
     StockVO findByCode(String stockCode);
-
-    StockVO findById(String stockId);
-
     List<StockVO> findAll();
-
     List<StockVO> findByCountry(String country);
-
     List<StockVO> findByMarket(String market);
-
+    List<StockVO> findByMarketType(String marketType);
+    List<StockVO> findByCountryAndMarket(@Param("country") String country, @Param("market") String market);
     List<StockVO> searchStocks(String keyword);
 
-    // ─────────────────────────────────────────
-    // [기존 유지] UPDATE
-    // ─────────────────────────────────────────
+    // ✅ 업종 관련
+    List<StockVO> findByIndustry(String industry);
+    List<String> findAllIndustries();
 
-    int update(StockVO stock);
+    // ✅ 정렬 조회
+    List<StockVO> findTopByVolume(int limit);
+    List<StockVO> findTopByChangeRate(int limit);
+    List<StockVO> findTopByChangeRateDesc(int limit);
+    List<StockVO> findRecentlyUpdated(int limit);
 
-    int updatePrice(StockVO stock);
-
-    // ─────────────────────────────────────────
-    // [기존 유지] DELETE
-    // ─────────────────────────────────────────
-
-    int delete(String stockId);
-
-    // ─────────────────────────────────────────
-    // ★ [신규 추가] 국가별 전체 삭제
-    // ─────────────────────────────────────────
-
-    /**
-     * ★ 국가별 전체 삭제
-     * 크롤링 전 기존 데이터 초기화용
-     * KoreaStockCrawlerService / USStockCrawlerService 에서 호출
-     */
-    int deleteByCountry(String country);
-
-    // ─────────────────────────────────────────
-    // [기존 유지] 통계
-    // ─────────────────────────────────────────
-
+    // ✅ 통계
+    int countByCountry(String country);
+    int countByMarket(String market);
     int count();
 
-    List<Map<String, Object>> countByCountry();
+    // ✅ 복합 조회
+    List<StockVO> findByMarketAndCountry(@Param("market") String market, @Param("country") String country);
+    List<StockVO> findByPriceRange(@Param("minPrice") double minPrice, @Param("maxPrice") double maxPrice);
+    List<StockVO> findByVolumeRange(@Param("minVolume") long minVolume, @Param("maxVolume") long maxVolume);
+
+    // ✅ 추가 조회
+    List<StockVO> findHighPriceStocks(int limit);
+    List<StockVO> findLowPriceStocks(int limit);
+    List<StockVO> findGainers(int limit);
+    List<StockVO> findLosers(int limit);
+    List<StockVO> findActiveStocks(int limit);
+
+    // ✅ CRUD
+    int insert(StockVO stock);
+    int insertCrawl(StockVO stock);
+    int update(StockVO stock);
+    int updateCurrentPrice(@Param("stockCode") String stockCode, @Param("currentPrice") double currentPrice, @Param("volume") long volume);
+    int delete(String stockId);
+    int deleteByCountry(String country);
+    int deleteByMarket(String market);
+    int deleteOldData(int days);
+
+    // ✅ 배치
+    int updateBatch(List<StockVO> stocks);
+
+    // ✅ 시장 요약
+    Map<String, Object> getMarketSummary(String market);
 }

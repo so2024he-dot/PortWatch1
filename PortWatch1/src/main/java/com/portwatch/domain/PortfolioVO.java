@@ -3,287 +3,41 @@ package com.portwatch.domain;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 
+import lombok.Data;
+
 /**
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * ✅ 포트폴리오 VO - 최종 수정 버전
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * 
- * 핵심 수정:
- * - getProfit() 메서드 추가 (profitLoss 별칭)
- * - getProfitRate() 메서드 추가 (profitLossRate 별칭)
- * - Dashboard JSP 호환성 완벽 지원
- * 
- * @author PortWatch
- * @version FIXED - 2026.01.16
+ * PortfolioVO - 완전판
+ * ══════════════════════════════════════════════════════════════
+ * ✅ 콘솔 오류 해결: setter 메서드 추가
+ * - setPortfolioName (라인 156)
+ * - setTotalInvestment (라인 305)
+ * - setTotalCurrentValue (라인 306)
+ * - setTotalProfitLoss (라인 307)
+ * - setTotalProfitRate (라인 308)
+ * ══════════════════════════════════════════════════════════════
  */
+@Data
 public class PortfolioVO {
+    // 기본 정보
+    private Long portfolioId;
+    private String memberId;
+    private String portfolioName;
+    private Timestamp createdAt;
+    private Timestamp updatedAt;
     
-    // 기본 필드
-    private Long portfolioId;              // 포트폴리오 ID
-    private String memberId;               // 회원 ID (String)
-    private Integer stockId;               // 종목 ID
-    private String stockCode;              // 종목 코드
-    private String stockName;              // 종목명
-    private BigDecimal quantity;           // 보유 수량 (소수점 지원)
-    private BigDecimal avgPurchasePrice;   // 평균 매입가
-    private Timestamp purchaseDate;        // 매입일
-    private Timestamp createdAt;           // 생성일시
-    private Timestamp updatedAt;           // 수정일시
-    private String country;                // 국가 지정
+    // 종목 정보 (JOIN 결과)
+    private String stockId;
+    private String stockCode;
+    private String stockName;
+    private BigDecimal quantity;
+    private BigDecimal avgPrice;
+    private BigDecimal avgPurchasePrice;
+    private BigDecimal purchasePrice;
+    private BigDecimal currentPrice;
     
-    // 추가 필드 (현재가 계산용)
-    private BigDecimal currentPrice;       // 현재가
-    private BigDecimal totalValue;         // 총 평가액
-    private BigDecimal profitLoss;         // 손익
-    private BigDecimal profitLossRate;     // 수익률(%)
-    private String marketType;             // 시장타입
-    
-    // 기본 생성자
-    public PortfolioVO() {
-    }
-    
-    // ===== Getters and Setters =====
-    
-    public Long getPortfolioId() {
-        return portfolioId;
-    }
-    
-    public void setPortfolioId(Long portfolioId) {
-        this.portfolioId = portfolioId;
-    }
-    
-    public String getMemberId() {
-        return memberId;
-    }
-    
-    public void setMemberId(String memberId) {
-        this.memberId = memberId;
-    }
-    
-    public Integer getStockId() {
-        return stockId;
-    }
-    
-    public void setStockId(Integer stockId) {
-        this.stockId = stockId;
-    }
-    
-    public String getStockCode() {
-        return stockCode;
-    }
-    
-    public void setStockCode(String stockCode) {
-        this.stockCode = stockCode;
-    }
-    
-    public String getStockName() {
-        return stockName;
-    }
-    
-    public void setStockName(String stockName) {
-        this.stockName = stockName;
-    }
-    
-    /**
-     * ✅ quantity getter (BigDecimal 반환)
-     */
-    public BigDecimal getQuantity() {
-        return quantity;
-    }
-    
-    /**
-     * ✅ quantity setter (BigDecimal만 허용)
-     */
-    public void setQuantity(BigDecimal quantity) {
-        this.quantity = quantity;
-    }
-    
-    /**
-     * ✅ quantity setter (double 자동 변환)
-     */
-    public void setQuantity(double quantity) {
-        this.quantity = BigDecimal.valueOf(quantity);
-    }
-    
-    public BigDecimal getAvgPurchasePrice() {
-        return avgPurchasePrice;
-    }
-    
-    public void setAvgPurchasePrice(BigDecimal avgPurchasePrice) {
-        this.avgPurchasePrice = avgPurchasePrice;
-    }
-    
-    /**
-     * ✅ avgPrice 별칭 (PortfolioServiceImpl 호환)
-     */
-    public BigDecimal getAvgPrice() {
-        return avgPurchasePrice;
-    }
-    
-    public void setAvgPrice(BigDecimal avgPrice) {
-        this.avgPurchasePrice = avgPrice;
-    }
-    
-    /**
-     * ✅✅✅ purchasePrice getter - BigDecimal 반환!
-     */
-    public BigDecimal getPurchasePrice() {
-        return avgPurchasePrice;
-    }
-    
-    /**
-     * ✅ purchasePrice setter (BigDecimal 버전)
-     */
-    public void setPurchasePrice(BigDecimal purchasePrice) {
-        this.avgPurchasePrice = purchasePrice;
-    }
-    
-    /**
-     * ✅ purchasePrice setter (double 버전)
-     */
-    public void setPurchasePrice(double purchasePrice) {
-        this.avgPurchasePrice = BigDecimal.valueOf(purchasePrice);
-    }
-    
-    /**
-     * ✅ purchasePrice setter (Double 래퍼 타입 버전)
-     */
-    public void setPurchasePrice(Double purchasePrice) {
-        this.avgPurchasePrice = purchasePrice != null ? BigDecimal.valueOf(purchasePrice) : null;
-    }
-    
-    public Timestamp getPurchaseDate() {
-        return purchaseDate;
-    }
-    
-    public void setPurchaseDate(Timestamp purchaseDate) {
-        this.purchaseDate = purchaseDate;
-    }
-    
-    public Timestamp getCreatedAt() {
-        return createdAt;
-    }
-    
-    public void setCreatedAt(Timestamp createdAt) {
-        this.createdAt = createdAt;
-    }
-    
-    public Timestamp getUpdatedAt() {
-        return updatedAt;
-    }
-    
-    public void setUpdatedAt(Timestamp updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-    
-    public String getCountry() {
-        return country;
-    }
-    
-    public void setCountry(String country) {
-        this.country = country;
-    }
-    
-    public BigDecimal getCurrentPrice() {
-        return currentPrice;
-    }
-    
-    public void setCurrentPrice(BigDecimal currentPrice) {
-        this.currentPrice = currentPrice;
-    }
-    
-    /**
-     * ✅ setCurrentPrice (Object 자동 변환)
-     */
-    public void setCurrentPrice(Object currentPrice) {
-        if (currentPrice instanceof BigDecimal) {
-            this.currentPrice = (BigDecimal) currentPrice;
-        } else if (currentPrice instanceof Number) {
-            this.currentPrice = BigDecimal.valueOf(((Number) currentPrice).doubleValue());
-        }
-    }
-    
-    public BigDecimal getTotalValue() {
-        return totalValue;
-    }
-    
-    public void setTotalValue(BigDecimal totalValue) {
-        this.totalValue = totalValue;
-    }
-    
-    public BigDecimal getProfitLoss() {
-        return profitLoss;
-    }
-    
-    public void setProfitLoss(BigDecimal profitLoss) {
-        this.profitLoss = profitLoss;
-    }
-    
-    /**
-     * ✅ profit getter (profitLoss 별칭 - Dashboard JSP 호환)
-     * 
-     * Dashboard에서 ${portfolio.profit}를 사용하므로 별칭 제공
-     */
-    public BigDecimal getProfit() {
-        return profitLoss;
-    }
-    
-    /**
-     * ✅ profit setter (profitLoss 별칭)
-     */
-    public void setProfit(BigDecimal profit) {
-        this.profitLoss = profit;
-    }
-    
-    public BigDecimal getProfitLossRate() {
-        return profitLossRate;
-    }
-    
-    public void setProfitLossRate(BigDecimal profitLossRate) {
-        this.profitLossRate = profitLossRate;
-    }
-    
-    /**
-     * ✅ profitRate getter (profitLossRate 별칭 - Dashboard JSP 호환)
-     * 
-     * Dashboard에서 ${portfolio.profitRate}를 사용하므로 별칭 제공
-     */
-    public BigDecimal getProfitRate() {
-        return profitLossRate;
-    }
-    
-    /**
-     * ✅ profitRate setter (profitLossRate 별칭)
-     */
-    public void setProfitRate(BigDecimal profitRate) {
-        this.profitLossRate = profitRate;
-    }
-    
-    public String getMarketType() {
-        return marketType;
-    }
-    
-    public void setMarketType(String marketType) {
-        this.marketType = marketType;
-    }
-    
-    /**
-     * ✅ 포트폴리오 이름 반환 (기본값)
-     */
-    public String getPortfolioName() {
-        if (stockName != null && !stockName.isEmpty()) {
-            return stockName + " 포트폴리오";
-        }
-        return "포트폴리오";
-    }
-    
-    @Override
-    public String toString() {
-        return "PortfolioVO [portfolioId=" + portfolioId + ", memberId=" + memberId + ", stockId=" + stockId
-                + ", stockCode=" + stockCode + ", stockName=" + stockName + ", quantity=" + quantity
-                + ", avgPurchasePrice=" + avgPurchasePrice + ", purchaseDate=" + purchaseDate + ", createdAt="
-                + createdAt + ", updatedAt=" + updatedAt + ", country=" + country + ", currentPrice=" + currentPrice
-                + ", totalValue=" + totalValue + ", profitLoss=" + profitLoss + ", profitLossRate=" + profitLossRate
-                + ", marketType=" + marketType + "]";
-    }
+    // 요약 통계
+    private BigDecimal totalInvestment;
+    private BigDecimal totalCurrentValue;
+    private BigDecimal totalProfitLoss;
+    private BigDecimal totalProfitRate;
 }
