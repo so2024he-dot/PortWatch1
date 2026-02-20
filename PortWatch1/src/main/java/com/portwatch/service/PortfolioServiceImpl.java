@@ -20,18 +20,12 @@ import com.portwatch.mapper.StockMapper;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * PortfolioServiceImpl
+ * PortfolioServiceImpl - 완전판
  * ══════════════════════════════════════════════════════════════
- * ✅ Deprecated API 완전 수정 완료
- *
- * [수정 내역]
- * 1. new BigDecimal(double) → BigDecimal.valueOf(double)
- * 2. double 산술 연산 → BigDecimal 메서드 체인
- * 3. Date → Timestamp(System.currentTimeMillis())
- * 4. 손익/수익률 계산 로직 BigDecimal 기반 재작성
- *
- * [빌드 결과]
- * Maven install → BUILD SUCCESS (Deprecated 경고 사라짐) ✅
+ * ✅ Deprecated API 완전 수정 (BigDecimal 연산)
+ * ✅ Controller 호출 메서드 100% 구현
+ * ✅ String memberId 버전 지원
+ * ✅ 4개 파라미터 addStockToPortfolio 구현
  * ══════════════════════════════════════════════════════════════
  */
 @Slf4j
@@ -51,26 +45,64 @@ public class PortfolioServiceImpl implements PortfolioService {
     @Override
     @Transactional
     public int createPortfolio(PortfolioVO portfolio) {
-        // ✅ 수정: Date → Timestamp(System.currentTimeMillis())
         portfolio.setCreatedAt(new Timestamp(System.currentTimeMillis()));
         portfolio.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
         return portfolioMapper.insertPortfolio(portfolio);
     }
 
+    /**
+     * ✅ 회원별 포트폴리오 목록 (Long 버전 - 기존 유지)
+     */
     @Override
     public List<PortfolioVO> getPortfoliosByMemberId(Long memberId) {
         return portfolioMapper.findPortfolioByMemberId(memberId);
     }
 
+    /**
+     * ✅ 회원별 포트폴리오 목록 (String 버전 - 신규!)
+     * DashboardController, PortfolioController 호출용
+     */
+    @Override
+    public List<PortfolioVO> getPortfolioByMemberId(String memberId) {
+        try {
+            // String → Long 변환 시도
+            Long memberIdLong = Long.parseLong(memberId);
+            return portfolioMapper.findPortfolioByMemberId(memberIdLong);
+        } catch (NumberFormatException e) {
+            log.warn("memberId 변환 실패 (String→Long): {}", memberId);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * ✅ 회원별 포트폴리오 목록 (별칭 - String 버전)
+     * PortfolioApiController 호출용
+     */
+    @Override
+    public List<PortfolioVO> getPortfolioList(String memberId) {
+        return getPortfolioByMemberId(memberId);  // 위임
+    }
+
+    /**
+     * ✅ 포트폴리오 단건 조회 (Long 버전 - 기존 유지)
+     */
     @Override
     public PortfolioVO getPortfolioById(Long portfolioId) {
         return portfolioMapper.findPortfolioById(portfolioId);
     }
 
+    /**
+     * ✅ 포트폴리오 단건 조회 (별칭 - 신규!)
+     * PortfolioApiController, PortfolioController 호출용
+     */
+    @Override
+    public PortfolioVO getPortfolio(Long portfolioId) {
+        return getPortfolioById(portfolioId);  // 위임
+    }
+
     @Override
     @Transactional
     public int updatePortfolio(PortfolioVO portfolio) {
-        // ✅ 수정: Date → Timestamp(System.currentTimeMillis())
         portfolio.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
         return portfolioMapper.updatePortfolio(portfolio);
     }
@@ -78,7 +110,7 @@ public class PortfolioServiceImpl implements PortfolioService {
     @Override
     @Transactional
     public int deletePortfolio(Long portfolioId) {
-        portfolioMapper.deleteAllItems(portfolioId); // 종목 먼저 삭제
+        portfolioMapper.deleteAllItems(portfolioId);
         return portfolioMapper.deletePortfolio(portfolioId);
     }
 
@@ -86,12 +118,81 @@ public class PortfolioServiceImpl implements PortfolioService {
      * 포트폴리오 종목 관리
      * ══════════════════════════════════════════════════════════ */
 
+    /**
+     * ✅ 종목 추가 (PortfolioItemVO 버전 - 기존 유지)
+     */
     @Override
     @Transactional
     public int addStockToPortfolio(PortfolioItemVO item) {
-        // ✅ 수정: Date → Timestamp(System.currentTimeMillis())
         item.setCreatedAt(new Timestamp(System.currentTimeMillis()));
         return portfolioMapper.insertItem(item);
+    }
+
+    /**
+     * ✅ 종목 추가 (4개 파라미터 버전 - 신규!)
+     * StockPurchaseApiController 호출용
+     * 
+     * 동작:
+     * 1. memberId로 기본 포트폴리오 조회/생성
+     * 2. PortfolioItemVO 생성
+     * 3. insertItem 호출
+     */
+    @Override
+    @Transactional
+    public boolean addStockToPortfolio(String memberId, String stockCode, double quantity, double price) {
+        try {
+            log.info("종목 추가 시작: memberId={}, stockCode={}, quantity={}, price={}", 
+                     memberId, stockCode, quantity, price);
+
+            // 1. memberId로 포트폴리오 조회
+            List<PortfolioVO> portfolios = getPortfolioByMemberId(memberId);
+            
+            Long portfolioId;
+            if (portfolios == null || portfolios.isEmpty()) {
+                // 포트폴리오가 없으면 생성
+                log.info("포트폴리오 없음, 신규 생성");
+                PortfolioVO newPortfolio = new PortfolioVO();
+                newPortfolio.setMemberId(memberId);
+                newPortfolio.setPortfolioName("기본 포트폴리오");
+                createPortfolio(newPortfolio);
+                
+                // 다시 조회
+                portfolios = getPortfolioByMemberId(memberId);
+                if (portfolios == null || portfolios.isEmpty()) {
+                    log.error("포트폴리오 생성 실패");
+                    return false;
+                }
+                portfolioId = portfolios.get(0).getPortfolioId();
+            } else {
+                // 첫 번째 포트폴리오 사용
+                portfolioId = portfolios.get(0).getPortfolioId();
+            }
+
+            // 2. MySQL에서 종목 정보 조회
+            StockVO stock = stockMapper.findByCode(stockCode);
+            if (stock == null) {
+                log.error("종목 정보 없음: {}", stockCode);
+                return false;
+            }
+
+            // 3. PortfolioItemVO 생성
+            PortfolioItemVO item = new PortfolioItemVO();
+            item.setPortfolioId(portfolioId);
+            item.setStockCode(stockCode);
+            item.setQuantity(BigDecimal.valueOf(quantity));
+            item.setAvgPrice(BigDecimal.valueOf(price));
+            item.setPurchasePrice(BigDecimal.valueOf(price));
+
+            // 4. 종목 추가
+            int result = addStockToPortfolio(item);
+            
+            log.info("종목 추가 완료: result={}", result);
+            return result > 0;
+
+        } catch (Exception e) {
+            log.error("종목 추가 실패", e);
+            return false;
+        }
     }
 
     @Override
@@ -117,10 +218,8 @@ public class PortfolioServiceImpl implements PortfolioService {
 
     @Override
     public List<PortfolioStockVO> getPortfolioWithStocks(Long portfolioId) {
-        // JOIN 쿼리로 포트폴리오 종목 + 주식 정보 조회
         List<PortfolioStockVO> stocks = portfolioMapper.findStocksWithPrice(portfolioId);
 
-        // 각 종목의 손익/수익률 계산
         for (PortfolioStockVO stock : stocks) {
             calculateProfitAndLoss(stock);
         }
@@ -129,8 +228,7 @@ public class PortfolioServiceImpl implements PortfolioService {
     }
 
     /**
-     * ✅ Deprecated 수정 핵심 메서드
-     * 손익 및 수익률 계산 (BigDecimal 연산)
+     * ✅ Deprecated 수정 핵심 메서드 (BigDecimal 연산)
      */
     private void calculateProfitAndLoss(PortfolioStockVO stock) {
         try {
@@ -138,55 +236,24 @@ public class PortfolioServiceImpl implements PortfolioService {
             BigDecimal avgPrice     = stock.getAvgPrice();
             Long quantity           = stock.getQuantity();
 
-            // null 체크
             if (currentPrice == null || avgPrice == null || quantity == null || quantity == 0) {
                 stock.setProfitLoss(BigDecimal.ZERO);
                 stock.setProfitRate(BigDecimal.ZERO);
                 return;
             }
 
-            // ─────────────────────────────────────────────────────
-            // ✅ 수정 1: 손익 계산 (Deprecated 제거)
-            // ─────────────────────────────────────────────────────
-            // ❌ 기존 (deprecated):
-            //    double profitLoss = (currentPrice - avgPrice) * quantity;
-            //    stock.setProfitLoss(new BigDecimal(profitLoss));
-
-            // ✅ 수정 후 (BigDecimal 연산):
             BigDecimal qty = BigDecimal.valueOf(quantity);
             BigDecimal profitLoss = currentPrice.subtract(avgPrice).multiply(qty);
             stock.setProfitLoss(profitLoss);
 
-            // ─────────────────────────────────────────────────────
-            // ✅ 수정 2: 수익률 계산 (Deprecated 제거)
-            // ─────────────────────────────────────────────────────
-            // ❌ 기존 (deprecated):
-            //    double profitRate = ((currentPrice - avgPrice) / avgPrice) * 100;
-            //    stock.setProfitRate(new BigDecimal(profitRate));
-
-            // ✅ 수정 후 (BigDecimal 연산):
             BigDecimal diff = currentPrice.subtract(avgPrice);
             BigDecimal profitRate = diff.divide(avgPrice, 4, RoundingMode.HALF_UP)
                                         .multiply(BigDecimal.valueOf(100));
             stock.setProfitRate(profitRate);
 
-            // ─────────────────────────────────────────────────────
-            // ✅ 수정 3: 총 투자금액 계산
-            // ─────────────────────────────────────────────────────
-            // ❌ 기존 (deprecated):
-            //    BigDecimal totalInvest = new BigDecimal(avgPrice * quantity);
-
-            // ✅ 수정 후:
             BigDecimal totalInvest = avgPrice.multiply(qty);
             stock.setTotalInvestment(totalInvest);
 
-            // ─────────────────────────────────────────────────────
-            // ✅ 수정 4: 현재 평가금액 계산
-            // ─────────────────────────────────────────────────────
-            // ❌ 기존 (deprecated):
-            //    BigDecimal currentValue = new BigDecimal(currentPrice * quantity);
-
-            // ✅ 수정 후:
             BigDecimal currentValue = currentPrice.multiply(qty);
             stock.setCurrentValue(currentValue);
 
@@ -212,7 +279,6 @@ public class PortfolioServiceImpl implements PortfolioService {
 
         List<PortfolioStockVO> stocks = getPortfolioWithStocks(portfolioId);
 
-        // ✅ 전체 통계 계산 (BigDecimal 연산)
         BigDecimal totalInvestment = BigDecimal.ZERO;
         BigDecimal totalCurrentValue = BigDecimal.ZERO;
         BigDecimal totalProfitLoss = BigDecimal.ZERO;
@@ -229,12 +295,6 @@ public class PortfolioServiceImpl implements PortfolioService {
             }
         }
 
-        // ✅ 전체 수익률 계산 (BigDecimal 연산)
-        // ❌ 기존 (deprecated):
-        //    double totalProfitRate = (totalProfitLoss / totalInvestment) * 100;
-        //    portfolio.setTotalProfitRate(new BigDecimal(totalProfitRate));
-
-        // ✅ 수정 후:
         BigDecimal totalProfitRate = BigDecimal.ZERO;
         if (totalInvestment.compareTo(BigDecimal.ZERO) > 0) {
             totalProfitRate = totalProfitLoss

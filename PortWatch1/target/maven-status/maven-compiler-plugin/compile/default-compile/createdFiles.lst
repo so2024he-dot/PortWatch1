@@ -1,8 +1,4 @@
-com\portwatch\controller\MarketApiController.class
-com\portwatch\controller\MarketApiController$2.class
 com\portwatch\persistence\WatchlistDAO.class
-com\portwatch\service\StockService.class
-com\portwatch\controller\MarketApiController$1.class
 com\portwatch\domain\StockVO.class
 com\portwatch\domain\WatchlistVO.class
 com\portwatch\persistence\StockDAO.class

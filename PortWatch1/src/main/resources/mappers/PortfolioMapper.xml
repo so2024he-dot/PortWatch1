@@ -1,184 +1,232 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper
-    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <!-- 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PORTFOLIO MAPPER - 완벽 수정 (avg_price 사용)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-✅ 핵심 수정:
-1. purchase_price → avg_price로 되돌림
-2. PORTFOLIO 테이블 실제 컬럼명과 일치
-
-실제 테이블 구조:
-- portfolio_id
-- member_id
-- stock_id
-- quantity
-- avg_price (NOT purchase_price!)
-- purchase_date
-- created_at
-- updated_at
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ══════════════════════════════════════════════════════════════
+  PortfolioMapper.xml - 완전판
+  
+  MySQL 테이블:
+  - PORTFOLIO: 포트폴리오
+  - PORTFOLIO_ITEM: 포트폴리오 종목
+  ══════════════════════════════════════════════════════════════
 -->
+<mapper namespace="com.portwatch.mapper.PortfolioMapper">
 
-<mapper namespace="com.portwatch.persistence.PortfolioDAO">
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- ResultMap - Portfolio                                -->
+    <!-- ════════════════════════════════════════════════════ -->
     
-    <!-- ✅ 회원별 포트폴리오 조회 (stock 정보 포함) -->
-    <select id="selectPortfolioByMember" parameterType="string" resultType="PortfolioVO">
+    <resultMap id="PortfolioResultMap" type="com.portwatch.domain.PortfolioVO">
+        <id property="portfolioId" column="portfolio_id"/>
+        <result property="memberId" column="member_id"/>
+        <result property="portfolioName" column="portfolio_name"/>
+        <result property="stockCode" column="stock_code"/>
+        <result property="stockName" column="stock_name"/>
+        <result property="quantity" column="quantity"/>
+        <result property="purchasePrice" column="purchase_price"/>
+        <result property="avgPrice" column="avg_price"/>
+        <result property="avgPurchasePrice" column="avg_price"/>
+        <result property="currentPrice" column="current_price"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- ResultMap - PortfolioItem                            -->
+    <!-- ════════════════════════════════════════════════════ -->
+    
+    <resultMap id="PortfolioItemResultMap" type="com.portwatch.domain.PortfolioItemVO">
+        <id property="itemId" column="item_id"/>
+        <result property="portfolioId" column="portfolio_id"/>
+        <result property="stockCode" column="stock_code"/>
+        <result property="quantity" column="quantity"/>
+        <result property="avgPrice" column="avg_price"/>
+        <result property="purchasePrice" column="purchase_price"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- ResultMap - PortfolioStock (JOIN 결과)               -->
+    <!-- ════════════════════════════════════════════════════ -->
+    
+    <resultMap id="PortfolioStockResultMap" type="com.portwatch.domain.PortfolioStockVO">
+        <id property="itemId" column="item_id"/>
+        <result property="portfolioId" column="portfolio_id"/>
+        <result property="stockCode" column="stock_code"/>
+        <result property="stockName" column="stock_name"/>
+        <result property="quantity" column="quantity"/>
+        <result property="avgPrice" column="avg_price"/>
+        <result property="currentPrice" column="current_price"/>
+    </resultMap>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- ✅ 회원별 포트폴리오 목록 (Long memberId)             -->
+    <!-- ════════════════════════════════════════════════════ -->
+    
+    <select id="findPortfolioByMemberId" parameterType="long" resultMap="PortfolioResultMap">
         SELECT 
             p.portfolio_id,
             p.member_id,
-            p.stock_id,
-            p.quantity,
-            p.avg_price AS purchase_price,
-            p.purchase_date,
+            p.portfolio_name,
             p.created_at,
             p.updated_at,
-            s.stock_code,
+            pi.stock_code,
             s.stock_name,
-            s.current_price,
-            s.market_type,
-            s.country
-        FROM portfolio p
-        LEFT JOIN stock s ON p.stock_id = s.stock_id
+            pi.quantity,
+            pi.avg_price,
+            pi.purchase_price,
+            s.current_price
+        FROM PORTFOLIO p
+        LEFT JOIN PORTFOLIO_ITEM pi ON p.portfolio_id = pi.portfolio_id
+        LEFT JOIN STOCK s ON pi.stock_code = s.stock_code
         WHERE p.member_id = #{memberId}
-        ORDER BY p.created_at DESC
+        ORDER BY p.portfolio_id ASC, pi.item_id ASC
     </select>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- ✅ 포트폴리오 단건 조회                               -->
+    <!-- ════════════════════════════════════════════════════ -->
     
-    <!-- ✅ 포트폴리오 ID로 조회 -->
-    <select id="selectPortfolioById" parameterType="long" resultType="PortfolioVO">
+    <select id="findPortfolioById" parameterType="long" resultMap="PortfolioResultMap">
         SELECT 
             p.portfolio_id,
             p.member_id,
-            p.stock_id,
-            p.quantity,
-            p.avg_price AS purchase_price,
-            p.purchase_date,
+            p.portfolio_name,
             p.created_at,
-            p.updated_at,
-            s.stock_code,
-            s.stock_name,
-            s.current_price,
-            s.market_type,
-            s.country
-        FROM portfolio p
-        LEFT JOIN stock s ON p.stock_id = s.stock_id
+            p.updated_at
+        FROM PORTFOLIO p
         WHERE p.portfolio_id = #{portfolioId}
     </select>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- ✅ 포트폴리오 생성                                    -->
+    <!-- ════════════════════════════════════════════════════ -->
     
-    <!-- ✅ 회원 + 주식으로 포트폴리오 조회 -->
-    <select id="selectByMemberAndStock" parameterType="map" resultType="PortfolioVO">
-        SELECT 
-            portfolio_id,
+    <insert id="insertPortfolio" parameterType="com.portwatch.domain.PortfolioVO" 
+            useGeneratedKeys="true" keyProperty="portfolioId">
+        INSERT INTO PORTFOLIO (
             member_id,
-            stock_id,
-            quantity,
-            avg_price AS purchase_price,
-            purchase_date,
-            created_at,
-            updated_at
-        FROM portfolio
-        WHERE member_id = #{memberId} AND stock_id = #{stockId}
-    </select>
-    
-    <!-- ✅ 포트폴리오 등록 -->
-    <insert id="insertPortfolio" parameterType="PortfolioVO" useGeneratedKeys="true" keyProperty="portfolioId">
-        INSERT INTO portfolio (
-            member_id,
-            stock_id,
-            quantity,
-            avg_price,
-            purchase_date,
+            portfolio_name,
             created_at,
             updated_at
         ) VALUES (
             #{memberId},
-            #{stockId},
-            #{quantity},
-            #{purchasePrice},
-            #{purchaseDate},
-            NOW(),
-            NOW()
+            #{portfolioName},
+            #{createdAt},
+            #{updatedAt}
         )
     </insert>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- ✅ 포트폴리오 수정                                    -->
+    <!-- ════════════════════════════════════════════════════ -->
     
-    <!-- ✅ 포트폴리오 수정 -->
-    <update id="updatePortfolio" parameterType="PortfolioVO">
-        UPDATE portfolio
-        SET 
-            quantity = #{quantity},
-            avg_price = #{purchasePrice},
-            updated_at = NOW()
+    <update id="updatePortfolio" parameterType="com.portwatch.domain.PortfolioVO">
+        UPDATE PORTFOLIO
+        SET portfolio_name = #{portfolioName},
+            updated_at = #{updatedAt}
         WHERE portfolio_id = #{portfolioId}
     </update>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- ✅ 포트폴리오 삭제                                    -->
+    <!-- ════════════════════════════════════════════════════ -->
     
-    <!-- ✅ 포트폴리오 삭제 -->
     <delete id="deletePortfolio" parameterType="long">
-        DELETE FROM portfolio
+        DELETE FROM PORTFOLIO
         WHERE portfolio_id = #{portfolioId}
     </delete>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- ✅ 종목 추가                                          -->
+    <!-- ════════════════════════════════════════════════════ -->
     
-    <!-- ✅ 전체 포트폴리오 조회 -->
-    <select id="selectAllPortfolio" resultType="PortfolioVO">
+    <insert id="insertItem" parameterType="com.portwatch.domain.PortfolioItemVO"
+            useGeneratedKeys="true" keyProperty="itemId">
+        INSERT INTO PORTFOLIO_ITEM (
+            portfolio_id,
+            stock_code,
+            quantity,
+            avg_price,
+            purchase_price,
+            created_at
+        ) VALUES (
+            #{portfolioId},
+            #{stockCode},
+            #{quantity},
+            #{avgPrice},
+            #{purchasePrice},
+            #{createdAt}
+        )
+    </insert>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- ✅ 포트폴리오 종목 목록                               -->
+    <!-- ════════════════════════════════════════════════════ -->
+    
+    <select id="findItemsByPortfolioId" parameterType="long" resultMap="PortfolioItemResultMap">
         SELECT 
-            p.portfolio_id,
-            p.member_id,
-            p.stock_id,
-            p.quantity,
-            p.avg_price AS purchase_price,
-            p.purchase_date,
-            p.created_at,
-            p.updated_at,
-            s.stock_code,
+            item_id,
+            portfolio_id,
+            stock_code,
+            quantity,
+            avg_price,
+            purchase_price,
+            created_at
+        FROM PORTFOLIO_ITEM
+        WHERE portfolio_id = #{portfolioId}
+        ORDER BY item_id ASC
+    </select>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- ✅ 포트폴리오 종목 + 현재가 JOIN                      -->
+    <!-- ════════════════════════════════════════════════════ -->
+    
+    <select id="findStocksWithPrice" parameterType="long" resultMap="PortfolioStockResultMap">
+        SELECT 
+            pi.item_id,
+            pi.portfolio_id,
+            pi.stock_code,
             s.stock_name,
-            s.current_price,
-            s.market_type,
-            s.country
-        FROM portfolio p
-        LEFT JOIN stock s ON p.stock_id = s.stock_id
-        ORDER BY p.created_at DESC
+            pi.quantity,
+            pi.avg_price,
+            s.current_price
+        FROM PORTFOLIO_ITEM pi
+        LEFT JOIN STOCK s ON pi.stock_code = s.stock_code
+        WHERE pi.portfolio_id = #{portfolioId}
+        ORDER BY pi.item_id ASC
     </select>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- ✅ 종목 수정                                          -->
+    <!-- ════════════════════════════════════════════════════ -->
     
-    <!-- ✅ 포트폴리오 수량 업데이트 -->
-    <update id="updateQuantity" parameterType="map">
-        UPDATE portfolio
-        SET 
-            quantity = #{quantity},
-            updated_at = NOW()
-        WHERE portfolio_id = #{portfolioId}
-    </update>
-    
-    <!-- ✅ 포트폴리오 평균 단가 업데이트 -->
-    <update id="updateAvgPrice" parameterType="map">
-        UPDATE portfolio
-        SET 
+    <update id="updateItem" parameterType="com.portwatch.domain.PortfolioItemVO">
+        UPDATE PORTFOLIO_ITEM
+        SET quantity = #{quantity},
             avg_price = #{avgPrice},
-            updated_at = NOW()
-        WHERE portfolio_id = #{portfolioId}
+            purchase_price = #{purchasePrice}
+        WHERE item_id = #{itemId}
     </update>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- ✅ 종목 삭제                                          -->
+    <!-- ════════════════════════════════════════════════════ -->
     
-    <!-- ✅ 특정 주식의 총 수량 조회 -->
-    <select id="getTotalQuantityByStock" parameterType="map" resultType="int">
-        SELECT COALESCE(SUM(quantity), 0)
-        FROM portfolio
-        WHERE member_id = #{memberId} AND stock_id = #{stockId}
-    </select>
+    <delete id="deleteItem" parameterType="long">
+        DELETE FROM PORTFOLIO_ITEM
+        WHERE item_id = #{itemId}
+    </delete>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- ✅ 포트폴리오 전체 종목 삭제                          -->
+    <!-- ════════════════════════════════════════════════════ -->
     
-    <!-- ✅ 회원의 포트폴리오 개수 조회 -->
-    <select id="getPortfolioCount" parameterType="string" resultType="int">
-        SELECT COUNT(*)
-        FROM portfolio
-        WHERE member_id = #{memberId}
-    </select>
-    
-    <!-- ✅ 회원의 총 투자금액 조회 -->
-    <select id="getTotalInvestment" parameterType="string" resultType="double">
-        SELECT COALESCE(SUM(quantity * avg_price), 0)
-        FROM portfolio
-        WHERE member_id = #{memberId}
-    </select>
-    
+    <delete id="deleteAllItems" parameterType="long">
+        DELETE FROM PORTFOLIO_ITEM
+        WHERE portfolio_id = #{portfolioId}
+    </delete>
+
 </mapper>
