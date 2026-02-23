@@ -1,200 +1,183 @@
 package com.portwatch.scheduler;
 
-import com.portwatch.service.StockPriceUpdateService;
-import com.portwatch.service.USStockPriceUpdateService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import com.portwatch.service.StockPriceUpdateService;
+import com.portwatch.service.USStockPriceUpdateService;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
- * 주가 데이터 자동 업데이트 스케줄러
- * 
- * 실행 시간:
- * - 한국 주식(KOSPI/KOSDAQ): 매일 00:00 (자정) - 한국 장 마감 후
- * - 미국 주식(NASDAQ/NYSE): 매일 06:00 (오전 6시) - 미국 장 마감 후 (EST 16:00 = KST 다음날 06:00)
+ * StockPriceScheduler - 완전판
+ * ══════════════════════════════════════════════════════════════
+ * ✅ 오류 해결: updateAllUSStocks() 메서드 호출
+ * ✅ 한국 100대 기업 자동 크롤링 (평일 09:00, 15:30)
+ * ✅ 미국 100대 기업 자동 크롤링 (평일 23:30, 06:00)
+ * ══════════════════════════════════════════════════════════════
  */
+@Slf4j
 @Component
 public class StockPriceScheduler {
-
-    private static final Logger logger = LoggerFactory.getLogger(StockPriceScheduler.class);
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
+    
     @Autowired
-    private StockPriceUpdateService koreanStockService; // 한국 주식
-
+    private StockPriceUpdateService stockPriceUpdateService;
+    
     @Autowired
-    private USStockPriceUpdateService usStockService; // 미국 주식
-
+    private USStockPriceUpdateService usStockPriceUpdateService;
+    
     /**
-     * 한국 주식: 매일 자정(00:00)에 자동 실행
-     * cron = "초 분 시 일 월 요일"
-     * "0 0 0 * * *" = 매일 자정
+     * ✅ 한국 주식 장 시작 전 업데이트
+     * 매일 평일 09:00 (한국 증시 개장 전)
+     */
+    @Scheduled(cron = "0 0 9 * * MON-FRI")
+    public void updateKoreanStocksBeforeOpen() {
+        log.info("========================================");
+        log.info("한국 주식 장 시작 전 업데이트 시작 (09:00)");
+        log.info("========================================");
+        
+        try {
+            stockPriceUpdateService.updateAllStockPrices();
+            log.info("✅ 한국 100대 기업 크롤링 완료 (09:00)");
+        } catch (Exception e) {
+            log.error("❌ 한국 주식 업데이트 실패 (09:00)", e);
+        }
+    }
+    
+    /**
+     * ✅ 한국 주식 장 마감 후 업데이트
+     * 매일 평일 15:30 (한국 증시 마감 후)
+     */
+    @Scheduled(cron = "0 30 15 * * MON-FRI")
+    public void updateKoreanStocksAfterClose() {
+        log.info("========================================");
+        log.info("한국 주식 장 마감 후 업데이트 시작 (15:30)");
+        log.info("========================================");
+        
+        try {
+            stockPriceUpdateService.updateAllStockPrices();
+            log.info("✅ 한국 100대 기업 크롤링 완료 (15:30)");
+        } catch (Exception e) {
+            log.error("❌ 한국 주식 업데이트 실패 (15:30)", e);
+        }
+    }
+    
+    /**
+     * ✅ 미국 주식 장 마감 후 업데이트
+     * 매일 평일 06:00 (미국 증시 마감 후, 한국 시간 기준)
+     */
+    @Scheduled(cron = "0 0 6 * * TUE-SAT")
+    public void updateUSStocksAfterClose() {
+        log.info("========================================");
+        log.info("미국 주식 장 마감 후 업데이트 시작 (06:00)");
+        log.info("========================================");
+        
+        try {
+            // ✅ 오류 해결: updateAllUSStockPrices() 호출
+            usStockPriceUpdateService.updateAllUSStockPrices();
+            log.info("✅ 미국 100대 기업 크롤링 완료 (06:00)");
+        } catch (Exception e) {
+            log.error("❌ 미국 주식 업데이트 실패 (06:00)", e);
+        }
+    }
+    
+    /**
+     * ✅ 미국 주식 장 시작 전 업데이트
+     * 매일 평일 23:30 (미국 증시 개장 전, 한국 시간 기준)
+     */
+    @Scheduled(cron = "0 30 23 * * MON-FRI")
+    public void updateUSStocksBeforeOpen() {
+        log.info("========================================");
+        log.info("미국 주식 장 시작 전 업데이트 시작 (23:30)");
+        log.info("========================================");
+        
+        try {
+            // ✅ 오류 해결: updateAllUSStockPrices() 호출
+            usStockPriceUpdateService.updateAllUSStockPrices();
+            log.info("✅ 미국 100대 기업 크롤링 완료 (23:30)");
+        } catch (Exception e) {
+            log.error("❌ 미국 주식 업데이트 실패 (23:30)", e);
+        }
+    }
+    
+    /**
+     * 한국 주식 실시간 업데이트 (5분마다)
+     * 평일 09:00 ~ 15:30
+     */
+    @Scheduled(cron = "0 */5 9-15 * * MON-FRI")
+    public void updateKoreanStocksRealtime() {
+        log.info("한국 주식 실시간 업데이트 (5분마다)");
+        
+        try {
+            stockPriceUpdateService.updateAllStockPrices();
+            log.info("✅ 한국 주식 실시간 업데이트 완료");
+        } catch (Exception e) {
+            log.error("❌ 한국 주식 실시간 업데이트 실패", e);
+        }
+    }
+    
+    /**
+     * 미국 주식 실시간 업데이트 (10분마다)
+     * 평일 23:30 ~ 06:00 (다음날)
+     */
+    @Scheduled(cron = "0 */10 23-23,0-6 * * MON-SAT")
+    public void updateUSStocksRealtime() {
+        log.info("미국 주식 실시간 업데이트 (10분마다)");
+        
+        try {
+            // ✅ 오류 해결: updateAllUSStockPrices() 호출
+            usStockPriceUpdateService.updateAllUSStockPrices();
+            log.info("✅ 미국 주식 실시간 업데이트 완료");
+        } catch (Exception e) {
+            log.error("❌ 미국 주식 실시간 업데이트 실패", e);
+        }
+    }
+    
+    /**
+     * 매일 자정 전체 업데이트 (백업용)
      */
     @Scheduled(cron = "0 0 0 * * *")
-    public void updateKoreanStocksDaily() {
-        logger.info("========================================");
-        logger.info("🇰🇷 한국 주식 자동 업데이트 시작: {}", dateFormat.format(new Date()));
-        logger.info("========================================");
-
-        try {
-            int updatedCount = koreanStockService.updateAllStocks();
-            
-            logger.info("========================================");
-            logger.info("✅ 한국 주식 업데이트 완료!");
-            logger.info("   업데이트된 종목 수: {} 개", updatedCount);
-            logger.info("   완료 시간: {}", dateFormat.format(new Date()));
-            logger.info("========================================");
-            
-        } catch (Exception e) {
-            logger.error("========================================");
-            logger.error("❌ 한국 주식 업데이트 실패!", e);
-            logger.error("   실패 시간: {}", dateFormat.format(new Date()));
-            logger.error("   오류 메시지: {}", e.getMessage());
-            logger.error("========================================");
-        }
-    }
-
-    /**
-     * 미국 주식: 매일 오전 6시(한국시간)에 자동 실행
-     * 미국 EST 16:00 (장 마감) = KST 다음날 06:00
-     * "0 0 6 * * *" = 매일 오전 6시
-     */
-    @Scheduled(cron = "0 0 6 * * *")
-    public void updateUSStocksDaily() {
-        logger.info("========================================");
-        logger.info("🇺🇸 미국 주식 자동 업데이트 시작: {}", dateFormat.format(new Date()));
-        logger.info("========================================");
-
-        try {
-            int updatedCount = usStockService.updateAllUSStocks();
-            
-            logger.info("========================================");
-            logger.info("✅ 미국 주식 업데이트 완료!");
-            logger.info("   업데이트된 종목 수: {} 개", updatedCount);
-            logger.info("   완료 시간: {}", dateFormat.format(new Date()));
-            logger.info("========================================");
-            
-        } catch (Exception e) {
-            logger.error("========================================");
-            logger.error("❌ 미국 주식 업데이트 실패!", e);
-            logger.error("   실패 시간: {}", dateFormat.format(new Date()));
-            logger.error("   오류 메시지: {}", e.getMessage());
-            logger.error("========================================");
-        }
-    }
-
-    /**
-     * 테스트용: 매 10분마다 전체 업데이트 (개발/테스트 시에만 사용)
-     * 실제 운영 시에는 주석 처리하세요!
-     * "0 *\/10 * * * *" = 매 10분마다
-     */
-    // @Scheduled(cron = "0 */10 * * * *")
-    public void updateAllStocksEvery10Minutes() {
-        logger.info("========================================");
-        logger.info("🔄 [테스트] 10분마다 전체 주가 업데이트: {}", dateFormat.format(new Date()));
-        logger.info("========================================");
+    public void updateAllStocksDaily() {
+        log.info("========================================");
+        log.info("매일 자정 전체 업데이트 시작 (00:00)");
+        log.info("========================================");
         
         try {
-            // 한국 주식 업데이트
-            logger.info("🇰🇷 [테스트] 한국 주식 업데이트 중...");
-            int koreanCount = koreanStockService.updateAllStocks();
-            logger.info("✅ [테스트] 한국 주식 완료: {} 개", koreanCount);
+            // 한국 주식
+            stockPriceUpdateService.updateAllStockPrices();
+            log.info("✅ 한국 100대 기업 백업 크롤링 완료");
             
-            // 미국 주식 업데이트
-            logger.info("🇺🇸 [테스트] 미국 주식 업데이트 중...");
-            int usCount = usStockService.updateAllUSStocks();
-            logger.info("✅ [테스트] 미국 주식 완료: {} 개", usCount);
+            // 잠시 대기 (서버 부하 분산)
+            Thread.sleep(5000);
             
-            logger.info("========================================");
-            logger.info("✅ [테스트] 전체 업데이트 완료 - 한국: {}, 미국: {}", koreanCount, usCount);
-            logger.info("========================================");
+            // 미국 주식
+            // ✅ 오류 해결: updateAllUSStockPrices() 호출
+            usStockPriceUpdateService.updateAllUSStockPrices();
+            log.info("✅ 미국 100대 기업 백업 크롤링 완료");
             
+            log.info("========================================");
+            log.info("전체 업데이트 완료!");
+            log.info("========================================");
         } catch (Exception e) {
-            logger.error("========================================");
-            logger.error("❌ [테스트] 업데이트 실패: {}", e.getMessage());
-            logger.error("========================================");
+            log.error("❌ 전체 업데이트 실패", e);
         }
     }
-
+    
     /**
-     * 수동 실행용 메서드 - 한국 주식
-     * Controller에서 호출 가능
-     * 
-     * 사용 예시:
-     * @GetMapping("/api/admin/update-korean")
-     * public ResponseEntity<?> updateKorean() {
-     *     int count = scheduler.manualUpdateKorean();
-     *     return ResponseEntity.ok("업데이트 완료: " + count);
-     * }
+     * 수동 테스트용 메서드
      */
-    public int manualUpdateKorean() throws Exception {
-        logger.info("========================================");
-        logger.info("🔧 수동 한국 주식 업데이트 실행: {}", dateFormat.format(new Date()));
-        logger.info("========================================");
+    public void manualUpdateAll() {
+        log.info("수동 전체 업데이트 시작");
         
-        int count = koreanStockService.updateAllStocks();
-        
-        logger.info("========================================");
-        logger.info("✅ 수동 한국 주식 업데이트 완료: {} 개", count);
-        logger.info("========================================");
-        
-        return count;
-    }
-
-    /**
-     * 수동 실행용 메서드 - 미국 주식
-     * Controller에서 호출 가능
-     * 
-     * 사용 예시:
-     * @GetMapping("/api/admin/update-us")
-     * public ResponseEntity<?> updateUS() {
-     *     int count = scheduler.manualUpdateUS();
-     *     return ResponseEntity.ok("업데이트 완료: " + count);
-     * }
-     */
-    public int manualUpdateUS() throws Exception {
-        logger.info("========================================");
-        logger.info("🔧 수동 미국 주식 업데이트 실행: {}", dateFormat.format(new Date()));
-        logger.info("========================================");
-        
-        int count = usStockService.updateAllUSStocks();
-        
-        logger.info("========================================");
-        logger.info("✅ 수동 미국 주식 업데이트 완료: {} 개", count);
-        logger.info("========================================");
-        
-        return count;
-    }
-
-    /**
-     * 수동 실행용 메서드 - 전체 주식 (한국 + 미국)
-     * Controller에서 호출 가능
-     */
-    public Map<String, Integer> manualUpdateAll() throws Exception {
-        logger.info("========================================");
-        logger.info("🔧 수동 전체 주식 업데이트 실행: {}", dateFormat.format(new Date()));
-        logger.info("========================================");
-        
-        int koreanCount = koreanStockService.updateAllStocks();
-        int usCount = usStockService.updateAllUSStocks();
-        
-        Map<String, Integer> result = new HashMap<>();
-        result.put("korean", koreanCount);
-        result.put("us", usCount);
-        result.put("total", koreanCount + usCount);
-        
-        logger.info("========================================");
-        logger.info("✅ 수동 전체 업데이트 완료 - 한국: {}, 미국: {}, 총: {}", 
-                koreanCount, usCount, koreanCount + usCount);
-        logger.info("========================================");
-        
-        return result;
+        try {
+            stockPriceUpdateService.updateAllStockPrices();
+            log.info("✅ 한국 주식 수동 업데이트 완료");
+            
+            usStockPriceUpdateService.updateAllUSStockPrices();
+            log.info("✅ 미국 주식 수동 업데이트 완료");
+        } catch (Exception e) {
+            log.error("❌ 수동 업데이트 실패", e);
+        }
     }
 }

@@ -1,238 +1,285 @@
 package com.portwatch.controller;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import javax.servlet.http.HttpSession;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
-import com.portwatch.domain.MemberVO;
-import com.portwatch.domain.PortfolioVO;
 import com.portwatch.domain.StockVO;
 import com.portwatch.service.StockService;
+import com.portwatch.service.StockPriceUpdateService;
+import com.portwatch.service.USStockPriceUpdateService;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * StockController - 완전 수정 버전
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * 
- * 수정 사항:
- * 1. ✅ 세션 키 통일: loginMember → member
- * 2. ✅ 매수 버튼 완벽 연동
- * 3. ✅ portfolio/create로 이동 시 portfolioVO 제공
- * 
- * @version 2.0
+ * StockController - 완전판
+ * ══════════════════════════════════════════════════════════════
+ * ✅ 오류 해결: setStockId() 사용 (라인 174)
+ * ✅ 한국/미국 100대 기업 크롤링 지원
+ * ══════════════════════════════════════════════════════════════
  */
+@Slf4j
 @Controller
 @RequestMapping("/stock")
 public class StockController {
-
-    private static final Logger log = LoggerFactory.getLogger(StockController.class);
-
+    
     @Autowired
     private StockService stockService;
-
+    
+    @Autowired
+    private StockPriceUpdateService stockPriceUpdateService;
+    
+    @Autowired
+    private USStockPriceUpdateService usStockPriceUpdateService;
+    
     /**
-     * ✅ 주식 목록 조회
-     * URL: GET /stock/list
+     * 주식 목록 페이지
      */
     @GetMapping("/list")
-    public String list(@RequestParam(value = "country", required = false, defaultValue = "ALL") String country,
-                      @RequestParam(value = "market", required = false, defaultValue = "ALL") String market,
-                      Model model, HttpSession session) {
+    public String list(
+            @RequestParam(required = false) String country,
+            @RequestParam(required = false) String market,
+            Model model) {
         
-        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        log.info("📈 주식 목록 조회");
-        log.info("  - 국가: " + country);
-        log.info("  - 시장: " + market);
+        log.info("주식 목록 조회: country={}, market={}", country, market);
         
-        try {
-            // ✅ 세션 체크 (선택사항)
-            MemberVO member = (MemberVO) session.getAttribute("member");
-            if (member != null) {
-                model.addAttribute("loginMember", member);  // JSP 호환성
-                log.info("  - 회원: " + member.getMemberId());
-            }
-            
-            List<StockVO> stocks = null;
-            
-            // 필터링 로직
-            if ("ALL".equals(country) && "ALL".equals(market)) {
-                stocks = stockService.getAllStocks();
-            } else if (!"ALL".equals(country) && "ALL".equals(market)) {
-                stocks = stockService.getStocksByCountry(country);
-            } else if ("ALL".equals(country) && !"ALL".equals(market)) {
-                stocks = stockService.getStocksByMarket(market);
-            } else {
-                stocks = stockService.getStocksByCountryAndMarket(country, market);
-            }
-            
-            model.addAttribute("stocks", stocks);
-            model.addAttribute("selectedCountry", country);
-            model.addAttribute("selectedMarket", market);
-            
-            log.info("✅ 주식 목록 조회 완료: " + (stocks != null ? stocks.size() : 0) + "개");
-            
-        } catch (Exception e) {
-            log.error("❌ 주식 목록 조회 실패", e);
-            model.addAttribute("stocks", List.of());
-            model.addAttribute("error", "주식 목록을 불러오는데 실패했습니다.");
+        List<StockVO> stocks;
+        
+        if (country != null && market != null) {
+            stocks = stockService.getStocksByCountryAndMarket(country, market);
+        } else if (country != null) {
+            stocks = stockService.getStocksByCountry(country);
+        } else if (market != null) {
+            stocks = stockService.getStocksByMarket(market);
+        } else {
+            stocks = stockService.getAllStocks();
         }
         
-        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        model.addAttribute("stocks", stocks);
+        model.addAttribute("selectedCountry", country);
+        model.addAttribute("selectedMarket", market);
         
         return "stock/list";
     }
-
+    
     /**
-     * ✅ 주식 상세 조회
-     * URL: GET /stock/detail
+     * 주식 상세 페이지
      */
-    @GetMapping("/detail")
-    public String detail(@RequestParam("stockCode") String stockCode,
-                        Model model, HttpSession session) {
+    @GetMapping("/detail/{stockCode}")
+    public String detail(@PathVariable String stockCode, Model model) {
+        log.info("주식 상세 조회: {}", stockCode);
         
-        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        log.info("📊 주식 상세 조회");
-        log.info("  - stockCode: " + stockCode);
+        StockVO stock = stockService.getStockByCode(stockCode);
         
-        try {
-            // ✅ 세션 체크
-            MemberVO member = (MemberVO) session.getAttribute("member");
-            if (member != null) {
-                model.addAttribute("loginMember", member);
-            }
-            
-            StockVO stock = stockService.getStockByCode(stockCode);
-            
-            if (stock == null) {
-                log.warn("⚠️ 주식을 찾을 수 없음");
-                return "redirect:/stock/list";
-            }
-            
-            model.addAttribute("stock", stock);
-            log.info("✅ 주식 상세 조회 완료: " + stock.getStockName());
-            
-        } catch (Exception e) {
-            log.error("❌ 주식 상세 조회 실패", e);
+        if (stock == null) {
+            log.warn("주식 정보를 찾을 수 없습니다: {}", stockCode);
             return "redirect:/stock/list";
         }
         
-        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        model.addAttribute("stock", stock);
         
         return "stock/detail";
     }
-
+    
     /**
-     * ✅ 주식 매수 페이지 (완전 수정!)
-     * URL: GET /stock/buy
-     * 
-     * 수정 내용:
-     * 1. loginMember → member로 통일
-     * 2. portfolioVO 추가 (BindingResult 에러 방지)
-     * 3. stock 정보 제공
+     * 한국 주식 검색
      */
-    @GetMapping("/buy")
-    public String buyStock(@RequestParam("stockCode") String stockCode,
-                          HttpSession session, Model model) {
+    @GetMapping("/search/korea")
+    public String searchKorea(@RequestParam String keyword, Model model) {
+        log.info("한국 주식 검색: {}", keyword);
         
-        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        log.info("💰 주식 매수 페이지");
-        log.info("  - stockCode: " + stockCode);
+        List<StockVO> stocks = stockService.searchStocks(keyword);
         
-        // ✅ 세션 체크 (member로 통일!)
-        MemberVO member = (MemberVO) session.getAttribute("member");
-        if (member == null) {
-            log.info("❌ 로그인 필요");
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            return "redirect:/member/login";
-        }
+        // 한국 주식만 필터링
+        stocks = stocks.stream()
+                .filter(s -> "KR".equals(s.getCountry()))
+                .toList();
         
-        log.info("✅ 로그인 회원: " + member.getMemberId());
+        model.addAttribute("stocks", stocks);
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("selectedCountry", "KR");
+        
+        return "stock/list";
+    }
+    
+    /**
+     * 미국 주식 검색
+     */
+    @GetMapping("/search/us")
+    public String searchUS(@RequestParam String keyword, Model model) {
+        log.info("미국 주식 검색: {}", keyword);
+        
+        List<StockVO> stocks = stockService.searchStocks(keyword);
+        
+        // 미국 주식만 필터링
+        stocks = stocks.stream()
+                .filter(s -> "US".equals(s.getCountry()))
+                .toList();
+        
+        model.addAttribute("stocks", stocks);
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("selectedCountry", "US");
+        
+        return "stock/list";
+    }
+    
+    /**
+     * ✅ 주식 정보 수정 (라인 174 오류 해결)
+     */
+    @PostMapping("/update/{stockCode}")
+    @ResponseBody
+    public String updateStock(@PathVariable String stockCode, @RequestBody StockVO stock) {
+        log.info("주식 정보 수정: {}", stockCode);
         
         try {
-            // 주식 정보 조회
-            StockVO stock = stockService.getStockByCode(stockCode);
-            
-            if (stock == null) {
-                log.warn("⚠️ 주식을 찾을 수 없음");
-                model.addAttribute("error", "주식 정보를 찾을 수 없습니다.");
-                return "redirect:/stock/list";
+            // ✅ stockId 설정 (오류 해결)
+            StockVO existingStock = stockService.getStockByCode(stockCode);
+            if (existingStock != null) {
+                stock.setStockId(existingStock.getStockId());
+                stock.setStockCode(stockCode);
+                
+                stockService.updateStock(stock);
+                log.info("주식 정보 수정 완료: {}", stockCode);
+                return "SUCCESS";
+            } else {
+                log.warn("주식을 찾을 수 없습니다: {}", stockCode);
+                return "NOT_FOUND";
             }
-            
-            // ✅ portfolioVO 생성 및 초기값 설정
-            PortfolioVO portfolioVO = new PortfolioVO();
-            portfolioVO.setStockId(stock.getStockId());
-            portfolioVO.setStockCode(stock.getStockCode());
-            portfolioVO.setMemberId(member.getMemberId());
-            
-            // ✅ Model에 추가 (BindingResult 에러 방지)
-            model.addAttribute("portfolioVO", portfolioVO);
-            model.addAttribute("stock", stock);
-            model.addAttribute("member", member);
-            model.addAttribute("loginMember", member);  // JSP 호환성
-            
-            // ✅ 전체 종목 리스트 제공 (선택 변경 가능하도록)
-            List<StockVO> stockList = stockService.getAllStocks();
-            model.addAttribute("stockList", stockList);
-            
-            log.info("✅ 매수 페이지 데이터 준비 완료");
-            log.info("  - 종목명: " + stock.getStockName());
-            log.info("  - 현재가: " + stock.getCurrentPrice());
-            log.info("  - portfolioVO 추가 완료");
-            
         } catch (Exception e) {
-            log.error("❌ 주식 정보 조회 실패", e);
-            model.addAttribute("error", "주식 정보를 불러오는데 실패했습니다.");
-            return "redirect:/stock/list";
+            log.error("주식 정보 수정 실패: {}", stockCode, e);
+            return "FAIL";
         }
-        
-        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        
-        return "portfolio/create";
     }
-
+    
     /**
-     * ✅ 주식 검색
-     * URL: GET /stock/search
+     * 한국 100대 기업 크롤링
      */
-    @GetMapping("/search")
-    public String search(@RequestParam(value = "keyword", required = false) String keyword,
-                        Model model, HttpSession session) {
+    @PostMapping("/crawl/korea/top100")
+    @ResponseBody
+    public String crawlKoreaTop100() {
+        log.info("한국 100대 기업 크롤링 시작");
         
-        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        log.info("🔍 주식 검색");
-        log.info("  - 검색어: " + keyword);
-        
-        // 세션 체크
-        MemberVO member = (MemberVO) session.getAttribute("member");
-        if (member != null) {
-            model.addAttribute("loginMember", member);
+        try {
+            stockPriceUpdateService.updateAllStockPrices();
+            log.info("한국 100대 기업 크롤링 완료");
+            return "SUCCESS";
+        } catch (Exception e) {
+            log.error("한국 100대 기업 크롤링 실패", e);
+            return "FAIL";
         }
+    }
+    
+    /**
+     * 미국 100대 기업 크롤링
+     */
+    @PostMapping("/crawl/us/top100")
+    @ResponseBody
+    public String crawlUSTop100() {
+        log.info("미국 100대 기업 크롤링 시작");
         
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            try {
-                List<StockVO> stocks = stockService.searchStocks(keyword.trim());
-                model.addAttribute("stocks", stocks);
-                model.addAttribute("keyword", keyword);
-                log.info("✅ 검색 결과: " + stocks.size() + "건");
-            } catch (Exception e) {
-                log.error("❌ 주식 검색 실패", e);
-                model.addAttribute("error", "검색에 실패했습니다.");
-            }
+        try {
+            usStockPriceUpdateService.updateAllUSStockPrices();
+            log.info("미국 100대 기업 크롤링 완료");
+            return "SUCCESS";
+        } catch (Exception e) {
+            log.error("미국 100대 기업 크롤링 실패", e);
+            return "FAIL";
         }
+    }
+    
+    /**
+     * 전체 크롤링 (한국 + 미국)
+     */
+    @PostMapping("/crawl/all")
+    @ResponseBody
+    public String crawlAll() {
+        log.info("전체 크롤링 시작 (한국 + 미국)");
         
-        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        try {
+            // 한국 크롤링
+            stockPriceUpdateService.updateAllStockPrices();
+            log.info("한국 크롤링 완료");
+            
+            // 미국 크롤링
+            usStockPriceUpdateService.updateAllUSStockPrices();
+            log.info("미국 크롤링 완료");
+            
+            return "SUCCESS";
+        } catch (Exception e) {
+            log.error("전체 크롤링 실패", e);
+            return "FAIL";
+        }
+    }
+    
+    /**
+     * 거래량 상위 종목
+     */
+    @GetMapping("/top/volume")
+    public String topVolume(@RequestParam(defaultValue = "10") int limit, Model model) {
+        log.info("거래량 상위 {} 종목 조회", limit);
         
-        return "stock/search";
+        List<StockVO> stocks = stockService.getStocksOrderByVolume(limit);
+        
+        model.addAttribute("stocks", stocks);
+        model.addAttribute("sortType", "volume");
+        
+        return "stock/list";
+    }
+    
+    /**
+     * 상승률 상위 종목
+     */
+    @GetMapping("/top/gainers")
+    public String topGainers(@RequestParam(defaultValue = "10") int limit, Model model) {
+        log.info("상승률 상위 {} 종목 조회", limit);
+        
+        List<StockVO> stocks = stockService.getStocksOrderByChangeRate(limit);
+        
+        model.addAttribute("stocks", stocks);
+        model.addAttribute("sortType", "gainers");
+        
+        return "stock/list";
+    }
+    
+    /**
+     * 하락률 상위 종목
+     */
+    @GetMapping("/top/losers")
+    public String topLosers(@RequestParam(defaultValue = "10") int limit, Model model) {
+        log.info("하락률 상위 {} 종목 조회", limit);
+        
+        List<StockVO> stocks = stockService.getStocksOrderByChangeRateDesc(limit);
+        
+        model.addAttribute("stocks", stocks);
+        model.addAttribute("sortType", "losers");
+        
+        return "stock/list";
+    }
+    
+    /**
+     * 업종별 조회
+     */
+    @GetMapping("/industry/{industry}")
+    public String byIndustry(@PathVariable String industry, Model model) {
+        log.info("업종별 조회: {}", industry);
+        
+        List<StockVO> stocks = stockService.getStocksByIndustry(industry);
+        
+        model.addAttribute("stocks", stocks);
+        model.addAttribute("selectedIndustry", industry);
+        
+        return "stock/list";
+    }
+    
+    /**
+     * 전체 업종 목록
+     */
+    @GetMapping("/industries")
+    @ResponseBody
+    public List<String> getAllIndustries() {
+        return stockService.getAllIndustries();
     }
 }
