@@ -8,6 +8,7 @@ com\portwatch\controller\StockApiController.class
 com\portwatch\service\PortfolioService.class
 com\portwatch\service\StockPurchaseValidationService.class
 com\portwatch\domain\WatchlistWithPriceVO.class
+com\portwatch\mapper\WatchlistMapper.class
 com\portwatch\controller\DashboardController$DashboardSummary.class
 com\portwatch\controller\MemberController.class
 com\portwatch\util\FormatUtil.class
@@ -22,7 +23,10 @@ com\portwatch\service\ExchangeRateService.class
 com\portwatch\mapper\StockPriceMapper.class
 com\portwatch\controller\NewsController.class
 com\portwatch\service\StockPriceUpdateService.class
+com\portwatch\service\USNewsCrawler.class
 com\portwatch\controller\NewsApiController.class
+com\portwatch\service\NewsCrawler.class
+com\portwatch\scheduler\StockPriceScheduler.class
 com\portwatch\service\PaymentService.class
 com\portwatch\controller\BackupController.class
 com\portwatch\persistence\WatchlistDAO.class
@@ -51,12 +55,14 @@ com\portwatch\common\ApiResponse.class
 com\portwatch\controller\PaymentController.class
 com\portwatch\service\NewsServiceImpl.class
 com\portwatch\domain\PortfolioStockVO.class
+com\portwatch\util\SessionUtils.class
 com\portwatch\scheduler\NewsScheduler.class
 com\portwatch\domain\MemberVO.class
 com\portwatch\persistence\PaymentDAO.class
 com\portwatch\controller\StockCrawlerController.class
 com\portwatch\controller\StockPurchaseApiController.class
 com\portwatch\domain\StockPriceVO.class
+com\portwatch\domain\MarketSummaryVO.class
 com\portwatch\scheduler\StockSymbolScheduler.class
 com\portwatch\service\PaymentServiceImpl.class
 com\portwatch\service\PortfolioServiceImpl.class
@@ -64,9 +70,11 @@ com\portwatch\controller\PortfolioController.class
 com\portwatch\controller\StockPriceUpdateApiController.class
 com\portwatch\service\StockServiceImpl.class
 com\portwatch\service\WatchlistService.class
+com\portwatch\persistence\PortfolioDAO.class
 com\portwatch\domain\PortfolioVO.class
 com\portwatch\controller\MarketApiController$1.class
 com\portwatch\controller\AdminStockUpdateController.class
+com\portwatch\controller\ExchangeRateApiController.class
 com\portwatch\service\NewsService.class
 com\portwatch\mapper\PaymentMapper.class
 com\portwatch\service\StockUpdateScheduler.class
