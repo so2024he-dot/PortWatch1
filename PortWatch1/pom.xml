@@ -7,7 +7,10 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.portwatch</groupId>
     <artifactId>portwatch</artifactId>
+    
+    <!-- ✅ 수정 1: name 태그 수정 (n → name) -->
     <name>PortWatch1</name>
+    
     <packaging>war</packaging>
     <version>1.0.0-BUILD-SNAPSHOT</version>
     
@@ -26,6 +29,13 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
             <version>${org.springframework-version}</version>
+            <!-- ✅ 수정 2: commons-logging 제외 (로깅 충돌 방지) -->
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         
         <dependency>
@@ -126,7 +136,8 @@
             <version>${org.aspectj-version}</version>
         </dependency>
         
-        <!-- Logging - Log4j 2 완전 제거, SLF4J + Logback 사용 -->
+        <!-- ✅ 수정 3: Logback만 사용 (Log4j 완전 제거) -->
+        <!-- Logging - SLF4J + Logback -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -167,7 +178,6 @@
             <version>1.14.3</version>
         </dependency>
         
-        
         <!-- JSON Simple -->
         <dependency>
             <groupId>com.googlecode.json-simple</groupId>
@@ -183,12 +193,8 @@
             <scope>test</scope>
         </dependency>
         
-        <!-- ⭐ Log4j 추가 -->
-		<dependency>
-		    <groupId>log4j</groupId>
-		    <artifactId>log4j</artifactId>
-		    <version>1.2.17</version>
-		</dependency>
+        <!-- ❌ Log4j 완전 제거 (기존 186-191번 라인 삭제됨) -->
+        <!-- Logback과 Log4j 충돌 방지 -->
         
         <dependency>
             <groupId>org.springframework</groupId>
