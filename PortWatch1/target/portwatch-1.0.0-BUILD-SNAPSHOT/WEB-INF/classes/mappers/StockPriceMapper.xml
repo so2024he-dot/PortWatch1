@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+  ══════════════════════════════════════════════════════════════
+  StockPriceMapper.xml - 완전판
+  
+  총 17개 쿼리 (기존 7 + 신규 10)
+  주가 이력 관리
+  ══════════════════════════════════════════════════════════════
+-->
+<mapper namespace="com.portwatch.mapper.StockPriceMapper">
+
+    <resultMap id="StockPriceResultMap" type="com.portwatch.domain.StockPriceVO">
+        <id property="priceId" column="price_id"/>
+        <result property="stockCode" column="stock_code"/>
+        <result property="priceDate" column="price_date"/>
+        <result property="openPrice" column="open_price"/>
+        <result property="highPrice" column="high_price"/>
+        <result property="lowPrice" column="low_price"/>
+        <result property="closePrice" column="close_price"/>
+        <result property="volume" column="volume"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <!-- 기존 쿼리 유지 -->
+
+    <!-- 1. insert - 주가 저장 -->
+    <insert id="insert" parameterType="com.portwatch.domain.StockPriceVO" 
+            useGeneratedKeys="true" keyProperty="priceId">
+        INSERT INTO STOCK_PRICE (
+            stock_code, price_date, open_price, high_price, 
+            low_price, close_price, volume, created_at
+        ) VALUES (
+            #{stockCode}, CURDATE(), #{openPrice}, #{highPrice},
+            #{lowPrice}, #{closePrice}, #{volume}, NOW()
+        )
+        ON DUPLICATE KEY UPDATE
+            open_price = VALUES(open_price),
+            high_price = VALUES(high_price),
+            low_price = VALUES(low_price),
+            close_price = VALUES(close_price),
+            volume = VALUES(volume),
+            created_at = NOW()
+    </insert>
+
+    <!-- 2. findByStockCode - 종목별 조회 -->
+    <select id="findByStockCode" parameterType="string" resultMap="StockPriceResultMap">
+        SELECT * FROM STOCK_PRICE
+        WHERE stock_code = #{stockCode}
+        ORDER BY price_date DESC
+    </select>
+
+    <!-- 3. findByStockCodeAndPeriod - 기간별 조회 -->
+    <select id="findByStockCodeAndPeriod" resultMap="StockPriceResultMap">
+        SELECT * FROM STOCK_PRICE
+        WHERE stock_code = #{stockCode}
+          AND price_date BETWEEN #{startDate} AND #{endDate}
+        ORDER BY price_date DESC
+    </select>
+
+    <!-- 4. findRecentByStockCode - 최근 N개 -->
+    <select id="findRecentByStockCode" resultMap="StockPriceResultMap">
+        SELECT * FROM STOCK_PRICE
+        WHERE stock_code = #{stockCode}
+        ORDER BY price_date DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 5. deleteByStockCode - 종목별 삭제 -->
+    <delete id="deleteByStockCode" parameterType="string">
+        DELETE FROM STOCK_PRICE WHERE stock_code = #{stockCode}
+    </delete>
+
+    <!-- 6. deleteOlderThan - 오래된 데이터 삭제 -->
+    <delete id="deleteOlderThan" parameterType="int">
+        DELETE FROM STOCK_PRICE 
+        WHERE price_date &lt; DATE_SUB(CURDATE(), INTERVAL #{days} DAY)
+    </delete>
+
+    <!-- 7. count - 전체 개수 -->
+    <select id="count" resultType="int">
+        SELECT COUNT(*) FROM STOCK_PRICE
+    </select>
+
+    <!-- ✅ 신규 추가 쿼리 (10개) -->
+
+    <!-- 8. findHistoryByDays - N일간 이력 -->
+    <select id="findHistoryByDays" resultMap="StockPriceResultMap">
+        SELECT * FROM STOCK_PRICE
+        WHERE stock_code = #{stockCode}
+          AND price_date >= DATE_SUB(CURDATE(), INTERVAL #{days} DAY)
+        ORDER BY price_date DESC
+    </select>
+
+    <!-- 9. findLatestByCode - 최신 가격 -->
+    <select id="findLatestByCode" parameterType="string" resultMap="StockPriceResultMap">
+        SELECT * FROM STOCK_PRICE
+        WHERE stock_code = #{stockCode}
+        ORDER BY price_date DESC
+        LIMIT 1
+    </select>
+
+    <!-- 10. insertBatch - 대량 삽입 -->
+    <insert id="insertBatch">
+        INSERT INTO STOCK_PRICE (
+            stock_code, price_date, open_price, high_price,
+            low_price, close_price, volume, created_at
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.stockCode}, CURDATE(), #{item.openPrice}, #{item.highPrice},
+             #{item.lowPrice}, #{item.closePrice}, #{item.volume}, NOW())
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+            close_price = VALUES(close_price),
+            volume = VALUES(volume),
+            created_at = NOW()
+    </insert>
+
+    <!-- 11. updateBatch - 대량 업데이트 -->
+    <update id="updateBatch">
+        <foreach collection="list" item="item" separator=";">
+            UPDATE STOCK_PRICE
+            SET close_price = #{item.closePrice},
+                volume = #{item.volume},
+                created_at = NOW()
+            WHERE stock_code = #{item.stockCode} 
+              AND price_date = CURDATE()
+        </foreach>
+    </update>
+
+    <!-- 12. findByDateRange - 기간 범위 조회 -->
+    <select id="findByDateRange" resultMap="StockPriceResultMap">
+        SELECT * FROM STOCK_PRICE
+        WHERE stock_code = #{stockCode}
+          AND price_date BETWEEN #{startDate} AND #{endDate}
+        ORDER BY price_date ASC
+    </select>
+
+    <!-- 13. getAveragePrice - 평균가 -->
+    <select id="getAveragePrice" resultType="decimal">
+        SELECT AVG(close_price)
+        FROM STOCK_PRICE
+        WHERE stock_code = #{stockCode}
+          AND price_date >= DATE_SUB(CURDATE(), INTERVAL #{days} DAY)
+    </select>
+
+    <!-- 14. getHighestPrice - 최고가 -->
+    <select id="getHighestPrice" resultType="decimal">
+        SELECT MAX(high_price)
+        FROM STOCK_PRICE
+        WHERE stock_code = #{stockCode}
+          AND price_date >= DATE_SUB(CURDATE(), INTERVAL #{days} DAY)
+    </select>
+
+    <!-- 15. getLowestPrice - 최저가 -->
+    <select id="getLowestPrice" resultType="decimal">
+        SELECT MIN(low_price)
+        FROM STOCK_PRICE
+        WHERE stock_code = #{stockCode}
+          AND price_date >= DATE_SUB(CURDATE(), INTERVAL #{days} DAY)
+    </select>
+
+    <!-- 16. getTotalVolume - 총 거래량 -->
+    <select id="getTotalVolume" resultType="long">
+        SELECT SUM(volume)
+        FROM STOCK_PRICE
+        WHERE stock_code = #{stockCode}
+          AND price_date >= DATE_SUB(CURDATE(), INTERVAL #{days} DAY)
+    </select>
+
+    <!-- 17. getPriceChange - 가격 변동 -->
+    <select id="getPriceChange" resultType="map">
+        SELECT 
+            (SELECT close_price FROM STOCK_PRICE 
+             WHERE stock_code = #{stockCode} 
+             ORDER BY price_date DESC LIMIT 1) as current_price,
+            (SELECT close_price FROM STOCK_PRICE 
+             WHERE stock_code = #{stockCode} 
+             ORDER BY price_date DESC LIMIT 1 OFFSET 1) as previous_price,
+            ((SELECT close_price FROM STOCK_PRICE 
+              WHERE stock_code = #{stockCode} 
+              ORDER BY price_date DESC LIMIT 1) - 
+             (SELECT close_price FROM STOCK_PRICE 
+              WHERE stock_code = #{stockCode} 
+              ORDER BY price_date DESC LIMIT 1 OFFSET 1)) as change_amount
+    </select>
+
+</mapper>
