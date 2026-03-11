@@ -3,6 +3,8 @@ package com.portwatch.persistence;
 import com.portwatch.domain.NewsVO;
 import java.util.List;
 
+import org.springframework.stereotype.Repository;
+
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * ✅ 뉴스 DAO 인터페이스 (완벽 수정 버전)
@@ -15,6 +17,7 @@ import java.util.List;
  * @author PortWatch
  * @version 4.0 - MySQL 8.0 호환 + 누락 메소드 추가
  */
+@Repository 
 public interface NewsDAO {
     
     /**
