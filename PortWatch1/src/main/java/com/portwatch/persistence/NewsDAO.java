@@ -3,124 +3,80 @@ package com.portwatch.persistence;
 import com.portwatch.domain.NewsVO;
 import java.util.List;
 
-import org.springframework.stereotype.Repository;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
 
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * ✅ 뉴스 DAO 인터페이스 (완벽 수정 버전)
+ * ✅ [수정] NewsDAO 인터페이스
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * 
- * ✅ 추가 메소드:
- * 1. existsByUrl() - URL 중복 체크 (boolean 반환)
- * 2. countAllNews() - 전체 뉴스 개수 조회
- * 
- * @author PortWatch
- * @version 4.0 - MySQL 8.0 호환 + 누락 메소드 추가
+ * 수정 내역:
+ *   - existsByUrl(@Param("url") String url) : @Param 추가
+ *     → NewsMapper.xml의 #{url} 파라미터와 이름 일치시킴
+ *   - checkDuplicateUrl(@Param("link") String link) : @Param 추가
+ *     → NewsMapper.xml의 #{link} 파라미터와 이름 일치시킴
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
-@Repository 
+@Mapper
 public interface NewsDAO {
-    
-    /**
-     * 최신 뉴스 조회
-     */
-    List<NewsVO> selectLatestNews(int limit) throws Exception;
-    
-    /**
-     * 종목별 뉴스 조회 (stockCode)
-     */
-    List<NewsVO> selectNewsByStockCode(String stockCode, int limit) throws Exception;
-    
-    /**
-     * 국가별 뉴스 조회
-     */
-    List<NewsVO> selectNewsByCountry(String country, int limit) throws Exception;
-    
-    /**
-     * 뉴스 ID로 조회
-     */
-    NewsVO selectNewsById(Long newsId) throws Exception;
-    
-    /**
-     * 뉴스 삽입
-     */
+
+    // ──────────────────────────────────────────
+    // INSERT / UPDATE / DELETE
+    // ──────────────────────────────────────────
+
     void insertNews(NewsVO news) throws Exception;
-    
-    /**
-     * 뉴스 URL 중복 체크 (int 반환)
-     */
-    int checkDuplicateUrl(String link) throws Exception;
-    
-    /**
-     * 뉴스 업데이트
-     */
+
     void updateNews(NewsVO news) throws Exception;
-    
-    /**
-     * 뉴스 삭제
-     */
+
     void deleteNews(Long newsId) throws Exception;
-    
-    /**
-     * 전체 뉴스 개수
-     */
-    int getTotalNewsCount() throws Exception;
-    
-    /**
-     * 오늘 등록된 뉴스 개수
-     */
-    int getTodayNewsCount() throws Exception;
-    
-    /**
-     * 전체 뉴스 조회
-     */
+
+    // ──────────────────────────────────────────
+    // SELECT - 단건
+    // ──────────────────────────────────────────
+
+    NewsVO selectNewsById(Long newsId) throws Exception;
+
+    // ──────────────────────────────────────────
+    // SELECT - 목록
+    // ──────────────────────────────────────────
+
     List<NewsVO> selectAllNews();
-    
-    /**
-     * 최근 뉴스 조회
-     */
+
     List<NewsVO> selectRecentNews(int limit);
-    
-    /**
-     * 종목별 뉴스 조회
-     */
+
+    /** 최신 뉴스 (selectLatestNews - selectRecentNews 와 동일) */
+    List<NewsVO> selectLatestNews(int limit) throws Exception;
+
     List<NewsVO> selectNewsByStock(String stockCode, int limit);
-    
-    /**
-     * ✅ 카테고리별 뉴스 조회
-     * 
-     * @param category 카테고리 (예: 증시, 경제, 산업)
-     * @param limit 조회 개수
-     * @return List<NewsVO>
-     * @throws Exception
-     */
+
+    List<NewsVO> selectNewsByStockCode(String stockCode, int limit) throws Exception;
+
+    List<NewsVO> selectNewsByCountry(String country, int limit) throws Exception;
+
     List<NewsVO> selectByCategory(String category, int limit) throws Exception;
-    
-    /**
-     * ✅ 뉴스 검색
-     * 
-     * @param keyword 검색 키워드
-     * @param limit 조회 개수
-     * @return List<NewsVO>
-     * @throws Exception
-     */
+
     List<NewsVO> search(String keyword, int limit) throws Exception;
-    
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // ✅ 추가 메소드 (NewsServiceImpl에서 사용)
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    
+
+    // ──────────────────────────────────────────
+    // COUNT / 중복 체크
+    // ──────────────────────────────────────────
+
     /**
-     * ✅ URL 존재 여부 확인 (boolean 반환)
-     * 
-     * @param url 확인할 뉴스 URL
-     * @return URL이 존재하면 true, 아니면 false
+     * ✅ [수정] URL 존재 여부 확인
+     *    @Param("url") 추가 → NewsMapper.xml #{url} 과 일치
      */
-    boolean existsByUrl(String url) throws Exception;
-    
+    boolean existsByUrl(@Param("url") String url) throws Exception;
+
     /**
-     * ✅ 전체 뉴스 개수 조회 (countAllNews)
-     * 
-     * @return 전체 뉴스 개수
+     * ✅ [수정] URL 중복 건수 반환 (int)
+     *    @Param("link") 추가 → NewsMapper.xml #{link} 과 일치
      */
+    int checkDuplicateUrl(@Param("link") String link) throws Exception;
+
+    int getTotalNewsCount() throws Exception;
+
+    int getTodayNewsCount() throws Exception;
+
     int countAllNews() throws Exception;
 }

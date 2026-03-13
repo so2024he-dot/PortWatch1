@@ -1,6 +1,8 @@
 package com.portwatch.persistence;
 
 import java.util.List;
+
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import com.portwatch.domain.WatchlistVO;
 
@@ -10,6 +12,7 @@ import com.portwatch.domain.WatchlistVO;
  * @author PortWatch Team
  * @version 1.0
  */
+@Mapper
 public interface WatchlistDAO {
     
     /**

@@ -2,48 +2,74 @@
 <!DOCTYPE configuration
   PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-config.dtd">
-  
-<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-<!-- MyBatis 설정 파일 -->
-<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
 
+<!--
+    ✅ [수정] mybatis-config.xml
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    핵심 오류: Cannot find class: MemberVO
+    
+    원인: <package name="com.portwatch.domain"/> 방식은
+          Eclipse WTP 배포 환경에서 클래스패스 스캔이
+          정상 동작하지 않을 수 있음
+    
+    해결: 각 VO 클래스를 <typeAlias>로 명시적 등록
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-->
 <configuration>
+
     <settings>
         <!-- 캐싱 -->
-        <setting name="cacheEnabled" value="true"/>
-        
+        <setting name="cacheEnabled"                     value="true"/>
+
         <!-- 지연 로딩 -->
-        <setting name="lazyLoadingEnabled" value="true"/>
-        <setting name="aggressiveLazyLoading" value="false"/>
-        
+        <setting name="lazyLoadingEnabled"               value="true"/>
+        <setting name="aggressiveLazyLoading"            value="false"/>
+
         <!-- ResultSet -->
-        <setting name="multipleResultSetsEnabled" value="true"/>
-        <setting name="useColumnLabel" value="true"/>
-        
+        <setting name="multipleResultSetsEnabled"        value="true"/>
+        <setting name="useColumnLabel"                   value="true"/>
+
         <!-- Auto Mapping -->
-        <setting name="autoMappingBehavior" value="PARTIAL"/>
+        <setting name="autoMappingBehavior"              value="PARTIAL"/>
         <setting name="autoMappingUnknownColumnBehavior" value="WARNING"/>
-        
+
         <!-- Executor -->
-        <setting name="defaultExecutorType" value="SIMPLE"/>
-        <setting name="defaultStatementTimeout" value="25"/>
-        
+        <setting name="defaultExecutorType"              value="SIMPLE"/>
+        <setting name="defaultStatementTimeout"          value="25"/>
+
         <!-- Null 처리 -->
-        <setting name="callSettersOnNulls" value="false"/>
-        
-        <!-- ⭐ 로깅 설정 변경: LOG4J → SLF4J -->
-        <setting name="logImpl" value="SLF4J"/>
-        
+        <setting name="callSettersOnNulls"               value="false"/>
+
+        <!-- 로깅 -->
+        <setting name="logImpl"                          value="SLF4J"/>
+
         <!-- ⭐ 언더스코어 → 카멜케이스 자동 변환 -->
-        <setting name="mapUnderscoreToCamelCase" value="true"/>
-        
+        <setting name="mapUnderscoreToCamelCase"         value="true"/>
+
         <!-- JDBC Type -->
-        <setting name="jdbcTypeForNull" value="NULL"/>
+        <setting name="jdbcTypeForNull"                  value="NULL"/>
     </settings>
-    
-    <!-- ⭐ TypeAlias 설정: package 스캔만 사용 -->
+
+    <!--
+        ✅ [핵심 수정] TypeAlias - 명시적 등록 방식으로 변경
+        ⛔ 기존: <package name="com.portwatch.domain"/>
+                 → Eclipse WTP 환경에서 클래스 못 찾는 문제 발생
+        ✅ 수정: 각 VO를 alias로 직접 등록
+                 → 클래스패스 스캔 없이 확실하게 동작
+    -->
     <typeAliases>
-        <package name="com.portwatch.domain"/>
+        <typeAlias alias="MemberVO"          type="com.portwatch.domain.MemberVO"/>
+        <typeAlias alias="NewsVO"            type="com.portwatch.domain.NewsVO"/>
+        <typeAlias alias="StockVO"           type="com.portwatch.domain.StockVO"/>
+        <typeAlias alias="StockPriceVO"      type="com.portwatch.domain.StockPriceVO"/>
+        <typeAlias alias="PortfolioVO"       type="com.portwatch.domain.PortfolioVO"/>
+        <typeAlias alias="PortfolioItemVO"   type="com.portwatch.domain.PortfolioItemVO"/>
+        <typeAlias alias="PortfolioStockVO"  type="com.portwatch.domain.PortfolioStockVO"/>
+        <typeAlias alias="PaymentVO"         type="com.portwatch.domain.PaymentVO"/>
+        <typeAlias alias="WatchlistVO"       type="com.portwatch.domain.WatchlistVO"/>
+        <typeAlias alias="WatchlistWithPriceVO" type="com.portwatch.domain.WatchlistWithPriceVO"/>
+        <typeAlias alias="DashboardVO"       type="com.portwatch.domain.DashboardVO"/>
+        <typeAlias alias="MarketSummaryVO"   type="com.portwatch.domain.MarketSummaryVO"/>
     </typeAliases>
-    
+
 </configuration>

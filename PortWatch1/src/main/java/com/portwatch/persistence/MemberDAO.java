@@ -1,6 +1,9 @@
 package com.portwatch.persistence;
 
 import java.util.List;
+
+import org.apache.ibatis.annotations.Mapper;
+
 import com.portwatch.domain.MemberVO;
 
 /**
@@ -29,6 +32,7 @@ import com.portwatch.domain.MemberVO;
  * @author PortWatch
  * @version FINAL FIXED - 2026.01.14
  */
+@Mapper
 public interface MemberDAO {
     
     /**

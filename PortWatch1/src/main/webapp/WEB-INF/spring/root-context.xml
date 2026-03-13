@@ -5,28 +5,24 @@
     xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
     xmlns:tx="http://www.springframework.org/schema/tx"
     xsi:schemaLocation="
-        http://www.springframework.org/schema/beans 
+        http://www.springframework.org/schema/beans
         http://www.springframework.org/schema/beans/spring-beans.xsd
-        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context
         http://www.springframework.org/schema/context/spring-context.xsd
-        http://www.springframework.org/schema/tx 
+        http://www.springframework.org/schema/tx
         http://www.springframework.org/schema/tx/spring-tx.xsd
-        http://mybatis.org/schema/mybatis-spring 
+        http://mybatis.org/schema/mybatis-spring
         http://mybatis.org/schema/mybatis-spring-1.2.xsd">
-    
-    <!-- ✅ AWS RDS MySQL DataSource (HikariCP) -->
+
+    <!-- ============================================================
+         AWS RDS MySQL DataSource (HikariCP)
+         jdbcUrl: AWS 콘솔 → RDS → portwatch-db-seoul → 엔드포인트 복사!
+         ============================================================ -->
     <bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
         <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
-        
-        <!-- ✅ AWS RDS 엔드포인트 (실제 엔드포인트로 변경하세요!) -->
         <property name="jdbcUrl" value="jdbc:mysql://portwatch-db-seoul.cpggwqm1goo3.ap-northeast-2.rds.amazonaws.com:3306/portwatch?useSSL=false&amp;serverTimezone=Asia/Seoul&amp;characterEncoding=UTF-8&amp;allowPublicKeyRetrieval=true"/>
-        
         <property name="username" value="admin"/>
-        
-        <!-- ✅ RDS 비밀번호 (실제 비밀번호로 변경하세요!) -->
         <property name="password" value="portwatch2026!!abcd"/>
-        
-        <!-- Connection Pool 설정 -->
         <property name="maximumPoolSize" value="10"/>
         <property name="minimumIdle" value="5"/>
         <property name="connectionTimeout" value="30000"/>
@@ -34,39 +30,42 @@
         <property name="maxLifetime" value="1800000"/>
         <property name="connectionTestQuery" value="SELECT 1"/>
     </bean>
-    
-    <!-- MyBatis SqlSessionFactory -->
+
+    <!-- ============================================================
+         MyBatis SqlSessionFactory
+         ※ annotationClass 속성은 mybatis-spring-1.2.xsd 미지원 → 제거
+         ============================================================ -->
     <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
         <property name="dataSource" ref="dataSource"/>
         <property name="configLocation" value="classpath:/mybatis-config.xml"/>
         <property name="mapperLocations" value="classpath:/mappers/**/*.xml"/>
         <property name="typeAliasesPackage" value="com.portwatch.domain"/>
     </bean>
-    
-    <!-- MyBatis SqlSessionTemplate -->
+
     <bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
         <constructor-arg ref="sqlSessionFactory"/>
     </bean>
-    
-    <!-- MyBatis Mapper 스캔 -->
-    <mybatis-spring:scan base-package="com.portwatch.mapper"/>
-    
+
+    <!-- ============================================================
+         MyBatis Mapper Scan
+         ※ annotationClass 제거 → 중복 Bean 방지는 @Mapper 어노테이션으로 제어
+         ============================================================ -->
+    <mybatis-spring:scan base-package="com.portwatch.mapper,com.portwatch.persistence"/>
+
     <!-- Transaction Manager -->
-    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+    <bean id="transactionManager"
+          class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
         <property name="dataSource" ref="dataSource"/>
     </bean>
-    
-    <!-- Transaction Annotation 활성화 -->
     <tx:annotation-driven transaction-manager="transactionManager"/>
-    
-    <!-- BCryptPasswordEncoder -->
-    <bean id="passwordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"/>
-    
-    <!-- Component Scan -->
+
+    <!-- BCrypt Password Encoder -->
+    <bean id="passwordEncoder"
+          class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"/>
+
+    <!-- Service & Scheduler Component Scan -->
     <context:component-scan base-package="com.portwatch.service"/>
     <context:component-scan base-package="com.portwatch.scheduler"/>
-    
-    <!-- Annotation 기반 설정 활성화 -->
     <context:annotation-config/>
-    
+
 </beans>
