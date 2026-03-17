@@ -5,36 +5,29 @@
     xmlns:context="http://www.springframework.org/schema/context"
     xsi:schemaLocation="
         http://www.springframework.org/schema/mvc
-        https://www.springframework.org/schema/mvc/spring-mvc.xsd
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd
         http://www.springframework.org/schema/beans
-        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/beans/spring-beans.xsd
         http://www.springframework.org/schema/context
-        https://www.springframework.org/schema/context/spring-context.xsd">
+        http://www.springframework.org/schema/context/spring-context.xsd">
 
-    <!-- Spring MVC @Controller 활성화 -->
-    <annotation-driven />
+    <!-- MVC 어노테이션 활성화 (@Controller, @RequestMapping 등) -->
+    <annotation-driven/>
 
-    <!-- 정적 리소스 처리 -->
-    <resources mapping="/resources/**" location="/resources/" />
+    <!-- 정적 리소스 (CSS, JS, 이미지) -->
+    <resources mapping="/resources/**" location="/resources/"/>
 
-    <!-- ViewResolver: /WEB-INF/views/*.jsp -->
+    <!--
+        ViewResolver: 뷰 파일 위치
+        "member/login" → /WEB-INF/views/member/login.jsp
+    -->
     <beans:bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
-        <beans:property name="prefix" value="/WEB-INF/views/" />
-        <beans:property name="suffix" value=".jsp" />
+        <beans:property name="prefix" value="/WEB-INF/views/"/>
+        <beans:property name="suffix" value=".jsp"/>
+        <beans:property name="order"  value="1"/>
     </beans:bean>
 
-    <!-- Controller 스캔 -->
-    <context:component-scan base-package="com.portwatch.controller" />
-
-    <!-- ✅ Multipart Resolver
-         StandardServletMultipartResolver 사용
-         (commons-fileupload JAR 불필요, Servlet 3.0 기본 제공)
-         web.xml 의 DispatcherServlet 에 multipart-config 필수 -->
-    <beans:bean id="multipartResolver"
-        class="org.springframework.web.multipart.support.StandardServletMultipartResolver"/>
-
-    <!-- JSON MessageConverter -->
-    <beans:bean id="jsonHttpMessageConverter"
-        class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter"/>
+    <!-- 컴포넌트 스캔: com.portwatch.controller 패키지 -->
+    <context:component-scan base-package="com.portwatch.controller"/>
 
 </beans:beans>

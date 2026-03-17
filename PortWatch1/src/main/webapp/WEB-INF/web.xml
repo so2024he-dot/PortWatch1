@@ -7,25 +7,47 @@
 
     <display-name>PortWatch</display-name>
 
-    <!-- ============================================================
-         [오류 원인 - English]
-         Console Error:
-           NoSuchBeanDefinitionException: No bean named 'springSecurityFilterChain' available
+    <!--
+    =====================================================================
+    [ROOT CAUSE - English Analysis]
 
-         The web.xml had a DelegatingFilterProxy for 'springSecurityFilterChain',
-         but there is NO Spring Security configuration (no @EnableWebSecurity, no SecurityConfig).
-         When Tomcat starts, it tries to find this bean → fails → context crashes.
+    Previous web.xml had DUPLICATE <servlet> declaration like this:
 
-         Fix: Remove the springSecurityFilterChain filter entirely.
-         (Spring Security will be added properly in future if needed)
+      <servlet>
+          <servlet-name>appServlet</servlet-name>
+          <servlet-class>DispatcherServlet</servlet-class>    <- 1st declaration
+      </servlet>
+      ...
+      <servlet>
+          <servlet-name>appServlet</servlet-name>
+          <multipart-config>...</multipart-config>            <- 2nd declaration (WRONG!)
+      </servlet>
 
-         [오류 원인 - 한글]
-         web.xml에 springSecurityFilterChain 필터가 등록되어 있었는데
-         root-context.xml 또는 SecurityConfig.java에 Spring Security 설정이 없어서
-         해당 Bean을 찾을 수 없어 Tomcat 기동이 실패함.
+    Duplicate <servlet name="appServlet"> causes Tomcat to fail silently
+    when initializing DispatcherServlet.
+    Result:
+      - "Root WebApplicationContext: initialization completed" APPEARS (root context OK)
+      - "FrameworkServlet 'appServlet': initialization completed" MISSING (MVC fails)
+      - ALL URLs handled by DispatcherServlet return 404 or 500
 
-         해결: springSecurityFilterChain 필터를 완전히 제거.
-         ============================================================ -->
+    FIX: Merge <multipart-config> INSIDE the single <servlet> declaration.
+
+    [핵심 원인 - 한글 분석]
+
+    이전 web.xml에 <servlet name="appServlet"> 가 두 번 선언되었음:
+    - 1번: DispatcherServlet 클래스 등록
+    - 2번: multipart-config 추가 (이것이 오류!)
+
+    Tomcat이 중복 servlet 선언을 처리할 때 DispatcherServlet이 조용히 실패함.
+    결과:
+      - Root WebApplicationContext는 정상 (MyBatis, Service, DAO)
+      - FrameworkServlet(MVC) 초기화 실패 → Controller 매핑 불가
+      - /member/login → 404 (커스텀 404 페이지 표시)
+      - /member/signup → 404
+
+    해결: <multipart-config>를 하나의 <servlet> 안에 통합
+    =====================================================================
+    -->
 
     <!-- ============================================================
          Root WebApplicationContext (MyBatis, Service, DAO)
@@ -41,6 +63,7 @@
 
     <!-- ============================================================
          DispatcherServlet (Spring MVC)
+         multipart-config 을 동일한 <servlet> 안에 통합 - 핵심 수정
          ============================================================ -->
     <servlet>
         <servlet-name>appServlet</servlet-name>
@@ -50,15 +73,21 @@
             <param-value>/WEB-INF/spring/appServlet/servlet-context.xml</param-value>
         </init-param>
         <load-on-startup>1</load-on-startup>
+        <!-- ✅ multipart-config은 반드시 같은 <servlet> 안에 -->
+        <multipart-config>
+            <max-file-size>10485760</max-file-size>       <!-- 10MB -->
+            <max-request-size>20971520</max-request-size>  <!-- 20MB -->
+            <file-size-threshold>0</file-size-threshold>
+        </multipart-config>
     </servlet>
 
-    <servlet-mapping>
+<!--     <servlet-mapping>
         <servlet-name>appServlet</servlet-name>
         <url-pattern>/</url-pattern>
     </servlet-mapping>
-
+ -->
     <!-- ============================================================
-         Encoding Filter (UTF-8)
+         UTF-8 인코딩 필터
          ============================================================ -->
     <filter>
         <filter-name>encodingFilter</filter-name>
@@ -72,42 +101,13 @@
             <param-value>true</param-value>
         </init-param>
     </filter>
-
     <filter-mapping>
         <filter-name>encodingFilter</filter-name>
         <url-pattern>/*</url-pattern>
     </filter-mapping>
 
     <!-- ============================================================
-         Multipart (파일 업로드) - StandardServletMultipartResolver 사용
-         ============================================================ -->
-    <servlet>
-        <servlet-name>appServlet</servlet-name>
-        <multipart-config>
-            <max-file-size>10485760</max-file-size>
-            <max-request-size>20971520</max-request-size>
-            <file-size-threshold>0</file-size-threshold>
-        </multipart-config>
-    </servlet>
-
-    <!-- ============================================================
-         ✅ springSecurityFilterChain 필터 완전 제거
-         (아래 주석 처리된 부분이 오류의 원인이었던 설정)
-
-         <filter>
-             <filter-name>springSecurityFilterChain</filter-name>
-             <filter-class>
-                 org.springframework.web.filter.DelegatingFilterProxy
-             </filter-class>
-         </filter>
-         <filter-mapping>
-             <filter-name>springSecurityFilterChain</filter-name>
-             <url-pattern>/*</url-pattern>
-         </filter-mapping>
-         ============================================================ -->
-
-    <!-- ============================================================
-         Session 설정 (30분)
+         세션 설정 (30분)
          ============================================================ -->
     <session-config>
         <session-timeout>30</session-timeout>
@@ -121,13 +121,12 @@
     </welcome-file-list>
 
     <!-- ============================================================
-         Error Pages
+         에러 페이지
          ============================================================ -->
     <error-page>
         <error-code>404</error-code>
         <location>/WEB-INF/views/error/404.jsp</location>
     </error-page>
-
     <error-page>
         <error-code>500</error-code>
         <location>/WEB-INF/views/error/500.jsp</location>
