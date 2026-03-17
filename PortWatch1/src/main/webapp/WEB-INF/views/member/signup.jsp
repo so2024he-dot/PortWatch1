@@ -1,271 +1,118 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-
-<jsp:include page="../common/header.jsp" />
-
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PortWatch - 회원가입</title>
 <style>
-    .signup-container {
-        min-height: calc(100vh - 200px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 2rem 0;
-    }
-    
-    .signup-card {
-        background: white;
-        border-radius: 20px;
-        padding: 3rem;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-        max-width: 500px;
-        width: 100%;
-    }
-    
-    .signup-header {
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-    
-    .signup-icon {
-        font-size: 4rem;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 1rem;
-    }
-    
-    .signup-title {
-        font-size: 2rem;
-        font-weight: 700;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 0.5rem;
-    }
-    
-    .signup-subtitle {
-        color: #6b7280;
-        font-size: 1rem;
-    }
-    
-    .form-floating {
-        margin-bottom: 1rem;
-    }
-    
-    .form-control {
-        border-radius: 10px;
-        border: 2px solid #e5e7eb;
-        padding: 1rem;
-        transition: all 0.3s;
-    }
-    
-    .form-control:focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-    
-    .password-strength {
-        height: 4px;
-        background: #e5e7eb;
-        border-radius: 4px;
-        margin-top: 0.5rem;
-        overflow: hidden;
-    }
-    
-    .password-strength-bar {
-        height: 100%;
-        transition: all 0.3s;
-    }
-    
-    .strength-weak { background: #ef4444; width: 33%; }
-    .strength-medium { background: #f59e0b; width: 66%; }
-    .strength-strong { background: #10b981; width: 100%; }
-    
-    .btn-signup {
-        width: 100%;
-        padding: 1rem;
-        font-size: 1.1rem;
-        font-weight: 600;
-        border-radius: 10px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
-        color: white;
-        transition: all 0.3s;
-        margin-top: 1rem;
-    }
-    
-    .btn-signup:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-    }
-    
-    .terms {
-        margin: 1rem 0;
-    }
-    
-    .terms label {
-        color: #6b7280;
-        font-size: 0.9rem;
-    }
-    
-    .login-link {
-        text-align: center;
-        margin-top: 1.5rem;
-        color: #6b7280;
-    }
-    
-    .login-link a {
-        color: var(--primary-color);
-        font-weight: 600;
-        text-decoration: none;
-    }
-    
-    .login-link a:hover {
-        text-decoration: underline;
-    }
-    
-    @media (max-width: 576px) {
-        .signup-card {
-            padding: 2rem 1.5rem;
-            margin: 1rem;
-        }
-        
-        .signup-title {
-            font-size: 1.5rem;
-        }
-        
-        .signup-icon {
-            font-size: 3rem;
-        }
-    }
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1a237e,#0d47a1);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 0}
+.box{background:#fff;border-radius:14px;padding:48px 42px;width:460px;box-shadow:0 24px 64px rgba(0,0,0,.3)}
+.logo{text-align:center;margin-bottom:28px}
+.logo h1{font-size:24px;color:#1a237e;font-weight:700}
+.logo p{color:#888;font-size:13px;margin-top:4px}
+label{display:block;font-size:13px;font-weight:600;color:#333;margin-top:14px;margin-bottom:5px}
+.row{display:flex;gap:8px}
+.row input{flex:1}
+input{width:100%;padding:12px 14px;border:1.5px solid #e0e0e0;border-radius:9px;font-size:14px;outline:none;transition:border-color .2s}
+input:focus{border-color:#1a237e}
+.btn-chk{padding:12px 14px;background:#e8f0fe;color:#1a237e;border:1.5px solid #1a237e;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn-chk:hover{background:#d0e4ff}
+.hint{font-size:11px;margin-top:4px;min-height:16px}
+.ok{color:#2e7d32}.err-h{color:#c62828}
+.btn{width:100%;padding:14px;background:#1a237e;color:#fff;border:none;border-radius:9px;font-size:15px;font-weight:600;cursor:pointer;margin-top:22px}
+.btn:hover{background:#283593}
+.err{background:#fdecea;color:#c62828;border-radius:8px;padding:11px 15px;font-size:13px;margin-bottom:14px;display:none}
+.links{text-align:center;margin-top:18px;font-size:13px;color:#888}
+.links a{color:#1a237e;font-weight:600;text-decoration:none}
 </style>
+</head>
+<body>
+<div class="box">
+  <div class="logo">
+    <h1>📈 PortWatch 회원가입</h1>
+    <p>주식 포트폴리오 관리 시스템</p>
+  </div>
+  <div class="err" id="err"></div>
 
-<div class="signup-container">
-    <div class="signup-card animate-fade-in">
-        <div class="signup-header">
-            <div class="signup-icon">
-                <i class="bi bi-person-plus"></i>
-            </div>
-            <h2 class="signup-title">회원가입</h2>
-            <p class="signup-subtitle">무료로 시작하세요</p>
-        </div>
-        
-        <!-- Error Message -->
-        <c:if test="${not empty error}">
-            <div class="alert alert-danger" role="alert">
-                <i class="bi bi-exclamation-circle me-2"></i>${error}
-            </div>
-        </c:if>
-        
-        <!-- Signup Form -->
-        <form action="${pageContext.request.contextPath}/member/signup" method="post" onsubmit="return validateForm()">
-            <div class="form-floating mb-3">
-                <input type="text" class="form-control" id="memberName" 
-                       name="memberName" placeholder="홍길동" required>
-                <label for="memberName">
-                    <i class="bi bi-person me-2"></i>이름
-                </label>
-            </div>
-            
-            <div class="form-floating mb-3">
-                <input type="email" class="form-control" id="memberEmail" 
-                       name="memberEmail" placeholder="example@email.com" required>
-                <label for="memberEmail">
-                    <i class="bi bi-envelope me-2"></i>이메일
-                </label>
-                <small class="text-muted">이메일은 아이디로 사용됩니다</small>
-            </div>
-            
-            <div class="form-floating mb-3">
-                <input type="password" class="form-control" id="memberPass" 
-                       name="memberPass" placeholder="Password" required
-                       onkeyup="checkPasswordStrength()">
-                <label for="memberPass">
-                    <i class="bi bi-lock me-2"></i>비밀번호
-                </label>
-                <div class="password-strength">
-                    <div class="password-strength-bar" id="strengthBar"></div>
-                </div>
-                <small class="text-muted" id="strengthText">4자 이상 입력하세요</small>
-            </div>
-            
-            <div class="form-floating mb-3">
-                <input type="password" class="form-control" id="memberPassConfirm" 
-                       placeholder="Password" required>
-                <label for="memberPassConfirm">
-                    <i class="bi bi-lock-fill me-2"></i>비밀번호 확인
-                </label>
-            </div>
-            
-            <div class="form-floating mb-3">
-                <input type="tel" class="form-control" id="memberPhone" 
-                       name="memberPhone" placeholder="010-1234-5678">
-                <label for="memberPhone">
-                    <i class="bi bi-phone me-2"></i>전화번호 (선택)
-                </label>
-            </div>
-            
-            <div class="terms">
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="agreeTerms" required>
-                    <label class="form-check-label" for="agreeTerms">
-                        <a href="#" class="text-decoration-none">이용약관</a> 및 
-                        <a href="#" class="text-decoration-none">개인정보처리방침</a>에 동의합니다
-                    </label>
-                </div>
-            </div>
-            
-            <button type="submit" class="btn btn-signup">
-                <i class="bi bi-check-circle me-2"></i>회원가입
-            </button>
-        </form>
-        
-        <div class="login-link">
-            이미 계정이 있으신가요?
-            <a href="${pageContext.request.contextPath}/member/login">
-                로그인하기 <i class="bi bi-arrow-right"></i>
-            </a>
-        </div>
-    </div>
+  <label>이메일 *</label>
+  <div class="row">
+    <input type="email" id="memberEmail" placeholder="이메일 주소"/>
+    <button class="btn-chk" onclick="checkEmail()">중복확인</button>
+  </div>
+  <div class="hint" id="emailHint"></div>
+
+  <label>비밀번호 *</label>
+  <input type="password" id="memberPass" placeholder="비밀번호 (8자 이상)"/>
+
+  <label>비밀번호 확인 *</label>
+  <input type="password" id="memberPassCfm" placeholder="비밀번호 재입력"
+         oninput="checkPw()"/>
+  <div class="hint" id="pwHint"></div>
+
+  <label>이름 *</label>
+  <input type="text" id="memberName" placeholder="이름을 입력하세요"/>
+
+  <label>전화번호</label>
+  <input type="tel" id="memberPhone" placeholder="010-0000-0000"/>
+
+  <button class="btn" onclick="doSignup()">회원가입</button>
+  <div class="links">이미 계정이 있으신가요? <a href="/member/login">로그인</a></div>
 </div>
 
 <script>
-function checkPasswordStrength() {
-    const password = $('#memberPass').val();
-    const strengthBar = $('#strengthBar');
-    const strengthText = $('#strengthText');
-    
-    if (password.length === 0) {
-        strengthBar.removeClass().addClass('password-strength-bar');
-        strengthText.text('4자 이상 입력하세요');
-    } else if (password.length < 6) {
-        strengthBar.removeClass().addClass('password-strength-bar strength-weak');
-        strengthText.text('약함 - 6자 이상 권장').css('color', '#ef4444');
-    } else if (password.length < 10) {
-        strengthBar.removeClass().addClass('password-strength-bar strength-medium');
-        strengthText.text('보통 - 10자 이상 권장').css('color', '#f59e0b');
-    } else {
-        strengthBar.removeClass().addClass('password-strength-bar strength-strong');
-        strengthText.text('강함 - 안전한 비밀번호입니다').css('color', '#10b981');
-    }
+var emailOk = false;
+
+function checkEmail(){
+  var email = document.getElementById('memberEmail').value.trim();
+  if(!email){setHint('emailHint','이메일을 입력하세요.',false);return;}
+  fetch('/member/check-email?memberEmail='+encodeURIComponent(email))
+  .then(r=>r.json()).then(d=>{
+    emailOk = d.available;
+    setHint('emailHint', d.message, d.available);
+  });
 }
 
-function validateForm() {
-    const password = $('#memberPass').val();
-    const confirm = $('#memberPassConfirm').val();
-    
-    if (password !== confirm) {
-        alert('비밀번호가 일치하지 않습니다.');
-        return false;
-    }
-    
-    if (password.length < 4) {
-        alert('비밀번호는 4자 이상이어야 합니다.');
-        return false;
-    }
-    
-    return true;
+function checkPw(){
+  var p1 = document.getElementById('memberPass').value;
+  var p2 = document.getElementById('memberPassCfm').value;
+  if(!p2) return;
+  setHint('pwHint', p1===p2?'비밀번호가 일치합니다.':'비밀번호가 일치하지 않습니다.', p1===p2);
 }
+
+function doSignup(){
+  var email = document.getElementById('memberEmail').value.trim();
+  var pass  = document.getElementById('memberPass').value;
+  var pass2 = document.getElementById('memberPassCfm').value;
+  var name  = document.getElementById('memberName').value.trim();
+  var phone = document.getElementById('memberPhone').value.trim();
+
+  if(!email||!pass||!name){showErr('필수 항목을 모두 입력하세요.');return;}
+  if(pass!==pass2){showErr('비밀번호가 일치하지 않습니다.');return;}
+  if(pass.length<8){showErr('비밀번호는 8자 이상이어야 합니다.');return;}
+
+  fetch('/member/signup',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'memberEmail='+encodeURIComponent(email)+
+         '&memberPass=' +encodeURIComponent(pass) +
+         '&memberName=' +encodeURIComponent(name) +
+         '&memberPhone='+encodeURIComponent(phone)
+  })
+  .then(r=>r.json()).then(d=>{
+    if(d.success){alert('회원가입이 완료되었습니다!');location.href='/member/login';}
+    else showErr(d.message);
+  })
+  .catch(()=>showErr('서버 연결 오류가 발생했습니다.'));
+}
+
+function setHint(id,msg,ok){
+  var el=document.getElementById(id);
+  el.textContent=msg;
+  el.className='hint '+(ok?'ok':'err-h');
+}
+function showErr(m){var e=document.getElementById('err');e.textContent=m;e.style.display='block';}
 </script>
-
-<jsp:include page="../common/footer.jsp" />
+</body>
+</html>

@@ -11,14 +11,10 @@
         http://www.springframework.org/schema/context
         https://www.springframework.org/schema/context/spring-context.xsd">
 
-    <!-- ============================================================
-         위 치 : src/main/webapp/WEB-INF/spring/appServlet/servlet-context.xml
-         ============================================================ -->
-
-    <!-- Enables the Spring MVC @Controller programming model -->
+    <!-- Spring MVC @Controller 활성화 -->
     <annotation-driven />
 
-    <!-- Handles HTTP GET requests for /resources/** -->
+    <!-- 정적 리소스 처리 -->
     <resources mapping="/resources/**" location="/resources/" />
 
     <!-- ViewResolver: /WEB-INF/views/*.jsp -->
@@ -30,17 +26,14 @@
     <!-- Controller 스캔 -->
     <context:component-scan base-package="com.portwatch.controller" />
 
-    <!-- ============================================================
-         Multipart Resolver (파일 업로드)
-         ※ CommonsMultipartResolver 는 commons-fileupload JAR 필요
-            → 없으면 BeanCreationException 발생
-            → StandardServletMultipartResolver 사용 (Servlet 3.0 기본 제공)
-            ※ web.xml 의 DispatcherServlet 에 multipart-config 태그 추가 필요
-         ============================================================ -->
+    <!-- ✅ Multipart Resolver
+         StandardServletMultipartResolver 사용
+         (commons-fileupload JAR 불필요, Servlet 3.0 기본 제공)
+         web.xml 의 DispatcherServlet 에 multipart-config 필수 -->
     <beans:bean id="multipartResolver"
         class="org.springframework.web.multipart.support.StandardServletMultipartResolver"/>
 
-    <!-- JSON Converter (Jackson) -->
+    <!-- JSON MessageConverter -->
     <beans:bean id="jsonHttpMessageConverter"
         class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter"/>
 

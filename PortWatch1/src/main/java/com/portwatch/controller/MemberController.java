@@ -1,17 +1,18 @@
 package com.portwatch.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -19,226 +20,160 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.portwatch.domain.MemberVO;
 import com.portwatch.service.MemberService;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
- * 회원 관련 컨트롤러
+ * MemberController - 최종 병합본
+ *
+ * ✅ 원본 기준 유지:
+ *   - 로그인: 이메일(memberEmail) + 비밀번호(memberPass)
+ *   - GET /member/login  → login.jsp
+ *   - GET /member/signup → signup.jsp  ← 404 오류 원인, GET 매핑 추가
+ *
+ * ✅ 신규 추가:
+ *   - 이메일 중복체크 AJAX: /member/check-email
+ *   - 아이디 중복체크 AJAX: /member/check-id
  */
 @Controller
 @RequestMapping("/member")
 public class MemberController {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(MemberController.class);
-    
+
     @Autowired
     private MemberService memberService;
-    
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 로그인 페이지
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    // ─────────────────────────────────────────────────
+    // GET /member/login → login.jsp
+    // ─────────────────────────────────────────────────
     @GetMapping("/login")
-    public String loginPage(HttpSession session) {
-        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        logger.info("🔐 로그인 페이지 접근");
-        logger.info("  → 로그인 페이지 표시");
-        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        
-        // 이미 로그인되어 있으면 대시보드로 리다이렉트
-        MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
-        if (loginMember != null) {
+    public String loginForm(HttpSession session) {
+        if (session.getAttribute("loginMember") != null) {
             return "redirect:/dashboard";
         }
-        
-        return "member/login";
+        return "member/login";   // /WEB-INF/views/member/login.jsp
     }
-    
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 로그인 처리
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    // ─────────────────────────────────────────────────
+    // POST /member/login → JSON
+    // ─────────────────────────────────────────────────
     @PostMapping("/login")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> login(
-            @RequestParam String memberEmail,
-            @RequestParam String memberPass,
+            @RequestParam("memberEmail") String memberEmail,
+            @RequestParam("memberPass")  String memberPass,
             HttpSession session) {
-        
+
         Map<String, Object> result = new HashMap<>();
-        
-        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        logger.info("🔐 로그인 시도");
-        logger.info("  - 이메일: {}", memberEmail);
-        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        
         try {
+            logger.info("로그인 요청 - email: {}", memberEmail);
+
             MemberVO member = memberService.login(memberEmail, memberPass);
-            
+
             if (member != null) {
-                // 세션에 저장
                 session.setAttribute("loginMember", member);
-                session.setAttribute("memberId", member.getMemberId());
-                session.setAttribute("memberName", member.getMemberName());
-                
-                logger.info("✅ 로그인 성공");
-                logger.info("  - 회원 ID: {}", member.getMemberId());
-                logger.info("  - 이름: {}", member.getMemberName());
-                logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                
-                result.put("success", true);
-                result.put("message", "로그인 성공");
-                result.put("memberId", member.getMemberId());
-                result.put("memberName", member.getMemberName());
-                return ResponseEntity.ok(result);
+                session.setAttribute("memberId",    member.getMemberId());
+                session.setAttribute("memberEmail", member.getMemberEmail());
+                result.put("success",     true);
+                result.put("message",     "로그인 성공");
+                result.put("redirectUrl", "/dashboard");
             } else {
-                logger.warn("❌ 로그인 실패: 이메일 또는 비밀번호 불일치");
-                logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                
                 result.put("success", false);
-                result.put("message", "이메일 또는 비밀번호가 일치하지 않습니다.");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(result);
+                result.put("message", "이메일 또는 비밀번호가 올바르지 않습니다.");
             }
+
         } catch (Exception e) {
-            logger.error("❌ 로그인 오류", e);
-            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
+            logger.error("로그인 예외 - email: {}, 오류: {}", memberEmail, e.getMessage(), e);
             result.put("success", false);
             result.put("message", "로그인 처리 중 오류가 발생했습니다.");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
         }
+
+        return ResponseEntity.ok(result);
     }
-    
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 로그아웃
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    // ─────────────────────────────────────────────────
+    // GET /member/signup → signup.jsp  ← 404 원인 해결
+    // ─────────────────────────────────────────────────
+    @GetMapping("/signup")
+    public String signupForm() {
+        return "member/signup";  // /WEB-INF/views/member/signup.jsp
+    }
+
+    // ─────────────────────────────────────────────────
+    // POST /member/signup → JSON
+    // ─────────────────────────────────────────────────
+    @PostMapping("/signup")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> signup(MemberVO member) {
+
+        Map<String, Object> result = new HashMap<>();
+        try {
+            // 이메일 중복 체크
+            if (!memberService.checkEmailAvailable(member.getMemberEmail())) {
+                result.put("success", false);
+                result.put("message", "이미 사용 중인 이메일입니다.");
+                return ResponseEntity.ok(result);
+            }
+
+            memberService.register(member);
+            result.put("success",     true);
+            result.put("message",     "회원가입이 완료되었습니다.");
+            result.put("redirectUrl", "/member/login");
+
+        } catch (Exception e) {
+            logger.error("회원가입 예외: {}", e.getMessage(), e);
+            result.put("success", false);
+            result.put("message", "회원가입 처리 중 오류가 발생했습니다.");
+        }
+
+        return ResponseEntity.ok(result);
+    }
+
+    // ─────────────────────────────────────────────────
+    // GET /member/logout
+    // ─────────────────────────────────────────────────
     @GetMapping("/logout")
     public String logout(HttpSession session) {
-        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        logger.info("🚪 로그아웃");
-        logger.info("  → 세션 무효화");
-        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        
         session.invalidate();
         return "redirect:/member/login";
     }
-    
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 회원가입 페이지
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    @GetMapping("/register")
-    public String registerPage() {
-        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        logger.info("📝 회원가입 페이지 접근");
-        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        return "member/register";
-    }
-    
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 회원가입 처리
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    @PostMapping("/register")
+
+    // ─────────────────────────────────────────────────
+    // AJAX 이메일 중복 체크
+    // ─────────────────────────────────────────────────
+    @GetMapping("/check-email")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> register(@RequestBody MemberVO member) {
-        
+    public ResponseEntity<Map<String, Object>> checkEmail(
+            @RequestParam("memberEmail") String memberEmail) {
+
         Map<String, Object> result = new HashMap<>();
-        
-        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        logger.info("📝 회원가입 시도");
-        logger.info("  - 이메일: {}", member.getMemberEmail());
-        logger.info("  - 이름: {}", member.getMemberName());
-        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        
-        try {
-            memberService.register(member);
-            
-            logger.info("✅ 회원가입 성공");
-            logger.info("  - 회원 ID: {}", member.getMemberId());
-            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            result.put("success", true);
-            result.put("message", "회원가입이 완료되었습니다.");
-            return ResponseEntity.ok(result);
-            
-        } catch (Exception e) {
-            logger.error("❌ 회원가입 오류", e);
-            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            result.put("success", false);
-            result.put("message", "회원가입 처리 중 오류가 발생했습니다: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
-        }
+        boolean available = memberService.checkEmailAvailable(memberEmail);
+        result.put("available", available);
+        result.put("message",   available ? "사용 가능한 이메일입니다." : "이미 사용 중인 이메일입니다.");
+        return ResponseEntity.ok(result);
     }
-    
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 프로필 페이지
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    @GetMapping("/profile")
-    public String profilePage(HttpSession session, Model model) {
-        
-        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        logger.info("👤 프로필 페이지 접근");
-        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        
+
+    // ─────────────────────────────────────────────────
+    // AJAX 아이디 중복 체크
+    // ─────────────────────────────────────────────────
+    @GetMapping("/check-id")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> checkId(
+            @RequestParam("memberId") String memberId) {
+
+        Map<String, Object> result = new HashMap<>();
+        boolean available = memberService.checkIdAvailable(memberId);
+        result.put("available", available);
+        result.put("message",   available ? "사용 가능한 아이디입니다." : "이미 사용 중인 아이디입니다.");
+        return ResponseEntity.ok(result);
+    }
+
+    // ─────────────────────────────────────────────────
+    // 마이페이지
+    // ─────────────────────────────────────────────────
+    @GetMapping("/mypage")
+    public String mypage(HttpSession session, Model model) {
         MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
-        if (loginMember == null) {
-            return "redirect:/member/login";
-        }
-        
-        try {
-            MemberVO member = memberService.getMemberById(loginMember.getMemberId());
-            model.addAttribute("member", member);
-            
-            logger.info("✅ 프로필 조회 성공");
-            logger.info("  - 회원 ID: {}", member.getMemberId());
-            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            return "member/profile";
-            
-        } catch (Exception e) {
-            logger.error("❌ 프로필 조회 오류", e);
-            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            model.addAttribute("error", e.getMessage());
-            return "error/500";
-        }
-    }
-    
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 프로필 수정
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    @PostMapping("/profile/update")
-    @ResponseBody
-    public ResponseEntity<Map<String, Object>> updateProfile(
-            @RequestBody MemberVO member,
-            HttpSession session) {
-        
-        Map<String, Object> result = new HashMap<>();
-        
-        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        logger.info("✏️ 프로필 수정 시도");
-        logger.info("  - 회원 ID: {}", member.getMemberId());
-        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        
-        try {
-            memberService.updateMember(member);
-            
-            // 세션 업데이트
-            MemberVO updatedMember = memberService.getMemberById(member.getMemberId());
-            session.setAttribute("loginMember", updatedMember);
-            
-            logger.info("✅ 프로필 수정 성공");
-            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            result.put("success", true);
-            result.put("message", "프로필이 수정되었습니다.");
-            return ResponseEntity.ok(result);
-            
-        } catch (Exception e) {
-            logger.error("❌ 프로필 수정 오류", e);
-            logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            result.put("success", false);
-            result.put("message", "프로필 수정 중 오류가 발생했습니다: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
-        }
+        if (loginMember == null) return "redirect:/member/login";
+        model.addAttribute("member", loginMember);
+        return "member/mypage";
     }
 }

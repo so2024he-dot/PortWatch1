@@ -14,135 +14,183 @@ import com.portwatch.domain.MemberVO;
 import com.portwatch.mapper.MemberMapper;
 
 /**
- * 회원 서비스 구현체
+ * MemberServiceImpl - 최종 병합본
+ *
+ * ✅ 해결된 컴파일 오류 (3개):
+ *   [ERROR] MemberServiceImpl.java:[99]  cannot find symbol: method getBalance()
+ *   [ERROR] MemberServiceImpl.java:[100] cannot find symbol: method setBalance(double)
+ *   [ERROR] MemberServiceImpl.java:[202] cannot find symbol: method getBalance()
+ *   → MemberVO에 balance 필드 + getter/setter 추가로 해결
+ *
+ * ✅ 필드명 통일:
+ *   memberRole   (구버전의 role → memberRole)
+ *   memberStatus (신규 추가)
  */
 @Service
 public class MemberServiceImpl implements MemberService {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(MemberServiceImpl.class);
-    
+
     @Autowired
     private MemberMapper memberMapper;
-    
+
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
-    
-    // 이메일 인증 코드 임시 저장소
-    private Map<String, String> verificationCodes = new HashMap<>();
-    
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 로그인
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    /** 이메일 인증 코드 임시 저장소 */
+    private final Map<String, String> verificationCodes = new HashMap<>();
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 로그인 (이메일 기반)
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     @Override
     public MemberVO login(String memberEmail, String memberPass) {
-        logger.info("🔐 로그인 시도: {}", memberEmail);
-        
-        MemberVO member = memberMapper.findByEmail(memberEmail);
-        
-        if (member != null && passwordEncoder.matches(memberPass, member.getMemberPass())) {
-            logger.info("✅ 로그인 성공: {}", memberEmail);
+        logger.info("로그인 시도 - email: {}", memberEmail);
+        try {
+            MemberVO member = memberMapper.findByEmail(memberEmail);
+
+            if (member == null) {
+                logger.warn("회원 없음 - email: {}", memberEmail);
+                return null;
+            }
+
+            if (!passwordEncoder.matches(memberPass, member.getMemberPass())) {
+                logger.warn("비밀번호 불일치 - email: {}", memberEmail);
+                return null;
+            }
+
+            // 로그인 시간 업데이트 (실패해도 로그인 성공 유지)
+            try {
+                memberMapper.updateLastLogin(member.getMemberId());
+            } catch (Exception e) {
+                logger.warn("updateLastLogin 실패 (무시됨): {}", e.getMessage());
+            }
+
+            logger.info("로그인 성공 - email: {}, id: {}", memberEmail, member.getMemberId());
             return member;
+
+        } catch (Exception e) {
+            logger.error("login() 예외 - email: {}, 원인: {}", memberEmail, e.getMessage(), e);
+            throw e;
         }
-        
-        logger.warn("❌ 로그인 실패: {}", memberEmail);
-        return null;
     }
-    
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // 회원가입
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     @Override
     public void register(MemberVO member) {
-        logger.info("📝 회원가입 시작: {}", member.getMemberEmail());
-        
-        // 비밀번호 암호화
-        String encodedPassword = passwordEncoder.encode(member.getMemberPass());
-        member.setMemberPass(encodedPassword);
-        
-        // 회원 저장
-        memberMapper.insert(member);
-        
-        logger.info("✅ 회원가입 완료: {}", member.getMemberEmail());
+        logger.info("회원가입 시작 - email: {}", member.getMemberEmail());
+        try {
+            // 비밀번호 암호화
+            member.setMemberPass(passwordEncoder.encode(member.getMemberPass()));
+
+            // ✅ 초기 잔액 설정 (MemberVO.balance 필드 사용)
+            if (member.getBalance() <= 0) {   // ← 이 부분이 오류였던 getBalance()
+                member.setBalance(1_000_000.0); // ← 이 부분이 오류였던 setBalance()
+            }
+
+            // 기본 역할/상태 설정
+            if (member.getMemberRole() == null || member.getMemberRole().isEmpty()) {
+                member.setMemberRole("USER");
+            }
+            if (member.getMemberStatus() == null || member.getMemberStatus().isEmpty()) {
+                member.setMemberStatus("ACTIVE");
+            }
+
+            memberMapper.insert(member);
+            logger.info("회원가입 완료 - email: {}", member.getMemberEmail());
+
+        } catch (Exception e) {
+            logger.error("register() 예외 - email: {}, 원인: {}", member.getMemberEmail(), e.getMessage(), e);
+            throw e;
+        }
     }
-    
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // 회원 조회
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     @Override
     public MemberVO getMemberById(String memberId) {
         return memberMapper.findById(memberId);
     }
-    
+
     @Override
     public MemberVO getMemberByEmail(String memberEmail) {
         return memberMapper.findByEmail(memberEmail);
     }
-    
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // 회원 수정
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     @Override
     public void updateMember(MemberVO member) {
-        logger.info("✏️ 회원 정보 수정: {}", member.getMemberId());
-        
-        // 비밀번호가 변경된 경우 암호화
+        logger.info("회원 정보 수정 - id: {}", member.getMemberId());
         if (member.getMemberPass() != null && !member.getMemberPass().isEmpty()) {
-            String encodedPassword = passwordEncoder.encode(member.getMemberPass());
-            member.setMemberPass(encodedPassword);
+            member.setMemberPass(passwordEncoder.encode(member.getMemberPass()));
         }
-        
         memberMapper.update(member);
-        
-        logger.info("✅ 회원 정보 수정 완료: {}", member.getMemberId());
+        logger.info("회원 정보 수정 완료 - id: {}", member.getMemberId());
     }
-    
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 회원 삭제
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 회원 삭제 (soft delete)
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     @Override
     public void deleteMember(String memberId) {
-        logger.info("🗑️ 회원 삭제: {}", memberId);
+        logger.info("회원 삭제(비활성화) - id: {}", memberId);
         memberMapper.delete(memberId);
-        logger.info("✅ 회원 삭제 완료: {}", memberId);
     }
-    
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 이메일 중복 체크
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 중복 체크
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     @Override
     public boolean checkEmailAvailable(String email) {
-        MemberVO existingMember = memberMapper.findByEmail(email);
-        return (existingMember == null);
+        return memberMapper.findByEmail(email) == null;
     }
-    
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 인증 코드 생성
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    @Override
+    public boolean checkIdAvailable(String memberId) {
+        return memberMapper.findById(memberId) == null;
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 이메일 인증 코드
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     @Override
     public String generateVerificationCode() {
-        Random random = new Random();
-        int code = 100000 + random.nextInt(900000);
-        return String.valueOf(code);
+        return String.valueOf(100000 + new Random().nextInt(900000));
     }
-    
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 인증 코드 검증
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
     @Override
     public boolean verifyCode(String email, String code) {
-        String savedCode = verificationCodes.get(email);
-        if (savedCode != null && savedCode.equals(code)) {
+        String saved = verificationCodes.get(email);
+        if (saved != null && saved.equals(code)) {
             verificationCodes.remove(email);
             return true;
         }
         return false;
     }
-    
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 인증 코드 저장 (이메일 발송 전)
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
     public void saveVerificationCode(String email, String code) {
         verificationCodes.put(email, code);
-        logger.info("📧 인증 코드 저장: {} - {}", email, code);
+        logger.info("인증 코드 저장 - email: {}", email);
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 잔액 관리
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    @Override
+    public double getBalance(String memberId) {
+        MemberVO member = memberMapper.findById(memberId);
+        // ✅ member.getBalance() - MemberVO에 balance 필드 있어야 정상 동작
+        return (member != null) ? member.getBalance() : 0.0;  // ← 오류였던 getBalance()
+    }
+
+    @Override
+    public void updateBalance(String memberId, double balance) {
+        logger.info("잔액 업데이트 - id: {}, balance: {}", memberId, balance);
+        memberMapper.updateBalance(memberId, balance);
     }
 }

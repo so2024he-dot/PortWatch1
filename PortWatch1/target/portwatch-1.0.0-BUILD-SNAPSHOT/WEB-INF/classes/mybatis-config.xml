@@ -4,16 +4,14 @@
   "http://mybatis.org/dtd/mybatis-3-config.dtd">
 
 <!--
-    ✅ [수정] mybatis-config.xml
-    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    핵심 오류: Cannot find class: MemberVO
-    
-    원인: <package name="com.portwatch.domain"/> 방식은
-          Eclipse WTP 배포 환경에서 클래스패스 스캔이
-          정상 동작하지 않을 수 있음
-    
-    해결: 각 VO 클래스를 <typeAlias>로 명시적 등록
-    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    mybatis-config.xml - 최종 확정본
+
+    ✅ 업로드된 버전 기준 유지 (명시적 typeAlias 방식)
+    ✅ 이유: Eclipse WTP 배포 환경에서 <package> 스캔 방식은
+            클래스패스 인식 문제가 발생할 수 있어 명시적 등록이 안전
+
+    ✅ 주의사항:
+       새로운 VO 클래스 추가 시 여기에도 반드시 <typeAlias> 등록 필요
 -->
 <configuration>
 
@@ -43,7 +41,10 @@
         <!-- 로깅 -->
         <setting name="logImpl"                          value="SLF4J"/>
 
-        <!-- ⭐ 언더스코어 → 카멜케이스 자동 변환 -->
+        <!--
+            ⭐ 언더스코어 → 카멜케이스 자동 변환
+            member_id → memberId, member_role → memberRole 자동 처리
+        -->
         <setting name="mapUnderscoreToCamelCase"         value="true"/>
 
         <!-- JDBC Type -->
@@ -51,25 +52,27 @@
     </settings>
 
     <!--
-        ✅ [핵심 수정] TypeAlias - 명시적 등록 방식으로 변경
-        ⛔ 기존: <package name="com.portwatch.domain"/>
-                 → Eclipse WTP 환경에서 클래스 못 찾는 문제 발생
-        ✅ 수정: 각 VO를 alias로 직접 등록
-                 → 클래스패스 스캔 없이 확실하게 동작
+        TypeAlias - 명시적 등록 방식 (업로드 버전 유지)
+
+        ⭐ 핵심: Eclipse WTP 환경에서는 <package> 스캔보다
+                 개별 <typeAlias> 등록이 ClassNotFoundException 방지에 확실함
+
+        ✅ MemberVO 포함 모든 VO 클래스 등록
+           → ClassNotFoundException 해결
     -->
     <typeAliases>
-        <typeAlias alias="MemberVO"          type="com.portwatch.domain.MemberVO"/>
-        <typeAlias alias="NewsVO"            type="com.portwatch.domain.NewsVO"/>
-        <typeAlias alias="StockVO"           type="com.portwatch.domain.StockVO"/>
-        <typeAlias alias="StockPriceVO"      type="com.portwatch.domain.StockPriceVO"/>
-        <typeAlias alias="PortfolioVO"       type="com.portwatch.domain.PortfolioVO"/>
-        <typeAlias alias="PortfolioItemVO"   type="com.portwatch.domain.PortfolioItemVO"/>
-        <typeAlias alias="PortfolioStockVO"  type="com.portwatch.domain.PortfolioStockVO"/>
-        <typeAlias alias="PaymentVO"         type="com.portwatch.domain.PaymentVO"/>
-        <typeAlias alias="WatchlistVO"       type="com.portwatch.domain.WatchlistVO"/>
+        <typeAlias alias="MemberVO"             type="com.portwatch.domain.MemberVO"/>
+        <typeAlias alias="NewsVO"               type="com.portwatch.domain.NewsVO"/>
+        <typeAlias alias="StockVO"              type="com.portwatch.domain.StockVO"/>
+        <typeAlias alias="StockPriceVO"         type="com.portwatch.domain.StockPriceVO"/>
+        <typeAlias alias="PortfolioVO"          type="com.portwatch.domain.PortfolioVO"/>
+        <typeAlias alias="PortfolioItemVO"      type="com.portwatch.domain.PortfolioItemVO"/>
+        <typeAlias alias="PortfolioStockVO"     type="com.portwatch.domain.PortfolioStockVO"/>
+        <typeAlias alias="PaymentVO"            type="com.portwatch.domain.PaymentVO"/>
+        <typeAlias alias="WatchlistVO"          type="com.portwatch.domain.WatchlistVO"/>
         <typeAlias alias="WatchlistWithPriceVO" type="com.portwatch.domain.WatchlistWithPriceVO"/>
-        <typeAlias alias="DashboardVO"       type="com.portwatch.domain.DashboardVO"/>
-        <typeAlias alias="MarketSummaryVO"   type="com.portwatch.domain.MarketSummaryVO"/>
+        <typeAlias alias="DashboardVO"          type="com.portwatch.domain.DashboardVO"/>
+        <typeAlias alias="MarketSummaryVO"      type="com.portwatch.domain.MarketSummaryVO"/>
     </typeAliases>
 
 </configuration>

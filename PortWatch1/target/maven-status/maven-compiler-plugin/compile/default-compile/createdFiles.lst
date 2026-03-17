@@ -17,7 +17,6 @@ com\portwatch\scheduler\StockPriceScheduler.class
 com\portwatch\controller\BackupController.class
 com\portwatch\service\KoreaStockCrawlerService.class
 com\portwatch\controller\PortfolioApiController.class
-com\portwatch\persistence\MemberMapper.class
 com\portwatch\domain\StockVO.class
 com\portwatch\mapper\NewsMapper.class
 com\portwatch\controller\WatchlistController.class
