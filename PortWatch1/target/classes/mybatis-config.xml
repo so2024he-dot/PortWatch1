@@ -4,75 +4,55 @@
   "http://mybatis.org/dtd/mybatis-3-config.dtd">
 
 <!--
-    mybatis-config.xml - 최종 확정본
+    mybatis-config.xml - 최종 수정본
 
-    ✅ 업로드된 버전 기준 유지 (명시적 typeAlias 방식)
-    ✅ 이유: Eclipse WTP 배포 환경에서 <package> 스캔 방식은
-            클래스패스 인식 문제가 발생할 수 있어 명시적 등록이 안전
+    ✅ 핵심 수정:
+      개별 <typeAlias> 등록 → <package> 스캔 방식으로 변경
 
-    ✅ 주의사항:
-       새로운 VO 클래스 추가 시 여기에도 반드시 <typeAlias> 등록 필요
+    [오류 원인 - English]
+      Individual typeAlias registration:
+        <typeAlias alias="MemberVO" type="com.portwatch.domain.MemberVO"/>
+      This requires MemberVO.class to exist at startup.
+      If MemberVO.java is missing or in wrong package → ClassNotFoundException.
+      → sqlSessionFactory creation fails → HTTP 500 for ALL requests.
+
+    [오류 원인 - 한글]
+      개별 typeAlias 등록 방식은 해당 클래스가 클래스패스에 반드시 있어야 함.
+      MemberVO.java가 없거나 잘못된 패키지에 있으면 ClassNotFoundException.
+      → sqlSessionFactory 생성 실패 → 모든 요청 HTTP 500.
+
+    [해결 - 패키지 스캔]
+      <package name="com.portwatch.domain"/> 방식:
+      - domain 패키지 전체를 자동 스캔
+      - 클래스명이 곧 alias (MemberVO → MemberVO)
+      - 새 VO 클래스 추가 시 별도 등록 불필요
 -->
 <configuration>
 
     <settings>
-        <!-- 캐싱 -->
         <setting name="cacheEnabled"                     value="true"/>
-
-        <!-- 지연 로딩 -->
         <setting name="lazyLoadingEnabled"               value="true"/>
         <setting name="aggressiveLazyLoading"            value="false"/>
-
-        <!-- ResultSet -->
         <setting name="multipleResultSetsEnabled"        value="true"/>
         <setting name="useColumnLabel"                   value="true"/>
-
-        <!-- Auto Mapping -->
         <setting name="autoMappingBehavior"              value="PARTIAL"/>
         <setting name="autoMappingUnknownColumnBehavior" value="WARNING"/>
-
-        <!-- Executor -->
         <setting name="defaultExecutorType"              value="SIMPLE"/>
         <setting name="defaultStatementTimeout"          value="25"/>
-
-        <!-- Null 처리 -->
         <setting name="callSettersOnNulls"               value="false"/>
-
-        <!-- 로깅 -->
         <setting name="logImpl"                          value="SLF4J"/>
-
-        <!--
-            ⭐ 언더스코어 → 카멜케이스 자동 변환
-            member_id → memberId, member_role → memberRole 자동 처리
-        -->
+        <!-- snake_case → camelCase 자동 변환 (member_id → memberId) -->
         <setting name="mapUnderscoreToCamelCase"         value="true"/>
-
-        <!-- JDBC Type -->
         <setting name="jdbcTypeForNull"                  value="NULL"/>
     </settings>
 
     <!--
-        TypeAlias - 명시적 등록 방식 (업로드 버전 유지)
-
-        ⭐ 핵심: Eclipse WTP 환경에서는 <package> 스캔보다
-                 개별 <typeAlias> 등록이 ClassNotFoundException 방지에 확실함
-
-        ✅ MemberVO 포함 모든 VO 클래스 등록
-           → ClassNotFoundException 해결
+        ✅ 패키지 스캔 방식 (개별 등록 제거)
+        com.portwatch.domain 패키지의 모든 클래스 자동 alias 등록:
+        MemberVO, StockVO, PortfolioVO, WatchlistVO, NewsVO 등
     -->
     <typeAliases>
-        <typeAlias alias="MemberVO"             type="com.portwatch.domain.MemberVO"/>
-        <typeAlias alias="NewsVO"               type="com.portwatch.domain.NewsVO"/>
-        <typeAlias alias="StockVO"              type="com.portwatch.domain.StockVO"/>
-        <typeAlias alias="StockPriceVO"         type="com.portwatch.domain.StockPriceVO"/>
-        <typeAlias alias="PortfolioVO"          type="com.portwatch.domain.PortfolioVO"/>
-        <typeAlias alias="PortfolioItemVO"      type="com.portwatch.domain.PortfolioItemVO"/>
-        <typeAlias alias="PortfolioStockVO"     type="com.portwatch.domain.PortfolioStockVO"/>
-        <typeAlias alias="PaymentVO"            type="com.portwatch.domain.PaymentVO"/>
-        <typeAlias alias="WatchlistVO"          type="com.portwatch.domain.WatchlistVO"/>
-        <typeAlias alias="WatchlistWithPriceVO" type="com.portwatch.domain.WatchlistWithPriceVO"/>
-        <typeAlias alias="DashboardVO"          type="com.portwatch.domain.DashboardVO"/>
-        <typeAlias alias="MarketSummaryVO"      type="com.portwatch.domain.MarketSummaryVO"/>
+        <package name="com.portwatch.domain"/>
     </typeAliases>
 
 </configuration>
