@@ -1,70 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xmlns="http://xmlns.jcp.org/xml/ns/javaee"
-         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
-             http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
-         id="WebApp_ID" version="3.1">
+<web-app version="3.1"
+    xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+                        https://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd">
 
-    <display-name>PortWatch</display-name>
-
-    <!--
-    =====================================================================
-    [ROOT CAUSE - English Analysis]
-
-    Previous web.xml had DUPLICATE <servlet> declaration like this:
-
-      <servlet>
-          <servlet-name>appServlet</servlet-name>
-          <servlet-class>DispatcherServlet</servlet-class>    <- 1st declaration
-      </servlet>
-      ...
-      <servlet>
-          <servlet-name>appServlet</servlet-name>
-          <multipart-config>...</multipart-config>            <- 2nd declaration (WRONG!)
-      </servlet>
-
-    Duplicate <servlet name="appServlet"> causes Tomcat to fail silently
-    when initializing DispatcherServlet.
-    Result:
-      - "Root WebApplicationContext: initialization completed" APPEARS (root context OK)
-      - "FrameworkServlet 'appServlet': initialization completed" MISSING (MVC fails)
-      - ALL URLs handled by DispatcherServlet return 404 or 500
-
-    FIX: Merge <multipart-config> INSIDE the single <servlet> declaration.
-
-    [핵심 원인 - 한글 분석]
-
-    이전 web.xml에 <servlet name="appServlet"> 가 두 번 선언되었음:
-    - 1번: DispatcherServlet 클래스 등록
-    - 2번: multipart-config 추가 (이것이 오류!)
-
-    Tomcat이 중복 servlet 선언을 처리할 때 DispatcherServlet이 조용히 실패함.
-    결과:
-      - Root WebApplicationContext는 정상 (MyBatis, Service, DAO)
-      - FrameworkServlet(MVC) 초기화 실패 → Controller 매핑 불가
-      - /member/login → 404 (커스텀 404 페이지 표시)
-      - /member/signup → 404
-
-    해결: <multipart-config>를 하나의 <servlet> 안에 통합
-    =====================================================================
-    -->
-
-    <!-- ============================================================
-         Root WebApplicationContext (MyBatis, Service, DAO)
-         ============================================================ -->
+    <!-- Root WebApplicationContext -->
     <context-param>
         <param-name>contextConfigLocation</param-name>
         <param-value>/WEB-INF/spring/root-context.xml</param-value>
     </context-param>
-
     <listener>
         <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
     </listener>
 
-    <!-- ============================================================
-         DispatcherServlet (Spring MVC)
-         multipart-config 을 동일한 <servlet> 안에 통합 - 핵심 수정
-         ============================================================ -->
+    <!-- UTF-8 인코딩 필터 -->
+    <filter>
+        <filter-name>encodingFilter</filter-name>
+        <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+        <init-param><param-name>encoding</param-name><param-value>UTF-8</param-value></init-param>
+        <init-param><param-name>forceEncoding</param-name><param-value>true</param-value></init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>encodingFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <!-- Spring Security 필터 -->
+    <filter>
+        <filter-name>springSecurityFilterChain</filter-name>
+        <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>springSecurityFilterChain</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <!-- DispatcherServlet
+         ✅ multipart-config: StandardServletMultipartResolver 사용 시 필수 -->
     <servlet>
         <servlet-name>appServlet</servlet-name>
         <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
@@ -73,63 +46,19 @@
             <param-value>/WEB-INF/spring/appServlet/servlet-context.xml</param-value>
         </init-param>
         <load-on-startup>1</load-on-startup>
-        <!-- ✅ multipart-config은 반드시 같은 <servlet> 안에 -->
         <multipart-config>
-            <max-file-size>10485760</max-file-size>       <!-- 10MB -->
-            <max-request-size>20971520</max-request-size>  <!-- 20MB -->
-            <file-size-threshold>0</file-size-threshold>
+            <max-file-size>104857600</max-file-size>
+            <max-request-size>104857600</max-request-size>
+            <file-size-threshold>1048576</file-size-threshold>
         </multipart-config>
     </servlet>
-
-<!--     <servlet-mapping>
+    <servlet-mapping>
         <servlet-name>appServlet</servlet-name>
         <url-pattern>/</url-pattern>
     </servlet-mapping>
- -->
-    <!-- ============================================================
-         UTF-8 인코딩 필터
-         ============================================================ -->
-    <filter>
-        <filter-name>encodingFilter</filter-name>
-        <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
-        <init-param>
-            <param-name>encoding</param-name>
-            <param-value>UTF-8</param-value>
-        </init-param>
-        <init-param>
-            <param-name>forceEncoding</param-name>
-            <param-value>true</param-value>
-        </init-param>
-    </filter>
-    <filter-mapping>
-        <filter-name>encodingFilter</filter-name>
-        <url-pattern>/*</url-pattern>
-    </filter-mapping>
 
-    <!-- ============================================================
-         세션 설정 (30분)
-         ============================================================ -->
     <session-config>
         <session-timeout>30</session-timeout>
     </session-config>
-
-    <!-- ============================================================
-         Welcome Page
-         ============================================================ -->
-    <welcome-file-list>
-        <welcome-file>index.jsp</welcome-file>
-    </welcome-file-list>
-
-    <!-- ============================================================
-         에러 페이지
-         ============================================================ -->
-    <error-page>
-        <error-code>404</error-code>
-        <location>/WEB-INF/views/error/404.jsp</location>
-    </error-page>
-    <error-page>
-        <error-code>500</error-code>
-        <location>/WEB-INF/views/error/500.jsp</location>
-    </error-page>
 
 </web-app>
