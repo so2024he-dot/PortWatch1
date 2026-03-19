@@ -33,6 +33,7 @@ com\portwatch\domain\StockPriceVO.class
 com\portwatch\scheduler\StockSymbolScheduler.class
 com\portwatch\service\PortfolioServiceImpl.class
 com\portwatch\controller\PortfolioController.class
+com\portwatch\config\SecurityConfig.class
 com\portwatch\persistence\PortfolioDAO.class
 com\portwatch\domain\PortfolioVO.class
 com\portwatch\mapper\PaymentMapper.class
