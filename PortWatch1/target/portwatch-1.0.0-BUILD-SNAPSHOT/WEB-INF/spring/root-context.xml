@@ -43,6 +43,7 @@
         <property name="idleTimeout" value="600000"/>
         <property name="maxLifetime" value="1800000"/>
         <property name="connectionTestQuery" value="SELECT 1"/>
+        <property name="initializationFailTimeout" value="-1"/>
     </bean>
 
     <!-- MyBatis SqlSessionFactory -->
