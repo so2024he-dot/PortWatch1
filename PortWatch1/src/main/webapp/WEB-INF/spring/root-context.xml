@@ -30,38 +30,28 @@
          ※ annotationClass 속성은 mybatis-spring-1.2.xsd 미지원 → 사용 불가
          ============================================================ -->
 
-    <!-- HikariCP DataSource - AWS RDS 연결 (keepaliveTime 추가로 JDBC 끊김 문제 해결) -->
+    <!--
+        HikariCP DataSource - AWS RDS 연결 (HikariCP 3.4.5 호환)
+        ✅ HikariCP 3.4.5 는 keepaliveTime 미지원 (4.0.0+에서만 지원)
+        ✅ AWS NAT 4분 타임아웃 대비:
+           - maxLifetime=180000 (3분) : AWS가 끊기기 전에 HikariCP가 먼저 교체
+           - idleTimeout=120000 (2분) : 유휴 연결 조기 반환으로 풀 신선도 유지
+           - connectionTestQuery=SELECT 1 : 연결 사용 전 유효성 확인
+           - socketTimeout=60000 : JDBC URL에 소켓 타임아웃 추가
+    -->
     <bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
         <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
-        <!--
-            ✅ JDBC URL 수정:
-              connectTimeout=60000  : TCP 연결 대기 최대 60초
-              socketTimeout=60000   : 소켓 응답 대기 최대 60초 (AWS NAT 타임아웃 대비)
-              autoReconnect=false   : HikariCP이 직접 재연결 관리 (true 시 충돌)
-        -->
         <property name="jdbcUrl"
-            value="jdbc:mysql://portwatch-db-seoul.cpggwqm1goo3.ap-northeast-2.rds.amazonaws.com:3306/portwatch?useSSL=false&amp;serverTimezone=Asia/Seoul&amp;characterEncoding=UTF-8&amp;allowPublicKeyRetrieval=true&amp;connectTimeout=60000&amp;socketTimeout=60000"/>
+            value="jdbc:mysql://portwatch-db-seoul.cpggwqm1goo3.ap-northeast-2.rds.amazonaws.com:3306/portwatch?useSSL=false&amp;serverTimezone=Asia/Seoul&amp;characterEncoding=UTF-8&amp;allowPublicKeyRetrieval=true&amp;connectTimeout=30000&amp;socketTimeout=60000"/>
         <property name="username" value="admin"/>
         <property name="password" value="portwatch2026!!abcd"/>
         <property name="maximumPoolSize" value="5"/>
         <property name="minimumIdle" value="2"/>
-        <property name="connectionTimeout" value="60000"/>
-        <property name="idleTimeout" value="300000"/>
-        <property name="maxLifetime" value="600000"/>
+        <property name="connectionTimeout" value="30000"/>
+        <property name="idleTimeout" value="120000"/>
+        <property name="maxLifetime" value="180000"/>
         <property name="connectionTestQuery" value="SELECT 1"/>
-        <!--
-            ✅ 핵심 수정: keepaliveTime 추가
-              AWS EC2/RDS 환경에서 유휴 TCP 연결이 4~5분 후 강제 종료됨
-              keepaliveTime=120000 → 2분마다 SELECT 1 실행하여 연결 유지
-              이를 통해 "HikariPool-1 - Connection is not available" 오류 해결
-        -->
-        <property name="keepaliveTime" value="120000"/>
-        <!--
-            ✅ initializationFailTimeout=0 으로 변경
-              -1: 시작 시 DB 연결 시도 안함 → 첫 요청 때 30초 타임아웃 발생
-               0: 시작 시 연결 시도하되 실패해도 Tomcat은 정상 시작
-        -->
-        <property name="initializationFailTimeout" value="0"/>
+        <property name="initializationFailTimeout" value="-1"/>
     </bean>
 
     <!-- MyBatis SqlSessionFactory -->
