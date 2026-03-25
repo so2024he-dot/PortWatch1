@@ -46,7 +46,9 @@ public class MemberController {
     // ─────────────────────────────────────────────────
     @GetMapping("/login")
     public String loginForm(HttpSession session) {
-        if (session.getAttribute("loginMember") != null) {
+        // "loginMember" 또는 "member" 중 하나라도 있으면 이미 로그인됨
+        if (session.getAttribute("loginMember") != null
+                || session.getAttribute("member") != null) {
             return "redirect:/dashboard";
         }
         return "member/login";   // /WEB-INF/views/member/login.jsp
@@ -69,7 +71,10 @@ public class MemberController {
             MemberVO member = memberService.login(memberEmail, memberPass);
 
             if (member != null) {
+                // 세션 키 통일: "loginMember"와 "member" 모두 저장
+                // (DashboardController, PortfolioController 등이 "member" 사용)
                 session.setAttribute("loginMember", member);
+                session.setAttribute("member",      member);
                 session.setAttribute("memberId",    member.getMemberId());
                 session.setAttribute("memberEmail", member.getMemberEmail());
                 result.put("success",     true);
