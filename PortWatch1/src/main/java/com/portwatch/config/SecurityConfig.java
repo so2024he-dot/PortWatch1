@@ -1,27 +1,18 @@
 package com.portwatch.config;
 
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 /**
  * SecurityConfig - Spring Security 설정
  *
- * ✅ 해결하는 오류:
- *   web.xml에 springSecurityFilterChain 필터가 등록되어 있으나
- *   대응 빈이 없어 NoSuchBeanDefinitionException 발생
- *   → 모든 요청이 500 에러 또는 차단됨
- *
- * ✅ 설정 내용:
- *   - 로그인/회원가입 페이지: 인증 없이 접근 허용
- *   - 정적 리소스(/resources/**): 허용
- *   - API 엔드포인트(/api/**): 허용 (주식, 뉴스 데이터 조회)
- *   - 나머지: 로그인 필요
- *   - CSRF: 비활성화 (Ajax POST 사용 중)
- *   - Spring Security 기본 폼 로그인: 비활성화 (커스텀 로그인 사용)
+ * ✅ 403 오류 수정:
+ *   - 루트(/) 및 공개 페이지 permitAll 추가
+ *   - 크롤러/어드민 API permitAll 추가
+ *   - exchange-rate → exchange/** 패턴 수정
+ *   - 미인증 접근 시 403 대신 로그인 페이지로 리다이렉트
  */
 @Configuration
 @EnableWebSecurity
@@ -35,7 +26,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
             // URL 접근 권한 설정
             .authorizeRequests()
-                // 공개 접근 허용 - 회원가입/로그인
+                // 루트 및 메인 페이지 - 비로그인 접근 허용
+                .antMatchers(
+                    "/",
+                    "/home",
+                    "/main"
+                ).permitAll()
+
+                // 회원 관련 - 비로그인 접근 허용
                 .antMatchers(
                     "/member/login",
                     "/member/signup",
@@ -47,16 +45,41 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 // 정적 리소스 허용
                 .antMatchers("/resources/**", "/favicon.ico").permitAll()
 
-                // 주식/뉴스 API - 비로그인 조회 허용 (필요 시 변경)
+                // 주식/뉴스/시장 페이지 - 비로그인 조회 허용
+                .antMatchers(
+                    "/stock/**",
+                    "/news/**"
+                ).permitAll()
+
+                // 주식/뉴스/시장/환율 API - 비로그인 조회 허용
                 .antMatchers(
                     "/api/stocks/**",
+                    "/api/stock/**",
                     "/api/news/**",
                     "/api/market/**",
-                    "/api/exchange-rate/**"
+                    "/api/exchange/**",
+                    "/api/exchange/rate",
+                    "/api/exchange/convert",
+                    "/api/us-stock/**",
+                    "/api/stock-price/**"
+                ).permitAll()
+
+                // 크롤러 엔드포인트 - 허용 (수동 트리거용)
+                .antMatchers(
+                    "/crawler/**",
+                    "/api/admin/**"
                 ).permitAll()
 
                 // 나머지 모든 요청: 로그인 필요
+                // (포트폴리오, 관심종목, 대시보드, 결제, 마이페이지)
                 .anyRequest().authenticated()
+
+            .and()
+
+            // 미인증 접근 시 로그인 페이지로 리다이렉트 (403 대신)
+            .exceptionHandling()
+                .authenticationEntryPoint((request, response, authException) ->
+                    response.sendRedirect(request.getContextPath() + "/member/login"))
 
             .and()
 
@@ -74,15 +97,4 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .invalidateHttpSession(true)
                 .deleteCookies("JSESSIONID");
     }
-
-    /**
-     * BCryptPasswordEncoder 빈 등록
-     * root-context.xml에도 등록되어 있으므로 중복 방지를 위해
-     * root-context.xml에서 제거하거나 여기서만 사용
-     *
-     * ※ root-context.xml의 passwordEncoder 빈과 충돌 시:
-     *    root-context.xml에서 해당 빈을 제거하세요.
-     */
-    // root-context.xml에 이미 BCryptPasswordEncoder 빈이 있으므로
-    // 여기서는 정의하지 않음 (중복 빈 방지)
 }
