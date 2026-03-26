@@ -38,6 +38,9 @@
            - idleTimeout=120000 (2분) : 유휴 연결 조기 반환으로 풀 신선도 유지
            - connectionTestQuery=SELECT 1 : 연결 사용 전 유효성 확인
            - socketTimeout=60000 : JDBC URL에 소켓 타임아웃 추가
+        ✅ initializationFailTimeout=30000 (수정):
+           - 구버전(-1): 서버 기동 시 DB 연결 없이 시작 → 첫 요청에서 연결 실패 → 로그인/회원가입 오류
+           - 수정본(30000): 서버 기동 시 30초 안에 DB 연결 시도 → 연결 후 정상 서비스
     -->
     <bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
         <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
@@ -51,7 +54,8 @@
         <property name="idleTimeout" value="120000"/>
         <property name="maxLifetime" value="180000"/>
         <property name="connectionTestQuery" value="SELECT 1"/>
-        <property name="initializationFailTimeout" value="-1"/>
+        <!-- ✅ 수정: -1 → 30000 (기동 시 30초 안에 DB 연결 확인, 실패 시 기동 중단) -->
+        <property name="initializationFailTimeout" value="30000"/>
     </bean>
 
     <!-- MyBatis SqlSessionFactory -->

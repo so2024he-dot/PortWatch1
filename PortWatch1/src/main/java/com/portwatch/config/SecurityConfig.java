@@ -64,6 +64,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     "/api/stock-price/**"
                 ).permitAll()
 
+                // 회원 API - 비로그인 접근 허용 (이메일 중복확인, 인증코드 발송/검증)
+                .antMatchers("/api/member/**").permitAll()
+
                 // 크롤러 엔드포인트 - 허용 (수동 트리거용)
                 .antMatchers(
                     "/crawler/**",
