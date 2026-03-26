@@ -3,6 +3,7 @@ package com.portwatch.service;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,6 +83,15 @@ public class MemberServiceImpl implements MemberService {
     public void register(MemberVO member) {
         logger.info("회원가입 시작 - email: {}", member.getMemberEmail());
         try {
+            // memberId 자동 생성 (폼에서 전송하지 않으므로 서버에서 생성)
+            if (member.getMemberId() == null || member.getMemberId().isEmpty()) {
+                String base = member.getMemberEmail().split("@")[0].replaceAll("[^a-zA-Z0-9]", "");
+                if (base.length() > 10) base = base.substring(0, 10);
+                String suffix = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+                member.setMemberId(base + "_" + suffix);
+                logger.info("memberId 자동 생성: {}", member.getMemberId());
+            }
+
             // 비밀번호 암호화
             member.setMemberPass(passwordEncoder.encode(member.getMemberPass()));
 

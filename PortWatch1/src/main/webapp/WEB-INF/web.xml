@@ -1,47 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xmlns="http://xmlns.jcp.org/xml/ns/javaee"
-         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
-             http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
-         id="WebApp_ID" version="3.1">
+<web-app version="3.1"
+    xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+                        https://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd">
 
-    <display-name>PortWatch</display-name>
-
-    <!-- ============================================================
-         [오류 원인 - English]
-         Console Error:
-           NoSuchBeanDefinitionException: No bean named 'springSecurityFilterChain' available
-
-         The web.xml had a DelegatingFilterProxy for 'springSecurityFilterChain',
-         but there is NO Spring Security configuration (no @EnableWebSecurity, no SecurityConfig).
-         When Tomcat starts, it tries to find this bean → fails → context crashes.
-
-         Fix: Remove the springSecurityFilterChain filter entirely.
-         (Spring Security will be added properly in future if needed)
-
-         [오류 원인 - 한글]
-         web.xml에 springSecurityFilterChain 필터가 등록되어 있었는데
-         root-context.xml 또는 SecurityConfig.java에 Spring Security 설정이 없어서
-         해당 Bean을 찾을 수 없어 Tomcat 기동이 실패함.
-
-         해결: springSecurityFilterChain 필터를 완전히 제거.
-         ============================================================ -->
-
-    <!-- ============================================================
-         Root WebApplicationContext (MyBatis, Service, DAO)
-         ============================================================ -->
+    <!-- Root WebApplicationContext -->
     <context-param>
         <param-name>contextConfigLocation</param-name>
         <param-value>/WEB-INF/spring/root-context.xml</param-value>
     </context-param>
-
     <listener>
         <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
     </listener>
 
-    <!-- ============================================================
-         DispatcherServlet (Spring MVC)
-         ============================================================ -->
+    <!-- UTF-8 인코딩 필터 -->
+    <filter>
+        <filter-name>encodingFilter</filter-name>
+        <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+        <init-param><param-name>encoding</param-name><param-value>UTF-8</param-value></init-param>
+        <init-param><param-name>forceEncoding</param-name><param-value>true</param-value></init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>encodingFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <!-- Spring Security 필터 -->
+    <filter>
+        <filter-name>springSecurityFilterChain</filter-name>
+        <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>springSecurityFilterChain</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <!-- DispatcherServlet
+         ✅ multipart-config: StandardServletMultipartResolver 사용 시 필수 -->
     <servlet>
         <servlet-name>appServlet</servlet-name>
         <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
@@ -50,87 +46,19 @@
             <param-value>/WEB-INF/spring/appServlet/servlet-context.xml</param-value>
         </init-param>
         <load-on-startup>1</load-on-startup>
+        <multipart-config>
+            <max-file-size>104857600</max-file-size>
+            <max-request-size>104857600</max-request-size>
+            <file-size-threshold>1048576</file-size-threshold>
+        </multipart-config>
     </servlet>
-
     <servlet-mapping>
         <servlet-name>appServlet</servlet-name>
         <url-pattern>/</url-pattern>
     </servlet-mapping>
 
-    <!-- ============================================================
-         Encoding Filter (UTF-8)
-         ============================================================ -->
-    <filter>
-        <filter-name>encodingFilter</filter-name>
-        <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
-        <init-param>
-            <param-name>encoding</param-name>
-            <param-value>UTF-8</param-value>
-        </init-param>
-        <init-param>
-            <param-name>forceEncoding</param-name>
-            <param-value>true</param-value>
-        </init-param>
-    </filter>
-
-    <filter-mapping>
-        <filter-name>encodingFilter</filter-name>
-        <url-pattern>/*</url-pattern>
-    </filter-mapping>
-
-    <!-- ============================================================
-         Multipart (파일 업로드) - StandardServletMultipartResolver 사용
-         ============================================================ -->
-    <servlet>
-        <servlet-name>appServlet</servlet-name>
-        <multipart-config>
-            <max-file-size>10485760</max-file-size>
-            <max-request-size>20971520</max-request-size>
-            <file-size-threshold>0</file-size-threshold>
-        </multipart-config>
-    </servlet>
-
-    <!-- ============================================================
-         ✅ springSecurityFilterChain 필터 완전 제거
-         (아래 주석 처리된 부분이 오류의 원인이었던 설정)
-
-         <filter>
-             <filter-name>springSecurityFilterChain</filter-name>
-             <filter-class>
-                 org.springframework.web.filter.DelegatingFilterProxy
-             </filter-class>
-         </filter>
-         <filter-mapping>
-             <filter-name>springSecurityFilterChain</filter-name>
-             <url-pattern>/*</url-pattern>
-         </filter-mapping>
-         ============================================================ -->
-
-    <!-- ============================================================
-         Session 설정 (30분)
-         ============================================================ -->
     <session-config>
         <session-timeout>30</session-timeout>
     </session-config>
-
-    <!-- ============================================================
-         Welcome Page
-         ============================================================ -->
-    <welcome-file-list>
-        <welcome-file>index.jsp</welcome-file>
-    </welcome-file-list>
-
-    <!-- ============================================================
-         Error Pages
-         ============================================================ -->
-    <error-page>
-        <error-code>404</error-code>
-        <location>/WEB-INF/views/error/404.jsp</location>
-    </error-page>
-
-    <error-page>
-        <error-code>500</error-code>
-        <location>/WEB-INF/views/error/500.jsp</location>
-    </error-page>
 
 </web-app>
