@@ -150,9 +150,15 @@ public class MemberController {
             @RequestParam("memberEmail") String memberEmail) {
 
         Map<String, Object> result = new HashMap<>();
-        boolean available = memberService.checkEmailAvailable(memberEmail);
-        result.put("available", available);
-        result.put("message",   available ? "사용 가능한 이메일입니다." : "이미 사용 중인 이메일입니다.");
+        try {
+            boolean available = memberService.checkEmailAvailable(memberEmail);
+            result.put("available", available);
+            result.put("message",   available ? "사용 가능한 이메일입니다." : "이미 사용 중인 이메일입니다.");
+        } catch (Exception e) {
+            logger.error("이메일 중복체크 오류: {}", e.getMessage());
+            result.put("available", false);
+            result.put("message",   "서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+        }
         return ResponseEntity.ok(result);
     }
 
@@ -165,9 +171,15 @@ public class MemberController {
             @RequestParam("memberId") String memberId) {
 
         Map<String, Object> result = new HashMap<>();
-        boolean available = memberService.checkIdAvailable(memberId);
-        result.put("available", available);
-        result.put("message",   available ? "사용 가능한 아이디입니다." : "이미 사용 중인 아이디입니다.");
+        try {
+            boolean available = memberService.checkIdAvailable(memberId);
+            result.put("available", available);
+            result.put("message",   available ? "사용 가능한 아이디입니다." : "이미 사용 중인 아이디입니다.");
+        } catch (Exception e) {
+            logger.error("아이디 중복체크 오류: {}", e.getMessage());
+            result.put("available", false);
+            result.put("message",   "서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+        }
         return ResponseEntity.ok(result);
     }
 
