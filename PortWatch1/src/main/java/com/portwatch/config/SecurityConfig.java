@@ -70,6 +70,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     "/api/admin/**"
                 ).permitAll()
 
+                // 디버그 엔드포인트 - 허용 (BCrypt 해시 생성, DB 연결 확인 등)
+                .antMatchers("/debug/**").permitAll()
+
                 // 나머지 모든 요청: 로그인 필요
                 // (포트폴리오, 관심종목, 대시보드, 결제, 마이페이지)
                 .anyRequest().authenticated()
