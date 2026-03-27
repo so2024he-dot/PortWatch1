@@ -24,6 +24,7 @@ input:focus{border-color:#1a237e}
 .btn{width:100%;padding:14px;background:#1a237e;color:#fff;border:none;border-radius:9px;font-size:15px;font-weight:600;cursor:pointer;margin-top:22px}
 .btn:hover{background:#283593}
 .err{background:#fdecea;color:#c62828;border-radius:8px;padding:11px 15px;font-size:13px;margin-bottom:14px;display:none}
+.ok-msg{background:#e8f5e9;color:#2e7d32;border-radius:8px;padding:11px 15px;font-size:13px;margin-bottom:14px;display:none}
 .links{text-align:center;margin-top:18px;font-size:13px;color:#888}
 .links a{color:#1a237e;font-weight:600;text-decoration:none}
 </style>
@@ -35,6 +36,7 @@ input:focus{border-color:#1a237e}
     <p>주식 포트폴리오 관리 시스템</p>
   </div>
   <div class="err" id="err"></div>
+  <div class="ok-msg" id="okMsg"></div>
 
   <label>이메일 *</label>
   <div class="row">
@@ -71,7 +73,7 @@ function checkEmail(){
   .then(r=>r.json()).then(d=>{
     emailOk = d.available;
     setHint('emailHint', d.message, d.available);
-  });
+  }).catch(()=>setHint('emailHint','서버 연결 오류입니다. 잠시 후 다시 시도해 주세요.',false));
 }
 
 function checkPw(){
@@ -101,8 +103,10 @@ function doSignup(){
          '&memberPhone='+encodeURIComponent(phone)
   })
   .then(r=>r.json()).then(d=>{
-    if(d.success){alert('회원가입이 완료되었습니다!');location.href='/member/login';}
-    else showErr(d.message);
+    if(d.success){
+      showOk('회원가입이 완료되었습니다! 로그인 페이지로 이동합니다...');
+      setTimeout(()=>location.href='/member/login', 1500);
+    } else showErr(d.message);
   })
   .catch(()=>showErr('서버 연결 오류가 발생했습니다.'));
 }
@@ -112,7 +116,8 @@ function setHint(id,msg,ok){
   el.textContent=msg;
   el.className='hint '+(ok?'ok':'err-h');
 }
-function showErr(m){var e=document.getElementById('err');e.textContent=m;e.style.display='block';}
+function showErr(m){var e=document.getElementById('err');e.textContent=m;e.style.display='block';document.getElementById('okMsg').style.display='none';}
+function showOk(m){var o=document.getElementById('okMsg');o.textContent=m;o.style.display='block';document.getElementById('err').style.display='none';}
 </script>
 </body>
 </html>
