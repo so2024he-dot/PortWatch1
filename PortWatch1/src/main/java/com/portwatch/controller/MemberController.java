@@ -242,4 +242,107 @@ public class MemberController {
         model.addAttribute("member", loginMember);
         return "member/mypage";
     }
+
+    // ─────────────────────────────────────────────────
+    // GET /member/profile → profile.jsp
+    // header.jsp, dashboard.jsp에서 링크 → 컨트롤러 매핑 없어서 404 발생하던 문제 해결
+    // ─────────────────────────────────────────────────
+    @GetMapping("/profile")
+    public String profile(HttpSession session, Model model) {
+        MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
+        if (loginMember == null) {
+            loginMember = (MemberVO) session.getAttribute("member");
+        }
+        if (loginMember == null) {
+            return "redirect:/member/login";
+        }
+        model.addAttribute("member", loginMember);
+        return "member/profile";
+    }
+
+    // ─────────────────────────────────────────────────
+    // POST /member/profile/update → 프로필 업데이트 AJAX
+    // ─────────────────────────────────────────────────
+    @PostMapping("/profile/update")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> profileUpdate(
+            MemberVO member, HttpSession session) {
+
+        Map<String, Object> result = new HashMap<>();
+        try {
+            MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
+            if (loginMember == null) {
+                loginMember = (MemberVO) session.getAttribute("member");
+            }
+            if (loginMember == null) {
+                result.put("success", false);
+                result.put("message", "로그인이 필요합니다.");
+                return ResponseEntity.ok(result);
+            }
+            // 이메일은 변경 불가 — 세션에서 가져옴
+            member.setMemberEmail(loginMember.getMemberEmail());
+            member.setMemberId(loginMember.getMemberId());
+            memberService.updateMember(member);
+
+            // 세션 갱신
+            MemberVO updated = memberService.getMemberByEmail(loginMember.getMemberEmail());
+            if (updated != null) {
+                session.setAttribute("loginMember", updated);
+                session.setAttribute("member",      updated);
+            }
+            result.put("success", true);
+            result.put("message", "프로필이 업데이트되었습니다.");
+        } catch (Exception e) {
+            logger.error("프로필 업데이트 오류: {}", e.getMessage(), e);
+            result.put("success", false);
+            result.put("message", "프로필 업데이트 중 오류가 발생했습니다.");
+        }
+        return ResponseEntity.ok(result);
+    }
+
+    // ─────────────────────────────────────────────────
+    // POST /member/profile/password → 비밀번호 변경 AJAX
+    // ─────────────────────────────────────────────────
+    @PostMapping("/profile/password")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> passwordChange(
+            @RequestParam String currentPassword,
+            @RequestParam String newPassword,
+            HttpSession session) {
+
+        Map<String, Object> result = new HashMap<>();
+        try {
+            MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
+            if (loginMember == null) {
+                loginMember = (MemberVO) session.getAttribute("member");
+            }
+            if (loginMember == null) {
+                result.put("success", false);
+                result.put("message", "로그인이 필요합니다.");
+                return ResponseEntity.ok(result);
+            }
+            // 현재 비밀번호 확인 후 변경
+            MemberVO verified = memberService.login(loginMember.getMemberEmail(), currentPassword);
+            if (verified == null) {
+                result.put("success", false);
+                result.put("message", "현재 비밀번호가 올바르지 않습니다.");
+                return ResponseEntity.ok(result);
+            }
+            // 새 비밀번호로 업데이트 (MemberServiceImpl에서 BCrypt 인코딩)
+            MemberVO toUpdate = new MemberVO();
+            toUpdate.setMemberId(loginMember.getMemberId());
+            toUpdate.setMemberEmail(loginMember.getMemberEmail());
+            toUpdate.setMemberPass(newPassword);
+            toUpdate.setMemberName(loginMember.getMemberName());
+            memberService.updateMember(toUpdate);
+
+            result.put("success", true);
+            result.put("message", "비밀번호가 변경되었습니다.");
+        } catch (Exception e) {
+            logger.error("비밀번호 변경 오류: {}", e.getMessage(), e);
+            result.put("success", false);
+            result.put("message", "비밀번호 변경 중 오류가 발생했습니다.");
+        }
+        return ResponseEntity.ok(result);
+    }
 }
