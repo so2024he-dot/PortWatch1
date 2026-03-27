@@ -39,30 +39,34 @@ public class NewsController {
      */
     @GetMapping("/list")
     public String newsList(HttpSession session, Model model) {
-        
+
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("📰 뉴스 목록 조회");
+
+        List<NewsVO> newsList = java.util.Collections.emptyList();
+        String dbError = null;
+
         try {
-            // 로그인 체크 (선택사항)
-            MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
-            
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            System.out.println("📰 뉴스 목록 조회");
-            
-            // 뉴스 목록 조회 (최신 50개)
-            List<NewsVO> newsList = newsService.getRecentNews(50);
-            
-            System.out.println("  - 뉴스 개수: " + (newsList != null ? newsList.size() : 0));
+            List<NewsVO> fetched = newsService.getRecentNews(50);
+            if (fetched != null) {
+                newsList = fetched;
+            }
+            System.out.println("  - 뉴스 개수: " + newsList.size());
             System.out.println("✅ 뉴스 목록 조회 완료!");
-            System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            model.addAttribute("newsList", newsList);
-            
-            return "news/list";
-            
         } catch (Exception e) {
             e.printStackTrace();
-            model.addAttribute("error", e.getMessage());
-            return "error/500";
+            dbError = "뉴스 데이터를 불러오지 못했습니다. (DB 연결 확인 필요: " + e.getMessage() + ")";
+            System.out.println("⚠️ 뉴스 조회 실패 (빈 목록으로 표시): " + e.getMessage());
         }
+
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+        model.addAttribute("newsList", newsList);
+        if (dbError != null) {
+            model.addAttribute("dbError", dbError);
+        }
+
+        return "news/list";
     }
     
     /**

@@ -169,6 +169,14 @@
             </div>
         </div>
         
+        <!-- DB 에러 알림 (서버에서 전달된 경우) -->
+        <c:if test="${not empty dbError}">
+            <div class="alert alert-warning" role="alert">
+                <i class="fas fa-database"></i> <strong>DB 연결 알림:</strong> ${dbError}
+                <br><small>뉴스 데이터를 불러오지 못했습니다. AWS RDS 연결 상태를 확인하세요.</small>
+            </div>
+        </c:if>
+
         <!-- 로딩 스피너 -->
         <div id="loadingSpinner" class="loading-spinner">
             <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">

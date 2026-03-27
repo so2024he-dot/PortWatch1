@@ -61,7 +61,7 @@ public class StockController {
                 country, market, industry, sortBy);
         
         List<StockVO> stocks;
-        
+
         // 필터링
         if (country != null && market != null) {
             stocks = stockService.getStocksByCountryAndMarket(country, market);
@@ -74,24 +74,35 @@ public class StockController {
         } else {
             stocks = stockService.getAllStocks();
         }
-        
-        // 정렬
-        if ("volume".equals(sortBy)) {
-            stocks = stockService.getStocksOrderByVolume(stocks.size());
-        } else if ("gainers".equals(sortBy)) {
-            stocks = stockService.getStocksOrderByChangeRate(stocks.size());
-        } else if ("losers".equals(sortBy)) {
-            stocks = stockService.getStocksOrderByChangeRateDesc(stocks.size());
+
+        // null 방지: DB 오류 시 빈 목록으로 처리
+        if (stocks == null) {
+            stocks = java.util.Collections.emptyList();
         }
-        
+
+        // 정렬 (목록이 비어있지 않을 때만)
+        if (!stocks.isEmpty()) {
+            if ("volume".equals(sortBy)) {
+                stocks = stockService.getStocksOrderByVolume(stocks.size());
+                if (stocks == null) stocks = java.util.Collections.emptyList();
+            } else if ("gainers".equals(sortBy)) {
+                stocks = stockService.getStocksOrderByChangeRate(stocks.size());
+                if (stocks == null) stocks = java.util.Collections.emptyList();
+            } else if ("losers".equals(sortBy)) {
+                stocks = stockService.getStocksOrderByChangeRateDesc(stocks.size());
+                if (stocks == null) stocks = java.util.Collections.emptyList();
+            }
+        }
+
         model.addAttribute("stocks", stocks);
         model.addAttribute("selectedCountry", country);
         model.addAttribute("selectedMarket", market);
         model.addAttribute("selectedIndustry", industry);
         model.addAttribute("sortBy", sortBy);
-        
-        // 필터 옵션
-        model.addAttribute("industries", stockService.getAllIndustries());
+
+        // 필터 옵션 (null 방지)
+        java.util.List<String> industries = stockService.getAllIndustries();
+        model.addAttribute("industries", industries != null ? industries : java.util.Collections.emptyList());
         
         return "stock/list";
     }
