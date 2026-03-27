@@ -38,6 +38,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     "/member/login",
                     "/member/signup",
                     "/member/logout",
+                    "/member/guest-login",
                     "/member/check-email",
                     "/member/check-id"
                 ).permitAll()

@@ -17,6 +17,11 @@ input{width:100%;padding:13px 15px;border:1.5px solid #e0e0e0;border-radius:9px;
 input:focus{border-color:#1a237e}
 .btn{width:100%;padding:14px;background:#1a237e;color:#fff;border:none;border-radius:9px;font-size:15px;font-weight:600;cursor:pointer;transition:background .2s}
 .btn:hover{background:#283593}
+.btn-guest{width:100%;padding:12px;background:#fff;color:#546e7a;border:1.5px solid #b0bec5;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;margin-top:10px;transition:all .2s}
+.btn-guest:hover{background:#eceff1;border-color:#78909c}
+.divider{display:flex;align-items:center;margin:16px 0;color:#bbb;font-size:12px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:#e0e0e0}
+.divider span{padding:0 10px}
 .err{background:#fdecea;color:#c62828;border-radius:8px;padding:11px 15px;font-size:13px;margin-bottom:18px;display:none}
 .links{text-align:center;margin-top:20px;font-size:13px;color:#888}
 .links a{color:#1a237e;font-weight:600;text-decoration:none}
@@ -36,6 +41,8 @@ input:focus{border-color:#1a237e}
   <input type="password" id="memberPass" placeholder="비밀번호 입력"
          onkeypress="if(event.key==='Enter')doLogin()"/>
   <button class="btn" onclick="doLogin()">로그인</button>
+  <div class="divider"><span>또는</span></div>
+  <button class="btn-guest" onclick="location.href='/member/guest-login'">🔍 회원가입 없이 서비스 체험하기</button>
   <div class="links">계정이 없으신가요? <a href="/member/signup">회원가입</a></div>
 </div>
 <script>

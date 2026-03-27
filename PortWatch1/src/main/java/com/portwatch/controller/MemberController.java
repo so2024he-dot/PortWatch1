@@ -142,6 +142,23 @@ public class MemberController {
     }
 
     // ─────────────────────────────────────────────────
+    // GET /member/guest-login → DB 없이 게스트 세션 생성
+    // ─────────────────────────────────────────────────
+    @GetMapping("/guest-login")
+    public String guestLogin(HttpSession session) {
+        MemberVO guest = new MemberVO("guest_user", "guest@portwatch.com", "", "게스트");
+        guest.setMemberRole("GUEST");
+        guest.setMemberStatus("ACTIVE");
+        guest.setBalance(0.0);
+        session.setAttribute("loginMember", guest);
+        session.setAttribute("member",      guest);
+        session.setAttribute("memberId",    "guest_user");
+        session.setAttribute("memberEmail", "guest@portwatch.com");
+        logger.info("게스트 로그인 - 임시 체험 세션 생성");
+        return "redirect:/dashboard";
+    }
+
+    // ─────────────────────────────────────────────────
     // AJAX 이메일 중복 체크
     // ─────────────────────────────────────────────────
     @GetMapping("/check-email")
