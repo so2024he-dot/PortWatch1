@@ -1,5 +1,6 @@
 package com.portwatch.controller;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,6 +10,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -71,6 +78,18 @@ public class MemberController {
             MemberVO member = memberService.login(memberEmail, memberPass);
 
             if (member != null) {
+                // Spring Security 인증 컨텍스트 설정 (anyRequest().authenticated() 통과)
+                String role = member.getMemberRole() != null ? member.getMemberRole() : "USER";
+                Authentication auth = new UsernamePasswordAuthenticationToken(
+                    member.getMemberEmail(), null,
+                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role))
+                );
+                SecurityContext sc = SecurityContextHolder.createEmptyContext();
+                sc.setAuthentication(auth);
+                SecurityContextHolder.setContext(sc);
+                session.setAttribute(
+                    HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, sc);
+
                 // 세션 키 통일: "loginMember"와 "member" 모두 저장
                 // (DashboardController, PortfolioController 등이 "member" 사용)
                 session.setAttribute("loginMember", member);
@@ -137,6 +156,7 @@ public class MemberController {
     // ─────────────────────────────────────────────────
     @GetMapping("/logout")
     public String logout(HttpSession session) {
+        SecurityContextHolder.clearContext();
         session.invalidate();
         return "redirect:/member/login";
     }
@@ -150,11 +170,23 @@ public class MemberController {
         guest.setMemberRole("GUEST");
         guest.setMemberStatus("ACTIVE");
         guest.setBalance(0.0);
+
+        // ✅ Spring Security 인증 컨텍스트 설정 (anyRequest().authenticated() 통과)
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+            "guest_user", null,
+            Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+        );
+        SecurityContext sc = SecurityContextHolder.createEmptyContext();
+        sc.setAuthentication(auth);
+        SecurityContextHolder.setContext(sc);
+        session.setAttribute(
+            HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, sc);
+
         session.setAttribute("loginMember", guest);
         session.setAttribute("member",      guest);
         session.setAttribute("memberId",    "guest_user");
         session.setAttribute("memberEmail", "guest@portwatch.com");
-        logger.info("게스트 로그인 - 임시 체험 세션 생성");
+        logger.info("게스트 로그인 - 임시 체험 세션 생성 (DB 불필요)");
         return "redirect:/dashboard";
     }
 
