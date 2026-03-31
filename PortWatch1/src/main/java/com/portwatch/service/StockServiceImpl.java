@@ -54,7 +54,7 @@ public class StockServiceImpl implements StockService {
             return stockMapper.findAll();
         } catch (Exception e) {
             log.error("전체 주식 조회 실패: {}", e.getMessage());
-            return null;
+            return java.util.Collections.emptyList();
         }
     }
 

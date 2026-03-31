@@ -74,11 +74,12 @@
          SELECT - 목록
          ============================================================ -->
 
-    <!-- ✅ 전체 뉴스 조회 (최신순) -->
+    <!-- ✅ 전체 뉴스 조회 (최신순) - 성능 최적화: LIMIT 50 -->
     <select id="selectAllNews" resultMap="NewsResultMap">
         SELECT news_id, title, stock_code, news_url, published_date, name
         FROM news
         ORDER BY published_date DESC
+        LIMIT 50
     </select>
 
     <!-- ✅ 최근 N개 뉴스 조회 -->
