@@ -467,7 +467,7 @@
     </script>
     
        <div class="container">
-        <h1>📊 주식 목록 (200개 기업)</h1>
+        <h1>📊 주식 목록 (<c:out value="${not empty stocks ? stocks.size() : 0}"/>개 기업)</h1>
         <div class="search-box">
             <input type="text" id="searchInput" placeholder="종목 코드 또는 이름 검색...">
         </div>
@@ -483,7 +483,7 @@
                 </tr>
             </thead>
             <tbody>
-                <c:forEach items="${stockList}" var="stock">
+                <c:forEach items="${stocks}" var="stock">
                     <tr>
                         <td>${stock.stockCode}</td>
                         <td>${stock.stockName}</td>
@@ -493,8 +493,24 @@
                         <td>${stock.currentPrice}</td>
                     </tr>
                 </c:forEach>
+                <c:if test="${empty stocks}">
+                    <tr><td colspan="6" style="text-align:center; padding:20px; color:#888;">
+                        DB에 주식 데이터가 없습니다. 아래 PuTTy 명령으로 데이터를 삽입해 주세요.
+                    </td></tr>
+                </c:if>
             </tbody>
         </table>
     </div>
+
+    <script>
+    // 테이블 검색 기능
+    document.getElementById('searchInput').addEventListener('input', function() {
+        const keyword = this.value.toLowerCase();
+        document.querySelectorAll('#stockTable tbody tr').forEach(function(row) {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(keyword) ? '' : 'none';
+        });
+    });
+    </script>
 </body>
 </html>
