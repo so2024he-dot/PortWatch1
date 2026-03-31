@@ -56,6 +56,7 @@
     <select id="findAll" resultMap="StockResultMap">
         SELECT <include refid="stockColumns"/> FROM STOCK
         ORDER BY country ASC, stock_code ASC
+        LIMIT 200
     </select>
 
     <!-- ════════════════════════════════════════════════════
