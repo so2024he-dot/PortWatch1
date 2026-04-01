@@ -1,6 +1,14 @@
 package com.portwatch.scheduler;
 
+import com.portwatch.domain.NewsVO;
+import com.portwatch.persistence.NewsDAO;
 import com.portwatch.service.NewsService;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+import org.jsoup.parser.Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +16,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -40,9 +49,20 @@ public class NewsScheduler {
     private static final Logger logger = LoggerFactory.getLogger(NewsScheduler.class);
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-    // ✅ 수정: required=false 추가 → NewsService 없어도 스케줄러 Bean 등록 성공
+    // ✅ required=false: NewsService 없어도 스케줄러 Bean 등록 성공
     @Autowired(required = false)
     private NewsService newsService;
+
+    // 미국 뉴스 직접 DB 저장용 (NewsDAO 사용)
+    @Autowired(required = false)
+    private NewsDAO newsDAO;
+
+    // 미국 뉴스 RSS 피드 (MarketWatch - 공개 RSS)
+    private static final String MARKETWATCH_RSS =
+        "https://feeds.content.dowjones.io/public/rss/mw_marketpulse";
+    // Yahoo Finance RSS (미국 시장 뉴스)
+    private static final String YAHOO_FINANCE_RSS =
+        "https://feeds.finance.yahoo.com/rss/2.0/headline?s=^GSPC,^DJI,^IXIC&region=US&lang=en-US";
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // 한국 뉴스 자동 크롤링 (30분마다)
@@ -91,27 +111,11 @@ public class NewsScheduler {
         logger.info("========================================");
 
         try {
-            int totalSaved = 0;
-
-            // 주요 미국 종목 리스트
-            String[] majorStocks = {
-                "AAPL", "MSFT", "GOOGL", "AMZN", "TSLA",
-                "META", "NVDA", "NFLX", "ADBE", "CRM"
-            };
-
-            for (String stockCode : majorStocks) {
-                try {
-                    logger.info("  [US] {} 뉴스 크롤링 중...", stockCode);
-                    // TODO: 실제 미국 뉴스 크롤링 구현
-                    totalSaved++;
-                } catch (Exception e) {
-                    logger.warn("  [US] {} 뉴스 크롤링 실패: {}", stockCode, e.getMessage());
-                }
-            }
+            int totalSaved = crawlUSNewsFromRSS();
 
             logger.info("========================================");
             logger.info("[US] 미국 뉴스 크롤링 완료!");
-            logger.info("     처리된 종목 수: {} 개", totalSaved);
+            logger.info("     저장된 뉴스: {} 개", totalSaved);
             logger.info("     완료 시간: {}", dateFormat.format(new Date()));
             logger.info("========================================");
 
@@ -157,12 +161,79 @@ public class NewsScheduler {
         logger.info("[US] 수동 미국 뉴스 크롤링 시작: {}", dateFormat.format(new Date()));
         logger.info("========================================");
 
-        // TODO: 실제 미국 뉴스 크롤링 구현
-        int savedCount = 0;
+        int savedCount = crawlUSNewsFromRSS();
 
         logger.info("========================================");
         logger.info("[US] 수동 미국 뉴스 크롤링 완료: {} 개", savedCount);
         logger.info("========================================");
+
+        return savedCount;
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 미국 뉴스 RSS 크롤링 (실제 구현)
+    // Yahoo Finance RSS → Jsoup XML 파싱 → NewsDAO로 MySQL 저장
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    private int crawlUSNewsFromRSS() {
+        if (newsDAO == null) {
+            logger.warn("[US-RSS] NewsDAO 없음 - 크롤링 건너뜀");
+            return 0;
+        }
+
+        int savedCount = 0;
+
+        // Yahoo Finance RSS: S&P500, 나스닥 뉴스 피드
+        String[] rssUrls = {
+            "https://feeds.finance.yahoo.com/rss/2.0/headline?s=%5EGSPC&region=US&lang=en-US",
+            "https://feeds.finance.yahoo.com/rss/2.0/headline?s=%5EIXIC&region=US&lang=en-US"
+        };
+
+        for (String rssUrl : rssUrls) {
+            try {
+                logger.info("  [US-RSS] 크롤링: {}", rssUrl);
+
+                Document doc = Jsoup.connect(rssUrl)
+                        .timeout(10000)
+                        .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+                        .parser(Parser.xmlParser())
+                        .get();
+
+                Elements items = doc.select("item");
+                logger.info("  [US-RSS] {}건 발견", items.size());
+
+                for (Element item : items) {
+                    try {
+                        Element titleEl = item.select("title").first();
+                        Element linkEl  = item.select("link").first();
+                        if (titleEl == null || linkEl == null) continue;
+
+                        String title = titleEl.text();
+                        String link  = linkEl.text();
+                        if (title.isEmpty() || link.isEmpty()) continue;
+
+                        // 중복 체크
+                        if (newsDAO.existsByUrl(link)) continue;
+
+                        NewsVO news = new NewsVO();
+                        news.setTitle(title);
+                        news.setNewsUrl(link);
+                        news.setNewsCode("US_" + System.currentTimeMillis() + "_" + savedCount);
+                        news.setName("Yahoo Finance");
+                        news.setStockCode("US_MARKET");
+                        news.setPublishedDate(LocalDateTime.now());
+
+                        newsDAO.insertNews(news);
+                        savedCount++;
+
+                    } catch (Exception e) {
+                        logger.warn("  [US-RSS] 개별 뉴스 저장 실패: {}", e.getMessage());
+                    }
+                }
+
+            } catch (Exception e) {
+                logger.warn("  [US-RSS] RSS 접속 실패({}): {}", rssUrl, e.getMessage());
+            }
+        }
 
         return savedCount;
     }
