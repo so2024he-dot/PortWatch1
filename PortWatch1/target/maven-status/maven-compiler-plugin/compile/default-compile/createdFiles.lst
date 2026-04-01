@@ -26,6 +26,7 @@ com\portwatch\controller\USStockApiController.class
 com\portwatch\domain\PortfolioStockVO.class
 com\portwatch\util\SessionUtils.class
 com\portwatch\scheduler\NewsScheduler.class
+com\portwatch\scheduler\StockScheduler.class
 com\portwatch\domain\MemberVO.class
 com\portwatch\controller\StockCrawlerController.class
 com\portwatch\controller\StockPurchaseApiController.class

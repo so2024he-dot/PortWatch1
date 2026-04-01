@@ -58,6 +58,7 @@ C:\Users\소현석\git\PortWatch1\PortWatch1\src\main\java\com\portwatch\service
 C:\Users\소현석\git\PortWatch1\PortWatch1\src\main\java\com\portwatch\common\ApiResponse.java
 C:\Users\소현석\git\PortWatch1\PortWatch1\src\main\java\com\portwatch\controller\DashboardController.java
 C:\Users\소현석\git\PortWatch1\PortWatch1\src\main\java\com\portwatch\persistence\WatchlistDAO.java
+C:\Users\소현석\git\PortWatch1\PortWatch1\src\main\java\com\portwatch\scheduler\StockScheduler.java
 C:\Users\소현석\git\PortWatch1\PortWatch1\src\main\java\com\portwatch\service\DailyStockBackupService.java
 C:\Users\소현석\git\PortWatch1\PortWatch1\src\main\java\com\portwatch\controller\PaymentController.java
 C:\Users\소현석\git\PortWatch1\PortWatch1\src\main\java\com\portwatch\service\WatchlistService.java

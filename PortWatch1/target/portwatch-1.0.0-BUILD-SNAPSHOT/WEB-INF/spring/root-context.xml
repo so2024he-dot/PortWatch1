@@ -4,6 +4,7 @@
     xmlns:context="http://www.springframework.org/schema/context"
     xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
     xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:task="http://www.springframework.org/schema/task"
     xsi:schemaLocation="
         http://www.springframework.org/schema/beans
         http://www.springframework.org/schema/beans/spring-beans.xsd
@@ -11,6 +12,8 @@
         http://www.springframework.org/schema/context/spring-context.xsd
         http://www.springframework.org/schema/tx
         http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/task
+        http://www.springframework.org/schema/task/spring-task.xsd
         http://mybatis.org/schema/mybatis-spring
         http://mybatis.org/schema/mybatis-spring-1.2.xsd">
 
@@ -106,6 +109,13 @@
     <!-- BCrypt Password Encoder -->
     <bean id="passwordEncoder"
         class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"/>
+
+    <!-- ✅ 핵심: @Scheduled 어노테이션 활성화 -->
+    <!-- 이 설정이 없으면 @Scheduled가 코드에 있어도 스케줄이 실행되지 않음 -->
+    <task:annotation-driven scheduler="taskScheduler"/>
+
+    <!-- 스케줄러 스레드 풀 (최대 5개 동시 실행) -->
+    <task:scheduler id="taskScheduler" pool-size="5"/>
 
     <!-- Service & Scheduler & Config 컴포넌트 스캔 -->
     <context:component-scan base-package="com.portwatch.service"/>
