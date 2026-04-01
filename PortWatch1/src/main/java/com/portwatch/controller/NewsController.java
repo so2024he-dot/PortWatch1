@@ -30,7 +30,7 @@ import com.portwatch.service.NewsService;
 @RequestMapping("/news")
 public class NewsController {
     
-    @Autowired
+    @Autowired(required = false)
     private NewsService newsService;
     
     /**
@@ -46,17 +46,21 @@ public class NewsController {
         List<NewsVO> newsList = java.util.Collections.emptyList();
         String dbError = null;
 
-        try {
-            List<NewsVO> fetched = newsService.getRecentNews(50);
-            if (fetched != null) {
-                newsList = fetched;
+        if (newsService == null) {
+            dbError = "뉴스 서비스를 사용할 수 없습니다. DB 연결을 확인해 주세요.";
+        } else {
+            try {
+                List<NewsVO> fetched = newsService.getRecentNews(50);
+                if (fetched != null) {
+                    newsList = fetched;
+                }
+                System.out.println("  - 뉴스 개수: " + newsList.size());
+                System.out.println("✅ 뉴스 목록 조회 완료!");
+            } catch (Exception e) {
+                e.printStackTrace();
+                dbError = "뉴스 데이터를 불러오지 못했습니다. (DB 연결 확인 필요: " + e.getMessage() + ")";
+                System.out.println("⚠️ 뉴스 조회 실패 (빈 목록으로 표시): " + e.getMessage());
             }
-            System.out.println("  - 뉴스 개수: " + newsList.size());
-            System.out.println("✅ 뉴스 목록 조회 완료!");
-        } catch (Exception e) {
-            e.printStackTrace();
-            dbError = "뉴스 데이터를 불러오지 못했습니다. (DB 연결 확인 필요: " + e.getMessage() + ")";
-            System.out.println("⚠️ 뉴스 조회 실패 (빈 목록으로 표시): " + e.getMessage());
         }
 
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
