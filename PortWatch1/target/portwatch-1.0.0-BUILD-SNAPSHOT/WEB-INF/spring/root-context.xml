@@ -32,29 +32,51 @@
 
     <!--
         HikariCP DataSource - AWS RDS 연결 (HikariCP 3.4.5 호환)
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        ⚠️  타임아웃 2단계 이해 (충돌 원인):
+            [1] JDBC URL connectTimeout=10000
+                → TCP 소켓 연결에 허용하는 최대 시간 (MySQL 드라이버 레벨)
+            [2] HikariCP connectionTimeout=30000
+                → 풀에서 연결을 꺼낼 때 기다리는 최대 시간 (풀 레벨)
+            ✅ 규칙: connectionTimeout >= connectTimeout 이어야 한다
+               5000 < 30000 이면 → 풀이 TCP 연결 완료 전에 포기 → timeout 오류
+
+        ✅ AWS EC2 IPv4 강제 (필수):
+            Tomcat 서비스 파일에 반드시 추가:
+            JAVA_OPTS="-Djava.net.preferIPv4Stack=true"
+            → Java 기본값은 IPv6 우선 → RDS hostname을 IPv6로 해석 시도
+            → IPv6 실패 후 IPv4 재시도 = 5-10초 지연 → 풀 타임아웃 발생
+
         ✅ HikariCP 3.4.5 는 keepaliveTime 미지원 (4.0.0+에서만 지원)
         ✅ AWS NAT 4분 타임아웃 대비:
            - maxLifetime=180000 (3분) : AWS가 끊기기 전에 HikariCP가 먼저 교체
            - idleTimeout=120000 (2분) : 유휴 연결 조기 반환으로 풀 신선도 유지
            - connectionTestQuery=SELECT 1 : 연결 사용 전 유효성 확인
-           - socketTimeout=60000 : JDBC URL에 소켓 타임아웃 추가
-        ✅ initializationFailTimeout=30000 (수정):
-           - 구버전(-1): 서버 기동 시 DB 연결 없이 시작 → 첫 요청에서 연결 실패 → 로그인/회원가입 오류
-           - 수정본(30000): 서버 기동 시 30초 안에 DB 연결 시도 → 연결 후 정상 서비스
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     -->
     <bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
         <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
+        <!--
+            ✅ connectTimeout=10000 (10초): TCP 연결 타임아웃
+               socketTimeout=60000  (60초): 쿼리 실행 타임아웃
+               sslMode=DISABLED: MySQL 8.4 SSL 비활성화
+        -->
         <property name="jdbcUrl"
-            value="jdbc:mysql://portwatch-db-seoul.cpggwqm1goo3.ap-northeast-2.rds.amazonaws.com:3306/portwatch?useSSL=false&amp;sslMode=DISABLED&amp;serverTimezone=Asia/Seoul&amp;characterEncoding=UTF-8&amp;allowPublicKeyRetrieval=true&amp;connectTimeout=30000&amp;socketTimeout=60000"/>
+            value="jdbc:mysql://portwatch-db-seoul.cpggwqm1goo3.ap-northeast-2.rds.amazonaws.com:3306/portwatch?useSSL=false&amp;sslMode=DISABLED&amp;serverTimezone=Asia/Seoul&amp;characterEncoding=UTF-8&amp;allowPublicKeyRetrieval=true&amp;connectTimeout=10000&amp;socketTimeout=60000"/>
         <property name="username" value="admin"/>
         <property name="password" value="portwatch2026!!abcd"/>
         <property name="maximumPoolSize" value="10"/>
         <property name="minimumIdle" value="2"/>
-        <property name="connectionTimeout" value="5000"/>
+        <!--
+            ✅ connectionTimeout=30000 (30초): 풀에서 연결 대기 최대 시간
+               반드시 connectTimeout(10000) 보다 커야 함
+               이전 값 5000은 TCP 연결 전에 풀이 포기 → 오류 원인
+        -->
+        <property name="connectionTimeout" value="30000"/>
         <property name="idleTimeout" value="120000"/>
         <property name="maxLifetime" value="180000"/>
         <property name="connectionTestQuery" value="SELECT 1"/>
-        <!-- ✅ -1: 기동 시 DB 연결 실패해도 Tomcat 기동 허용 (EC2 환경에서 안전) -->
+        <!-- ✅ -1: 기동 시 DB 연결 실패해도 Tomcat 기동 허용 (EC2 재시작 안전) -->
         <property name="initializationFailTimeout" value="-1"/>
     </bean>
 
