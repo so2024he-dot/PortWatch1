@@ -9,6 +9,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.portwatch.service.KoreaStockCrawlerService;
@@ -20,9 +21,9 @@ import lombok.extern.slf4j.Slf4j;
  * 주식 크롤링 Controller
  * ══════════════════════════════════════════════════
  * GET  /crawler        → 크롤링 UI 페이지 (JSP)
- * POST /crawler/korea  → 한국 주식 크롤링
- * POST /crawler/us     → 미국 주식 크롤링
- * POST /crawler/all    → 전체 크롤링
+ * GET|POST /crawler/korea  → 한국 주식 크롤링 (브라우저/curl 모두 허용)
+ * GET|POST /crawler/us     → 미국 주식 크롤링 (브라우저/curl 모두 허용)
+ * GET|POST /crawler/all    → 전체 크롤링
  * GET  /crawler/status → 상태 조회 (Ajax 폴링)
  * ══════════════════════════════════════════════════
  */
@@ -48,8 +49,8 @@ public class StockCrawlerController {
         return "crawler/stock-update";
     }
 
-    /** POST /crawler/korea */
-    @PostMapping("/korea")
+    /** GET|POST /crawler/korea (브라우저 URL 직접 입력도 허용) */
+    @RequestMapping(value = "/korea", method = {RequestMethod.GET, RequestMethod.POST})
     @ResponseBody
     public ResponseEntity<Map<String, Object>> crawlKorea() {
         Map<String, Object> res = new HashMap<>();
@@ -78,8 +79,8 @@ public class StockCrawlerController {
         return ResponseEntity.ok(res);
     }
 
-    /** POST /crawler/us */
-    @PostMapping("/us")
+    /** GET|POST /crawler/us (브라우저 URL 직접 입력도 허용) */
+    @RequestMapping(value = "/us", method = {RequestMethod.GET, RequestMethod.POST})
     @ResponseBody
     public ResponseEntity<Map<String, Object>> crawlUs() {
         Map<String, Object> res = new HashMap<>();
@@ -108,8 +109,8 @@ public class StockCrawlerController {
         return ResponseEntity.ok(res);
     }
 
-    /** POST /crawler/all */
-    @PostMapping("/all")
+    /** GET|POST /crawler/all (브라우저 URL 직접 입력도 허용) */
+    @RequestMapping(value = "/all", method = {RequestMethod.GET, RequestMethod.POST})
     @ResponseBody
     public ResponseEntity<Map<String, Object>> crawlAll() {
         Map<String, Object> res = new HashMap<>();
