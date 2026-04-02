@@ -119,11 +119,44 @@ public class SessionDebugController {
                 "/debug/bcrypt?pass=원하는비밀번호 로 BCrypt 해시를 생성하세요.");
 
         } catch (Exception e) {
-            result.put("success",   false);
+            String errMsg = e.getMessage() != null ? e.getMessage() : "";
+            String diagnosis;
+            String action;
+
+            if (errMsg.contains("timed out") || errMsg.contains("Connection is not available")) {
+                // HikariCP 풀 타임아웃 — 가장 흔한 원인: IPv6 DNS + setenv.sh 미적용
+                diagnosis = "[원인] HikariCP 30초 대기 후 포기. EC2에서 setenv.sh 미적용 가능성 높음.\n"
+                          + "Java 기본값: IPv6 DNS 우선 → RDS는 IPv4 전용 → DNS 해석 5-10초 지연 → 풀 타임아웃";
+                action    = "EC2 PuTTy에서 실행:\n"
+                          + "sudo tee /opt/tomcat/bin/setenv.sh << 'EOF'\n"
+                          + "#!/bin/bash\n"
+                          + "export JAVA_OPTS=\"-Djava.net.preferIPv4Stack=true -Xms256m -Xmx512m\"\n"
+                          + "EOF\n"
+                          + "sudo chmod 755 /opt/tomcat/bin/setenv.sh\n"
+                          + "sudo systemctl restart tomcat";
+            } else if (errMsg.contains("Communications link failure") || errMsg.contains("connect timed out")) {
+                // TCP 연결 자체 실패 — 보안 그룹 또는 RDS 엔드포인트 문제
+                diagnosis = "[원인] TCP 소켓 연결 실패. RDS 보안 그룹 포트 3306 인바운드 규칙 확인 필요.";
+                action    = "AWS 콘솔 → RDS → 보안 그룹 → 인바운드 규칙 → 포트 3306 → EC2 IP 허용 확인";
+            } else if (errMsg.contains("Access denied")) {
+                // 인증 실패 — DB 사용자/비밀번호 오류
+                diagnosis = "[원인] DB 인증 실패. root-context.xml의 username/password 확인 필요.";
+                action    = "root-context.xml: username=admin, password 확인";
+            } else if (errMsg.contains("Unknown database") || errMsg.contains("portwatch")) {
+                // DB 없음
+                diagnosis = "[원인] 'portwatch' 데이터베이스 없음. RDS에서 CREATE DATABASE 필요.";
+                action    = "mysql -h [RDS엔드포인트] -u admin -p → CREATE DATABASE portwatch;";
+            } else {
+                diagnosis = "[원인 미상] 예외: " + e.getClass().getSimpleName();
+                action    = "EC2 로그 확인: sudo tail -100 /opt/tomcat/logs/catalina.out | grep -i hikari";
+            }
+
+            result.put("success",    false);
             result.put("dbConnected", false);
-            result.put("message",   "DB 연결 실패: " + e.getMessage());
-            result.put("diagnosis", "HikariCP 연결 풀 문제. root-context.xml의 initializationFailTimeout 확인 필요.");
-            result.put("error",     e.getClass().getSimpleName());
+            result.put("message",    "DB 연결 실패: " + errMsg);
+            result.put("diagnosis",  diagnosis);
+            result.put("action",     action);
+            result.put("error",      e.getClass().getSimpleName());
         }
 
         return ResponseEntity.ok(result);
