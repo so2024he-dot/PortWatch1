@@ -124,16 +124,22 @@ public class SessionDebugController {
             String action;
 
             if (errMsg.contains("timed out") || errMsg.contains("Connection is not available")) {
-                // HikariCP 풀 타임아웃 — 가장 흔한 원인: IPv6 DNS + setenv.sh 미적용
-                diagnosis = "[원인] HikariCP 30초 대기 후 포기. EC2에서 setenv.sh 미적용 가능성 높음.\n"
-                          + "Java 기본값: IPv6 DNS 우선 → RDS는 IPv4 전용 → DNS 해석 5-10초 지연 → 풀 타임아웃";
-                action    = "EC2 PuTTy에서 실행:\n"
-                          + "sudo tee /opt/tomcat/bin/setenv.sh << 'EOF'\n"
-                          + "#!/bin/bash\n"
-                          + "export JAVA_OPTS=\"-Djava.net.preferIPv4Stack=true -Xms256m -Xmx512m\"\n"
-                          + "EOF\n"
-                          + "sudo chmod 755 /opt/tomcat/bin/setenv.sh\n"
-                          + "sudo systemctl restart tomcat";
+                // HikariCP 풀 타임아웃 — 3단계 진단 체크리스트
+                diagnosis = "[HikariCP 30초 타임아웃] 다음 순서로 EC2에서 진단하세요:\n"
+                          + "① IPv4 확인: ps aux | grep java | grep -o 'preferIPv4Stack=true'\n"
+                          + "   → 출력없으면 setenv.sh 미적용 → setenv.sh 재생성 필요\n"
+                          + "② RDS TCP 연결: nc -zv portwatch-db-seoul.cpggwqm1goo3.ap-northeast-2.rds.amazonaws.com 3306\n"
+                          + "   → 실패하면 보안그룹 문제 → AWS 콘솔에서 SG 확인\n"
+                          + "③ jdbcUrl 확인: unzip -p /opt/tomcat/webapps/ROOT.war WEB-INF/spring/root-context.xml | grep jdbcUrl\n"
+                          + "   → cpggwqm1goo3(숫자1) 이고 한 줄인지 확인";
+                action    = "# Step 1: IPv4 확인\n"
+                          + "ps aux | grep java | grep -o 'preferIPv4Stack=true'\n\n"
+                          + "# Step 2: RDS TCP 직접 테스트\n"
+                          + "nc -zv portwatch-db-seoul.cpggwqm1goo3.ap-northeast-2.rds.amazonaws.com 3306\n\n"
+                          + "# Step 3: MySQL 직접 연결 테스트\n"
+                          + "mysql -h portwatch-db-seoul.cpggwqm1goo3.ap-northeast-2.rds.amazonaws.com -P 3306 -u admin -p\n\n"
+                          + "# Step 4: Tomcat 로그 확인\n"
+                          + "sudo grep -i 'hikari\\|ERROR\\|jdbc' /opt/tomcat/logs/catalina.out | tail -30";
             } else if (errMsg.contains("Communications link failure") || errMsg.contains("connect timed out")) {
                 // TCP 연결 자체 실패 — 보안 그룹 또는 RDS 엔드포인트 문제
                 diagnosis = "[원인] TCP 소켓 연결 실패. RDS 보안 그룹 포트 3306 인바운드 규칙 확인 필요.";

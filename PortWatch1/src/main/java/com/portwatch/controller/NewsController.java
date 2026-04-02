@@ -80,13 +80,20 @@ public class NewsController {
     @PostMapping("/refresh")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> refreshNews() {
-        
+
         Map<String, Object> response = new HashMap<>();
-        
+
+        // ✅ newsService null 체크 (DB 연결 실패 시 NPE 방지)
+        if (newsService == null) {
+            response.put("success", false);
+            response.put("message", "뉴스 서비스를 사용할 수 없습니다. DB 연결을 먼저 확인하세요.");
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
+        }
+
         try {
             System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             System.out.println("🔄 뉴스 자동 새로고침");
-            
+
             // 뉴스 크롤링 실행
             int count = newsService.crawlAndSaveNews();
             
