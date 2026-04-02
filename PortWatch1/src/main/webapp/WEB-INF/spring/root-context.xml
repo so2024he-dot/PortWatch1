@@ -35,95 +35,84 @@
 
     <!--
         ══════════════════════════════════════════════════════════════
-        HikariCP DataSource - AWS RDS Aurora MySQL 연결
-        (HikariCP 3.4.5 + MySQL Connector/J 8.x + Aurora MySQL)
-        ══════════════════════════════════════════════════════════════
+        HikariCP DataSource - AWS RDS MySQL 8.4.3 연결
+        (HikariCP 3.4.5 + MySQL Connector/J 8.x)
 
-        ⚠️  [현재 오류 2단계 분석] 2026-04-02 스크린샷 기준
+        ✅ [2026-04-02 스크린샷 134437 EC2 직접 연결 확인 완료]
+           mysql -h portwatch-db-seoul.cpggwqm1goo3.ap-northeast-2.rds.amazonaws.com
+           Server version: 8.4.3 Source distribution → 연결 성공!
+           portwatch 데이터베이스 존재 확인 ✅
+
+        ⚠️  [이전 버전 jdbcUrl 버그 2종 — 수정 완료]
         ─────────────────────────────────────────────────────────────
-        1단계 (해결됨): HikariPool-1 timed out after 30000ms
-           원인: setenv.sh 권한 600 → IPv4 미적용 → IPv6 DNS 지연
-           해결: sudo tee /opt/tomcat/bin/setenv.sh + chmod 755
+        버그1: jdbcUrl 값을 여러 줄로 작성
+               XML 속성값에 개행+공백이 그대로 포함됨
+               → "jdbc:mysql://...\n   ?useSSL..." 로 파싱
+               → MySQL 드라이버 URL 파싱 오류 → Communications link failure
+               수정: jdbcUrl 값을 반드시 한 줄로 작성
 
-        2단계 (현재): CommunicationsException: Communications link failure
-                      + ConnectException: Connection timed out
-           원인: Aurora로 전환 시 엔드포인트가 변경되었으나
-                 root-context.xml은 구 MySQL 엔드포인트 사용 중
-           해결: 아래 jdbcUrl을 Aurora 클러스터 Writer 엔드포인트로 변경
+        버그2: 호스트명 오타 cpggwqmigoo3 (i) → cpggwqm1goo3 (숫자1)
+               → 존재하지 않는 호스트 → Connection timed out
+               수정: 스크린샷 134437 MySQL 연결 성공 엔드포인트 적용
         ─────────────────────────────────────────────────────────────
 
-        ✅ Aurora 엔드포인트 확인 방법:
-           AWS 콘솔 → RDS → 데이터베이스 → [클러스터명] 클릭
-           → 연결 및 보안 탭 → 엔드포인트 섹션
-           → "쓰기" 유형의 엔드포인트 주소 복사
-           형식: [클러스터명].cluster-[id].ap-northeast-2.rds.amazonaws.com
-
-        ✅ Aurora MySQL vs 일반 MySQL 드라이버 차이:
-           - JDBC URL 프리픽스는 동일: jdbc:mysql://
-           - MySQL Connector/J 8.x가 Aurora를 자동 감지
-           - useSSL=false&sslMode=DISABLED 동일하게 적용
-
-        ✅ AWS EC2 IPv4 강제 (EC2 setenv.sh 필수):
-           sudo tee /opt/tomcat/bin/setenv.sh << 'EOF'
+        ✅ AWS EC2 setenv.sh (IPv4 강제 — Tomcat 재시작 전 필수):
+           sudo tee /opt/tomcat/bin/setenv.sh << 'SETENV'
            #!/bin/bash
            export JAVA_OPTS="-Djava.net.preferIPv4Stack=true -Xms256m -Xmx512m"
-           EOF
+           SETENV
            sudo chmod 755 /opt/tomcat/bin/setenv.sh
+           cat /opt/tomcat/bin/setenv.sh   ← Permission denied 없어야 함
 
-        ✅ HikariCP 3.4.5 + Aurora 권장 설정:
-           - connectTimeout=5000 (Aurora는 빠른 장애조치 지원, 5초면 충분)
-           - socketTimeout=60000 (쿼리 최대 60초)
-           - connectionTimeout=30000 (풀 대기 최대 30초)
-           - maxLifetime=180000 (AWS NAT 4분 타임아웃 전에 갱신)
-           - idleTimeout=120000 (유휴 연결 2분 후 반환)
+        ✅ HikariCP 3.4.5 타임아웃 계층:
+           connectTimeout=5000  (JDBC TCP 연결 5초)
+           < connectionTimeout=30000 (HikariCP 풀 대기 30초)
+           규칙: 반드시 connectTimeout < connectionTimeout 이어야 함
         ══════════════════════════════════════════════════════════════
     -->
     <bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
         <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
+
         <!--
-            ⚠️  [필수 수정] Aurora 클러스터 Writer 엔드포인트로 변경하세요!
-            ─────────────────────────────────────────────────────────────
-            구 MySQL 엔드포인트 (삭제/변경됨):
-              portwatch-db-seoul.cpggwqm1goo3.ap-northeast-2.rds.amazonaws.com
-
-            신규 Aurora 엔드포인트 예시:
-              [클러스터명].cluster-[id].ap-northeast-2.rds.amazonaws.com
-
-            AWS 콘솔에서 확인 후 아래 jdbcUrl의 호스트명을 교체하세요.
-            ─────────────────────────────────────────────────────────────
-            ✅ connectTimeout=5000  (Aurora 장애조치 고려, 5초)
-               socketTimeout=60000  (쿼리 실행 최대 60초)
-               sslMode=DISABLED     (Aurora도 내부 통신은 SSL 불필요)
-               enabledTLSProtocols=TLSv1.2 (Aurora SSL 끄기 보조)
+            ✅ jdbcUrl 작성 규칙: 반드시 한 줄(value="..." 안에 개행 없음)
+               개행이 있으면 XML 파서가 공백/줄바꿈을 URL에 포함 → 연결 실패
+               ─────────────────────────────────────────────────────
+               connectTimeout=5000  : TCP 연결 5초 제한 (JDBC 드라이버 레벨)
+               socketTimeout=60000  : 쿼리 실행 60초 제한
+               sslMode=DISABLED     : MySQL 8.4 SSL 비활성화
+               autoReconnect=true   : 연결 끊김 시 자동 재연결 시도
         -->
-        <property name="jdbcUrl"
-    value="jdbc:mysql://portwatch-db-seoul.cpggwqmigoo3.ap-northeast-2.rds.amazonaws.com:3306/portwatch
-           ?useSSL=false
-           &amp;sslMode=DISABLED
-           &amp;serverTimezone=Asia/Seoul
-           &amp;characterEncoding=UTF-8
-           &amp;allowPublicKeyRetrieval=true
-           &amp;connectTimeout=5000
-           &amp;socketTimeout=60000
-           &amp;autoReconnect=true
-           &amp;failOverReadOnly=false"/>
+        <property name="jdbcUrl" value="jdbc:mysql://portwatch-db-seoul.cpggwqm1goo3.ap-northeast-2.rds.amazonaws.com:3306/portwatch?useSSL=false&amp;sslMode=DISABLED&amp;serverTimezone=Asia/Seoul&amp;characterEncoding=UTF-8&amp;allowPublicKeyRetrieval=true&amp;connectTimeout=5000&amp;socketTimeout=60000&amp;autoReconnect=true"/>
+
         <property name="username" value="admin"/>
         <property name="password" value="portwatch2026!!abcd"/>
+
         <!--
-            ✅ Aurora 권장 풀 크기: db.t3.medium → 최대 10개 적절
-               Aurora는 연결 재사용 효율이 높아 minimumIdle=2 권장
+            ✅ db.t3.micro: max_connections ≈ 150
+               maximumPoolSize=10 (개발용, 운영 시 5로 축소 권장)
+               minimumIdle=2 (최소 2개 연결 항상 유지)
         -->
         <property name="maximumPoolSize" value="10"/>
         <property name="minimumIdle" value="2"/>
+
         <!--
             ✅ connectionTimeout=30000 (30초): 풀에서 연결 대기 최대 시간
                반드시 connectTimeout(5000) 보다 커야 함
+               이전 5000 설정은 TCP 연결 전에 풀이 포기 → 오류 원인
         -->
         <property name="connectionTimeout" value="30000"/>
+
+        <!--
+            ✅ AWS NAT Gateway 4분 유휴 타임아웃 대비:
+               maxLifetime=180000 (3분): AWS가 끊기기 전에 HikariCP가 먼저 교체
+               idleTimeout=120000 (2분): 유휴 연결 조기 반환으로 풀 신선도 유지
+               connectionTestQuery=SELECT 1: 연결 사용 전 유효성 확인
+        -->
         <property name="idleTimeout" value="120000"/>
         <property name="maxLifetime" value="180000"/>
         <property name="connectionTestQuery" value="SELECT 1"/>
-        <!-- ✅ -1: 기동 시 DB 연결 실패해도 Tomcat 기동 허용 -->
+
+        <!-- ✅ -1: 기동 시 DB 연결 실패해도 Tomcat 기동 허용 (EC2 재시작 안전) -->
         <property name="initializationFailTimeout" value="-1"/>
     </bean>
 

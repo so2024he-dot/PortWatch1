@@ -144,7 +144,7 @@ scp target/portwatch-1.0.0-BUILD-SNAPSHOT.war ubuntu@54.180.142.111:~/
 # 2. EC2에서 배포
 ssh ubuntu@54.180.142.111
 sudo systemctl stop tomcat
-sudo cp ~/portwatch-1.0.0-BUILD-SNAPSHOT.war /opt/tomcat/webapps/ROOT.war
+sudo cp ~/portwatch.war /opt/tomcat/webapps/ROOT.war
 sudo systemctl start tomcat
 
 # ⚠️  주의: ROOT.war 절대 삭제하지 말 것
