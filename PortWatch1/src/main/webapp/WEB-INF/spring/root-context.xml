@@ -89,11 +89,15 @@
 
         <!--
             ✅ db.t3.micro: max_connections ≈ 150
-               maximumPoolSize=10 (개발용, 운영 시 5로 축소 권장)
-               minimumIdle=2 (최소 2개 연결 항상 유지)
+               maximumPoolSize=15 (10→15으로 증가):
+                 NewsScheduler + StockScheduler + 수동 API 동시 실행 시 풀 경쟁 방지
+                 NewsScheduler(한국/미국) + StockScheduler(한국/미국) = 최대 4개 동시
+                 + 수동 crawler/korea, /us, update-all = 최대 3개
+                 합계 7개 + 여유 8개 = 15개 적합
+               minimumIdle=3 (2→3으로 증가): 최소 연결 상시 유지
         -->
-        <property name="maximumPoolSize" value="10"/>
-        <property name="minimumIdle" value="2"/>
+        <property name="maximumPoolSize" value="15"/>
+        <property name="minimumIdle" value="3"/>
 
         <!--
             ✅ connectionTimeout=30000 (30초): 풀에서 연결 대기 최대 시간

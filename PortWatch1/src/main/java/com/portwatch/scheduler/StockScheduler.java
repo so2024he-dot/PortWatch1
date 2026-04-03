@@ -51,7 +51,11 @@ public class StockScheduler {
     // 크롤링 대상: 네이버 금융 시가총액 TOP 100
     // 저장 위치: AWS RDS MySQL STOCK 테이블
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    @Scheduled(initialDelay = 120000, fixedDelay = 1800000)
+    // ✅ [2026-04-02 수정] initialDelay: 120000(2분) → 600000(10분)
+    //    이유: Tomcat 시작 직후 RDS 연결이 불안정할 수 있음
+    //         (RDS 자동 마이너 버전 업그레이드 시 재시작 발생 → 09:03 오류 원인)
+    //         10분 대기 시 HikariPool이 충분히 연결을 확보한 후 스케줄러 실행
+    @Scheduled(initialDelay = 600000, fixedDelay = 1800000)
     public void crawlKoreanStocksScheduled() {
         logger.info("════════════════════════════════════════");
         logger.info("[KR-주식] 한국 주식 자동 크롤링 시작: {}", dateFormat.format(new Date()));
@@ -88,7 +92,9 @@ public class StockScheduler {
     // 크롤링 대상: NYSE/NASDAQ 주요 100개 종목
     // 저장 위치: AWS RDS MySQL STOCK 테이블
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    @Scheduled(initialDelay = 180000, fixedDelay = 3600000)
+    // ✅ [2026-04-02 수정] initialDelay: 180000(3분) → 720000(12분)
+    //    이유: 한국 주식 크롤러(10분) + 2분 여유 후 실행
+    @Scheduled(initialDelay = 720000, fixedDelay = 3600000)
     public void crawlUSStocksScheduled() {
         logger.info("════════════════════════════════════════");
         logger.info("[US-주식] 미국 주식 자동 크롤링 시작: {}", dateFormat.format(new Date()));

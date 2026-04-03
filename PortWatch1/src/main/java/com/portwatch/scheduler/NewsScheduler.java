@@ -69,7 +69,11 @@ public class NewsScheduler {
     // initialDelay=60000  : 서버 시작 후 1분 후 첫 실행
     // fixedDelay=1800000  : 이전 완료 후 30분 대기
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    @Scheduled(initialDelay = 60000, fixedDelay = 1800000)
+    // ✅ [2026-04-02 수정] initialDelay: 60000(1분) → 480000(8분)
+    //    이유: Tomcat 시작 후 DB 연결 풀이 안정화되기 전에 스케줄러가 실행되면
+    //         Communications link failure → HikariPool 타임아웃 연쇄 발생
+    //         8분 대기로 RDS 마이너 업그레이드 재시작 완료 + HikariPool 안정화 확보
+    @Scheduled(initialDelay = 480000, fixedDelay = 1800000)
     public void crawlKoreanNewsAutomatically() {
         logger.info("========================================");
         logger.info("[KR] 한국 뉴스 자동 크롤링 시작: {}", dateFormat.format(new Date()));
@@ -104,7 +108,9 @@ public class NewsScheduler {
     // initialDelay=120000 : 서버 시작 후 2분 후 첫 실행
     // fixedDelay=3600000  : 이전 완료 후 1시간 대기
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    @Scheduled(initialDelay = 120000, fixedDelay = 3600000)
+    // ✅ [2026-04-02 수정] initialDelay: 120000(2분) → 900000(15분)
+    //    이유: 한국 뉴스(8분) + 주식(10분/12분) 스케줄러보다 늦게 시작
+    @Scheduled(initialDelay = 900000, fixedDelay = 3600000)
     public void crawlUSNewsAutomatically() {
         logger.info("========================================");
         logger.info("[US] 미국 뉴스 자동 크롤링 시작: {}", dateFormat.format(new Date()));
