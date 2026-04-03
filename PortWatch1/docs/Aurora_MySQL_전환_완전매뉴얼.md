@@ -100,7 +100,7 @@ AWS 콘솔에서 Writer 엔드포인트 확인 후 아래와 같이 수정:
 ```xml
 <!-- ⚠️ [여기를 수정] Aurora Writer 엔드포인트로 교체 -->
 <property name="jdbcUrl"
-    value="jdbc:mysql://[Aurora-Writer-엔드포인트]:3306/portwatch
+    value="jdbc:mysql://portwatch-db-seoul.cpggwqmigoo3.ap-northeast-2.rds.amazonaws.com:3306/portwatch
            ?useSSL=false
            &amp;sslMode=DISABLED
            &amp;serverTimezone=Asia/Seoul
@@ -158,7 +158,7 @@ EC2 콘솔 → 보안 그룹 → Aurora가 사용하는 보안 그룹 선택
 
 ```bash
 # nc (netcat)으로 Aurora 포트 3306 연결 가능한지 테스트
-nc -zv [Aurora-Writer-엔드포인트] 3306
+nc -zv portwatch-db-seoul.cpggwqmigoo3.ap-northeast-2.rds.amazonaws.com 3306
 
 # 성공 시 출력:
 # Connection to [호스트] 3306 port [tcp/mysql] succeeded!

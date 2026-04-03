@@ -77,28 +77,32 @@
             ✅ jdbcUrl 작성 규칙: 반드시 한 줄(value="..." 안에 개행 없음)
                개행이 있으면 XML 파서가 공백/줄바꿈을 URL에 포함 → 연결 실패
                ─────────────────────────────────────────────────────
-               connectTimeout=5000  : TCP 연결 5초 제한 (JDBC 드라이버 레벨)
+               connectTimeout=10000 : TCP 연결 10초 제한 (JDBC 드라이버 레벨, 5000→10000으로 증가)
                socketTimeout=60000  : 쿼리 실행 60초 제한
                sslMode=DISABLED     : MySQL 8.4 SSL 비활성화
                autoReconnect=true   : 연결 끊김 시 자동 재연결 시도
         -->
-        <property name="jdbcUrl" value="jdbc:mysql://portwatch-db-seoul.cpggwqm1goo3.ap-northeast-2.rds.amazonaws.com:3306/portwatch?useSSL=false&amp;sslMode=DISABLED&amp;serverTimezone=Asia/Seoul&amp;characterEncoding=UTF-8&amp;allowPublicKeyRetrieval=true&amp;connectTimeout=5000&amp;socketTimeout=60000&amp;autoReconnect=true"/>
+        <property name="jdbcUrl" value="jdbc:mysql://portwatch-db-seoul.cpggwqm1goo3.ap-northeast-2.rds.amazonaws.com:3306/portwatch?useSSL=false&amp;sslMode=DISABLED&amp;serverTimezone=Asia/Seoul&amp;characterEncoding=UTF-8&amp;allowPublicKeyRetrieval=true&amp;connectTimeout=10000&amp;socketTimeout=60000&amp;autoReconnect=true"/>
 
         <property name="username" value="admin"/>
         <property name="password" value="portwatch2026!!abcd"/>
 
         <!--
             ✅ db.t3.micro: max_connections ≈ 150
-               maximumPoolSize=10 (개발용, 운영 시 5로 축소 권장)
-               minimumIdle=2 (최소 2개 연결 항상 유지)
+               maximumPoolSize=15 (10→15으로 증가):
+                 NewsScheduler + StockScheduler + 수동 API 동시 실행 시 풀 경쟁 방지
+                 NewsScheduler(한국/미국) + StockScheduler(한국/미국) = 최대 4개 동시
+                 + 수동 crawler/korea, /us, update-all = 최대 3개
+                 합계 7개 + 여유 8개 = 15개 적합
+               minimumIdle=3 (2→3으로 증가): 최소 연결 상시 유지
         -->
-        <property name="maximumPoolSize" value="10"/>
-        <property name="minimumIdle" value="2"/>
+        <property name="maximumPoolSize" value="15"/>
+        <property name="minimumIdle" value="3"/>
 
         <!--
             ✅ connectionTimeout=30000 (30초): 풀에서 연결 대기 최대 시간
-               반드시 connectTimeout(5000) 보다 커야 함
-               이전 5000 설정은 TCP 연결 전에 풀이 포기 → 오류 원인
+               반드시 connectTimeout(10000) 보다 커야 함
+               connectTimeout=10000 설정으로 TCP 10초 여유 확보
         -->
         <property name="connectionTimeout" value="30000"/>
 
@@ -111,6 +115,15 @@
         <property name="idleTimeout" value="120000"/>
         <property name="maxLifetime" value="180000"/>
         <property name="connectionTestQuery" value="SELECT 1"/>
+
+        <!--
+            ✅ keepaliveTime=60000 (60초):
+               HikariCP가 유휴 연결에 60초마다 SELECT 1을 전송
+               → AWS NAT Gateway의 4분 TCP 유휴 끊김 방지
+               → 연결이 살아있지 않으면 즉시 폐기 후 새 연결 생성
+               HikariCP 3.4.0 이상 지원 (3.4.5 ✅)
+        -->
+        <property name="keepaliveTime" value="60000"/>
 
         <!-- ✅ -1: 기동 시 DB 연결 실패해도 Tomcat 기동 허용 (EC2 재시작 안전) -->
         <property name="initializationFailTimeout" value="-1"/>
