@@ -116,15 +116,6 @@
         <property name="maxLifetime" value="180000"/>
         <property name="connectionTestQuery" value="SELECT 1"/>
 
-        <!--
-            ✅ keepaliveTime=60000 (60초):
-               HikariCP가 유휴 연결에 60초마다 SELECT 1을 전송
-               → AWS NAT Gateway의 4분 TCP 유휴 끊김 방지
-               → 연결이 살아있지 않으면 즉시 폐기 후 새 연결 생성
-               HikariCP 3.4.0 이상 지원 (3.4.5 ✅)
-        -->
-        <property name="keepaliveTime" value="60000"/>
-
         <!-- ✅ -1: 기동 시 DB 연결 실패해도 Tomcat 기동 허용 (EC2 재시작 안전) -->
         <property name="initializationFailTimeout" value="-1"/>
     </bean>
