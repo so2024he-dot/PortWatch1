@@ -382,7 +382,7 @@ wtpwebapps\portwatch1 is not a directory or war file, or is not readable
 echo "=== 1. setenv.sh 확인 ===" && cat /opt/tomcat/bin/setenv.sh
 echo "=== 2. IPv4 적용 확인 ===" && ps aux | grep java | grep -o 'preferIPv4Stack=true'
 echo "=== 3. Tomcat 상태 ===" && sudo systemctl status tomcat | grep Active
-echo "=== 4. Aurora 포트 연결 테스트 ===" && nc -zv [Aurora-엔드포인트] 3306
+echo "=== 4. Aurora 포트 연결 테스트 ===" && nc -zv portwatch-db-seoul.cpggwqmigoo3.ap-northeast-2.rds.amazonaws.com 3306
 echo "=== 5. DB 연결 확인 ===" && curl -s http://localhost:8080/debug/db-check | python3 -m json.tool
 echo "=== 6. 앱 응답 확인 ===" && curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/
 ```
