@@ -77,12 +77,20 @@
             ✅ jdbcUrl 작성 규칙: 반드시 한 줄(value="..." 안에 개행 없음)
                개행이 있으면 XML 파서가 공백/줄바꿈을 URL에 포함 → 연결 실패
                ─────────────────────────────────────────────────────
-               connectTimeout=10000 : TCP 연결 10초 제한 (JDBC 드라이버 레벨, 5000→10000으로 증가)
+               useSSL=false         : SSL 비활성화 (VPC 내부 연결)
+               sslMode=DISABLED     : MySQL 8.4 SSL 비활성화 (useSSL=false와 이중 보장)
+               useUnicode=true      : 한글 처리 명시적 활성화
+               characterEncoding=UTF-8 : 한글 인코딩
+               allowPublicKeyRetrieval=true : MySQL 8.x caching_sha2_password 인증 지원
+               connectTimeout=10000 : TCP 연결 10초 제한
                socketTimeout=60000  : 쿼리 실행 60초 제한
-               sslMode=DISABLED     : MySQL 8.4 SSL 비활성화
-               autoReconnect=true   : 연결 끊김 시 자동 재연결 시도
+               tcpKeepAlive=true    : AWS NAT Gateway 4분 유휴 끊김 방지 (TCP 레벨 keepalive)
+               ─────────────────────────────────────────────────────
+               ⛔ autoReconnect=true 제거:
+                  MySQL 8.x에서 deprecated. 연결 실패 시 재연결 폭풍 유발 가능.
+                  HikariCP 자체 풀 관리(maxLifetime, idleTimeout)로 충분히 대체됨.
         -->
-        <property name="jdbcUrl" value="jdbc:mysql://portwatch-db-seoul.cpggwqm1goo3.ap-northeast-2.rds.amazonaws.com:3306/portwatch?useSSL=false&amp;sslMode=DISABLED&amp;serverTimezone=Asia/Seoul&amp;characterEncoding=UTF-8&amp;allowPublicKeyRetrieval=true&amp;connectTimeout=10000&amp;socketTimeout=60000&amp;autoReconnect=true"/>
+        <property name="jdbcUrl" value="jdbc:mysql://portwatch-db-seoul.cpggwqm1goo3.ap-northeast-2.rds.amazonaws.com:3306/portwatch?useSSL=false&amp;sslMode=DISABLED&amp;serverTimezone=Asia/Seoul&amp;characterEncoding=UTF-8&amp;useUnicode=true&amp;allowPublicKeyRetrieval=true&amp;connectTimeout=10000&amp;socketTimeout=60000&amp;tcpKeepAlive=true"/>
 
         <property name="username" value="admin"/>
         <property name="password" value="portwatch2026!!abcd"/>
