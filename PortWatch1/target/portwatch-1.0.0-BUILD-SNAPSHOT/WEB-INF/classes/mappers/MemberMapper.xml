@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+    MemberMapper.xml - 최종 병합본
+
+    ✅ 실제 MEMBER 테이블 컬럼 완전 매핑
+    ✅ selectMemberById SQL 추가 (StockPurchaseValidationService 오류 해결)
+    ✅ balance 컬럼 포함 (MemberServiceImpl 오류 해결)
+
+    namespace 이중 처리:
+      - com.portwatch.persistence.MemberDAO (persistence 레이어)
+      - com.portwatch.mapper.MemberMapper   (mapper 레이어)
+    → 동일한 SQL 재사용을 위해 MemberDAO namespace 하나로 통합,
+      MemberMapper는 resultMap 공유 방식 사용
+-->
+<mapper namespace="com.portwatch.persistence.MemberDAO">
+
+    <!--
+        ResultMap - DB 컬럼 → Java 필드 매핑
+        mapUnderscoreToCamelCase=true 이지만 명시적으로 작성하여 안전 보장
+    -->
+    <resultMap id="memberResultMap" type="MemberVO">
+        <id     property="memberId"      column="member_id"/>
+        <result property="memberEmail"   column="member_email"/>
+        <result property="memberPass"    column="member_pass"/>
+        <result property="memberName"    column="member_name"/>
+        <result property="memberPhone"   column="member_phone"/>
+        <result property="memberAddress" column="member_address"/>
+        <result property="memberGender"  column="member_gender"/>
+        <result property="memberBirth"   column="member_birth"/>
+        <result property="memberRole"    column="member_role"/>
+        <result property="memberStatus"  column="member_status"/>
+        <result property="balance"       column="balance"/>
+        <result property="createdAt"     column="created_at"/>
+        <result property="updatedAt"     column="updated_at"/>
+    </resultMap>
+
+    <!-- ════════════════════════════════════════
+         SELECT 쿼리
+         ════════════════════════════════════════ -->
+
+    <!-- 이메일로 회원 조회 (로그인 핵심) -->
+    <select id="findByEmail" parameterType="String" resultMap="memberResultMap">
+        SELECT member_id,
+               member_email,
+               member_pass,
+               member_name,
+               member_phone,
+               member_address,
+               member_gender,
+               member_birth,
+               member_role,
+               member_status,
+               balance,
+               created_at,
+               updated_at
+          FROM MEMBER
+         WHERE member_email = #{memberEmail}
+           AND member_status = 'ACTIVE'
+    </select>
+
+    <!-- 아이디로 회원 조회 (findById) -->
+    <select id="findById" parameterType="String" resultMap="memberResultMap">
+        SELECT member_id,
+               member_email,
+               member_pass,
+               member_name,
+               member_phone,
+               member_address,
+               member_gender,
+               member_birth,
+               member_role,
+               member_status,
+               balance,
+               created_at,
+               updated_at
+          FROM MEMBER
+         WHERE member_id = #{memberId}
+    </select>
+
+    <!--
+        아이디로 회원 조회 (selectMemberById)
+        ✅ StockPurchaseValidationService.java:178 에서 호출
+        findById 와 동일한 SQL 실행
+    -->
+    <select id="selectMemberById" parameterType="String" resultMap="memberResultMap">
+        SELECT member_id,
+               member_email,
+               member_pass,
+               member_name,
+               member_phone,
+               member_address,
+               member_gender,
+               member_birth,
+               member_role,
+               member_status,
+               balance,
+               created_at,
+               updated_at
+          FROM MEMBER
+         WHERE member_id = #{memberId}
+    </select>
+
+    <!-- ════════════════════════════════════════
+         INSERT
+         ════════════════════════════════════════ -->
+
+    <insert id="insert" parameterType="MemberVO">
+        INSERT INTO MEMBER (
+            member_id,
+            member_email,
+            member_pass,
+            member_name,
+            member_phone,
+            member_address,
+            member_gender,
+            member_birth,
+            member_role,
+            member_status,
+            balance
+        ) VALUES (
+            #{memberId},
+            #{memberEmail},
+            #{memberPass},
+            #{memberName},
+            #{memberPhone,       jdbcType=VARCHAR},
+            #{memberAddress,     jdbcType=VARCHAR},
+            #{memberGender,      jdbcType=VARCHAR},
+            #{memberBirth,       jdbcType=TIMESTAMP},
+            #{memberRole},
+            #{memberStatus},
+            #{balance}
+        )
+    </insert>
+
+    <!-- ════════════════════════════════════════
+         UPDATE
+         ════════════════════════════════════════ -->
+
+    <update id="update" parameterType="MemberVO">
+        UPDATE MEMBER
+           SET member_name    = #{memberName},
+               member_phone   = #{memberPhone,   jdbcType=VARCHAR},
+               member_address = #{memberAddress, jdbcType=VARCHAR},
+               member_gender  = #{memberGender,  jdbcType=VARCHAR},
+               member_birth   = #{memberBirth,   jdbcType=TIMESTAMP}
+               <if test="memberPass != null and memberPass != ''">
+               , member_pass  = #{memberPass}
+               </if>
+         WHERE member_id = #{memberId}
+    </update>
+
+    <!-- 마지막 로그인 시간 업데이트 -->
+    <update id="updateLastLogin" parameterType="String">
+        UPDATE MEMBER
+           SET updated_at = NOW()
+         WHERE member_id  = #{memberId}
+    </update>
+
+    <!-- 잔액 업데이트 -->
+    <update id="updateBalance">
+        UPDATE MEMBER
+           SET balance    = #{balance},
+               updated_at = NOW()
+         WHERE member_id  = #{memberId}
+    </update>
+
+    <!-- ════════════════════════════════════════
+         DELETE
+         ════════════════════════════════════════ -->
+
+    <delete id="delete" parameterType="String">
+        UPDATE MEMBER
+           SET member_status = 'INACTIVE',
+               updated_at    = NOW()
+         WHERE member_id     = #{memberId}
+    </delete>
+
+</mapper>

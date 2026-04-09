@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+    ✅ StockMapper.xml
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    namespace: com.portwatch.mapper.StockMapper
+    StockServiceImpl → StockMapper 인터페이스 → 이 XML
+
+    ⚠️ 주의: StockDAOMapper.xml (namespace=StockDAO) 과 별개입니다.
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-->
+<mapper namespace="com.portwatch.mapper.StockMapper">
+
+    <!-- SQL Fragment (공통 컬럼) -->
+    <sql id="stockColumns">
+        stock_code, stock_name, country, market, market_type, industry,
+        current_price, price_change, change_rate, volume, market_cap,
+        updated_at, created_at
+    </sql>
+
+    <!-- ResultMap -->
+    <resultMap id="StockResultMap" type="StockVO">
+        <id     property="stockCode"     column="stock_code"/>
+        <result property="stockName"     column="stock_name"/>
+        <result property="country"       column="country"/>
+        <result property="market"        column="market"/>
+        <result property="marketType"    column="market_type"/>
+        <result property="industry"      column="industry"/>
+        <result property="currentPrice"  column="current_price"/>
+        <result property="priceChange"   column="price_change"/>
+        <result property="changeRate"    column="change_rate"/>
+        <result property="volume"        column="volume"/>
+        <result property="marketCap"     column="market_cap"/>
+        <result property="updatedAt"     column="updated_at"/>
+        <result property="createdAt"     column="created_at"/>
+    </resultMap>
+
+    <!-- ════════════════════════════════════════════════════
+         단건 조회
+         ════════════════════════════════════════════════════ -->
+    <select id="findById" parameterType="int" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE stock_id = #{stockId}
+    </select>
+
+    <select id="findByCode" parameterType="string" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE stock_code = #{stockCode}
+    </select>
+
+    <!-- ════════════════════════════════════════════════════
+         전체 조회
+         ════════════════════════════════════════════════════ -->
+    <select id="findAll" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        ORDER BY country ASC, stock_code ASC
+        LIMIT 200
+    </select>
+
+    <!-- ════════════════════════════════════════════════════
+         국가별 조회
+         ════════════════════════════════════════════════════ -->
+    <select id="findByCountry" parameterType="string" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE country = #{country}
+        ORDER BY stock_code ASC
+    </select>
+
+    <!-- ════════════════════════════════════════════════════
+         시장별 조회
+         ════════════════════════════════════════════════════ -->
+    <select id="findByMarket" parameterType="string" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE market = #{market} OR market_type = #{market}
+        ORDER BY stock_code ASC
+    </select>
+
+    <select id="findByMarketType" parameterType="string" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE market_type = #{marketType}
+        ORDER BY stock_code ASC
+    </select>
+
+    <!-- ════════════════════════════════════════════════════
+         국가 + 시장 복합 조회
+         ════════════════════════════════════════════════════ -->
+    <select id="findByCountryAndMarket" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE country = #{country}
+          AND (market = #{market} OR market_type = #{market})
+        ORDER BY stock_code ASC
+    </select>
+
+    <select id="findByMarketAndCountry" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE (market = #{market} OR market_type = #{market})
+          AND country = #{country}
+        ORDER BY stock_code ASC
+    </select>
+
+    <!-- ════════════════════════════════════════════════════
+         키워드 검색
+         ════════════════════════════════════════════════════ -->
+    <select id="searchStocks" parameterType="string" resultMap="StockResultMap">
+        <![CDATA[
+        SELECT ]]><include refid="stockColumns"/><![CDATA[ FROM STOCK
+        WHERE stock_code LIKE CONCAT('%', #{keyword}, '%')
+           OR stock_name LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY stock_code ASC
+        LIMIT 100
+        ]]>
+    </select>
+
+    <!-- ════════════════════════════════════════════════════
+         업종 관련
+         ════════════════════════════════════════════════════ -->
+    <select id="findByIndustry" parameterType="string" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE industry = #{industry}
+        ORDER BY stock_code ASC
+    </select>
+
+    <select id="findAllIndustries" resultType="string">
+        SELECT DISTINCT industry
+        FROM STOCK
+        WHERE industry IS NOT NULL AND industry != ''
+        ORDER BY industry ASC
+    </select>
+
+    <!-- ════════════════════════════════════════════════════
+         정렬 조회 (Top N)
+         ════════════════════════════════════════════════════ -->
+    <select id="findTopByVolume" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE volume IS NOT NULL AND volume > 0
+        ORDER BY volume DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="findTopByChangeRate" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE change_rate IS NOT NULL
+        ORDER BY change_rate DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="findTopByChangeRateDesc" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE change_rate IS NOT NULL
+        ORDER BY change_rate ASC
+        LIMIT #{limit}
+    </select>
+
+    <select id="findRecentlyUpdated" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE updated_at IS NOT NULL
+        ORDER BY updated_at DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- ════════════════════════════════════════════════════
+         가격/거래량 범위 조회
+         ════════════════════════════════════════════════════ -->
+    <select id="findByPriceRange" resultMap="StockResultMap">
+        <![CDATA[
+        SELECT ]]><include refid="stockColumns"/><![CDATA[ FROM STOCK
+        WHERE current_price >= #{minPrice}
+          AND current_price <= #{maxPrice}
+        ORDER BY current_price DESC
+        ]]>
+    </select>
+
+    <select id="findByVolumeRange" resultMap="StockResultMap">
+        <![CDATA[
+        SELECT ]]><include refid="stockColumns"/><![CDATA[ FROM STOCK
+        WHERE volume >= #{minVolume}
+          AND volume <= #{maxVolume}
+        ORDER BY volume DESC
+        ]]>
+    </select>
+
+    <!-- ════════════════════════════════════════════════════
+         추가 조회
+         ════════════════════════════════════════════════════ -->
+    <select id="findHighPriceStocks" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE current_price IS NOT NULL
+        ORDER BY current_price DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="findLowPriceStocks" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE current_price IS NOT NULL AND current_price > 0
+        ORDER BY current_price ASC
+        LIMIT #{limit}
+    </select>
+
+    <select id="findGainers" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        <![CDATA[ WHERE change_rate > 0 ]]>
+        ORDER BY change_rate DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="findLosers" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        <![CDATA[ WHERE change_rate < 0 ]]>
+        ORDER BY change_rate ASC
+        LIMIT #{limit}
+    </select>
+
+    <select id="findActiveStocks" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE volume IS NOT NULL AND volume > 0
+        ORDER BY volume DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- ════════════════════════════════════════════════════
+         통계
+         ════════════════════════════════════════════════════ -->
+    <select id="countByCountry" parameterType="string" resultType="int">
+        SELECT COUNT(*) FROM STOCK WHERE country = #{country}
+    </select>
+
+    <select id="countByMarket" parameterType="string" resultType="int">
+        SELECT COUNT(*) FROM STOCK
+        WHERE market = #{market} OR market_type = #{market}
+    </select>
+
+    <select id="count" resultType="int">
+        SELECT COUNT(*) FROM STOCK
+    </select>
+
+    <!-- ════════════════════════════════════════════════════
+         시장 요약
+         ════════════════════════════════════════════════════ -->
+    <select id="getMarketSummary" parameterType="string" resultType="map">
+        SELECT
+            COUNT(*) AS totalCount,
+            AVG(change_rate) AS avgChangeRate,
+            SUM(volume) AS totalVolume,
+            MAX(current_price) AS maxPrice,
+            MIN(current_price) AS minPrice
+        FROM STOCK
+        WHERE market = #{market} OR market_type = #{market}
+    </select>
+
+    <!-- ════════════════════════════════════════════════════
+         INSERT
+         ════════════════════════════════════════════════════ -->
+    <insert id="insert" parameterType="StockVO">
+        INSERT INTO STOCK (
+            stock_code, stock_name, country, market, market_type, industry,
+            current_price, price_change, change_rate, volume, market_cap,
+            created_at, updated_at
+        ) VALUES (
+            #{stockCode}, #{stockName}, #{country}, #{market}, #{marketType}, #{industry},
+            #{currentPrice}, #{priceChange}, #{changeRate}, #{volume}, #{marketCap},
+            NOW(), NOW()
+        )
+    </insert>
+
+    <insert id="insertCrawl" parameterType="StockVO">
+        INSERT INTO STOCK (
+            stock_code, stock_name, country, market, market_type, industry,
+            current_price, price_change, change_rate, volume, market_cap,
+            created_at, updated_at
+        ) VALUES (
+            #{stockCode}, #{stockName}, #{country}, #{market}, #{marketType}, #{industry},
+            #{currentPrice}, #{priceChange}, #{changeRate}, #{volume}, #{marketCap},
+            NOW(), NOW()
+        )
+        ON DUPLICATE KEY UPDATE
+            stock_name    = VALUES(stock_name),
+            current_price = VALUES(current_price),
+            price_change  = VALUES(price_change),
+            change_rate   = VALUES(change_rate),
+            volume        = VALUES(volume),
+            market_cap    = VALUES(market_cap),
+            updated_at    = NOW()
+    </insert>
+
+    <!-- ════════════════════════════════════════════════════
+         UPDATE
+         ════════════════════════════════════════════════════ -->
+    <update id="update" parameterType="StockVO">
+        UPDATE STOCK
+        SET stock_name    = #{stockName},
+            current_price = #{currentPrice},
+            price_change  = #{priceChange},
+            change_rate   = #{changeRate},
+            volume        = #{volume},
+            market_cap    = #{marketCap},
+            updated_at    = NOW()
+        WHERE stock_code = #{stockCode}
+    </update>
+
+    <update id="updateCurrentPrice">
+        UPDATE STOCK
+        SET current_price = #{currentPrice},
+            volume        = #{volume},
+            updated_at    = NOW()
+        WHERE stock_code = #{stockCode}
+    </update>
+
+    <update id="updateBatch" parameterType="list">
+        <foreach collection="list" item="stock" separator=";">
+            UPDATE STOCK
+            SET current_price = #{stock.currentPrice},
+                price_change  = #{stock.priceChange},
+                change_rate   = #{stock.changeRate},
+                volume        = #{stock.volume},
+                updated_at    = NOW()
+            WHERE stock_code = #{stock.stockCode}
+        </foreach>
+    </update>
+
+    <!-- ════════════════════════════════════════════════════
+         DELETE
+         ════════════════════════════════════════════════════ -->
+    <delete id="delete">
+        DELETE FROM STOCK WHERE stock_code = #{stockCode}
+    </delete>
+
+    <delete id="deleteByCountry" parameterType="string">
+        DELETE FROM STOCK WHERE country = #{country}
+    </delete>
+
+    <delete id="deleteByMarket" parameterType="string">
+        DELETE FROM STOCK WHERE market = #{market} OR market_type = #{market}
+    </delete>
+
+    <delete id="deleteOldData" parameterType="int">
+        <![CDATA[
+        DELETE FROM STOCK
+        WHERE updated_at < DATE_SUB(NOW(), INTERVAL #{days} DAY)
+        ]]>
+    </delete>
+
+</mapper>

@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+    ✅ StockDAOMapper.xml
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    namespace: com.portwatch.persistence.StockDAO
+    
+    StockDAO 인터페이스에 @Mapper 등록 시,
+    MyBatis는 이 XML(namespace = StockDAO)의 SQL을 찾습니다.
+    
+    주의: StockMapper.xml (namespace = StockMapper)과 별개 파일입니다.
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-->
+<mapper namespace="com.portwatch.persistence.StockDAO">
+
+    <!-- SQL Fragment (공통 컬럼) -->
+    <sql id="stockColumns">
+        stock_code, stock_name, country, market, market_type, industry,
+        current_price, price_change, change_rate, volume, market_cap,
+        updated_at, created_at
+    </sql>
+
+    <!-- ResultMap -->
+    <resultMap id="StockResultMap" type="StockVO">
+        <id     property="stockCode"     column="stock_code"/>
+        <result property="stockName"     column="stock_name"/>
+        <result property="country"       column="country"/>
+        <result property="market"        column="market"/>
+        <result property="marketType"    column="market_type"/>
+        <result property="industry"      column="industry"/>
+        <result property="currentPrice"  column="current_price"/>
+        <result property="priceChange"   column="price_change"/>
+        <result property="changeRate"    column="change_rate"/>
+        <result property="volume"        column="volume"/>
+        <result property="marketCap"     column="market_cap"/>
+        <result property="updatedAt"     column="updated_at"/>
+        <result property="createdAt"     column="created_at"/>
+    </resultMap>
+
+    <!-- ════════════════════════════════════════════════════
+         단건 조회 - 종목코드
+         ════════════════════════════════════════════════════ -->
+    <select id="selectStockByCode" parameterType="string" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE stock_code = #{stockCode}
+    </select>
+
+    <select id="selectByCode" parameterType="string" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE stock_code = #{stockCode}
+    </select>
+
+    <select id="getStockByCode" parameterType="string" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE stock_code = #{stockCode}
+    </select>
+
+    <!-- ════════════════════════════════════════════════════
+         단건 조회 - 종목ID
+         ════════════════════════════════════════════════════ -->
+    <select id="selectStockById" parameterType="int" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE stock_id = #{stockId}
+    </select>
+
+    <select id="selectById" parameterType="int" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE stock_id = #{stockId}
+    </select>
+
+    <!-- ════════════════════════════════════════════════════
+         전체 조회
+         ════════════════════════════════════════════════════ -->
+    <select id="selectAllStocks" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK ORDER BY stock_code
+    </select>
+
+    <select id="selectAll" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK ORDER BY stock_code
+    </select>
+
+    <!-- ════════════════════════════════════════════════════
+         국가별 조회
+         ════════════════════════════════════════════════════ -->
+    <select id="selectStocksByCountry" parameterType="string" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE country = #{country}
+        ORDER BY stock_code
+    </select>
+
+    <select id="selectByCountry" parameterType="string" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE country = #{country}
+        ORDER BY stock_code
+    </select>
+
+    <!-- ════════════════════════════════════════════════════
+         시장별 조회
+         ════════════════════════════════════════════════════ -->
+    <select id="selectStocksByMarketType" parameterType="string" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE market_type = #{marketType}
+        ORDER BY stock_code
+    </select>
+
+    <select id="selectByMarket" parameterType="string" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE market = #{marketType} OR market_type = #{marketType}
+        ORDER BY stock_code
+    </select>
+
+    <select id="getStocksByMarketType" parameterType="string" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE market_type = #{marketType}
+        ORDER BY stock_code
+    </select>
+
+    <!-- ════════════════════════════════════════════════════
+         국가 + 시장 복합 조회
+         ════════════════════════════════════════════════════ -->
+    <select id="selectByCountryAndMarket" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE country = #{country}
+          AND (market = #{market} OR market_type = #{market})
+        ORDER BY stock_code
+    </select>
+
+    <!-- ════════════════════════════════════════════════════
+         업종별 조회
+         ════════════════════════════════════════════════════ -->
+    <select id="selectStocksByIndustry" parameterType="string" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE industry = #{industry}
+        ORDER BY stock_code
+    </select>
+
+    <select id="selectByIndustry" parameterType="string" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE industry = #{industry}
+        ORDER BY stock_code
+    </select>
+
+    <select id="selectAllIndustries" resultType="string">
+        SELECT DISTINCT industry
+        FROM STOCK
+        WHERE industry IS NOT NULL
+        ORDER BY industry
+    </select>
+
+    <!-- ════════════════════════════════════════════════════
+         정렬 조회
+         ════════════════════════════════════════════════════ -->
+    <select id="selectStocksOrderByVolume" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE volume IS NOT NULL
+        ORDER BY volume DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectOrderByVolume" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE volume IS NOT NULL
+        ORDER BY volume DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectStocksOrderByChangeRate" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE change_rate IS NOT NULL
+        ORDER BY change_rate DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectOrderByChangeRate" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE change_rate IS NOT NULL
+        ORDER BY change_rate DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- ════════════════════════════════════════════════════
+         검색
+         ════════════════════════════════════════════════════ -->
+    <select id="searchStocks" resultMap="StockResultMap">
+        <![CDATA[
+        SELECT ]]><include refid="stockColumns"/><![CDATA[ FROM STOCK
+        WHERE stock_code LIKE CONCAT('%', #{keyword}, '%')
+           OR stock_name LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY stock_code
+        LIMIT 50
+        ]]>
+    </select>
+
+    <select id="search" parameterType="string" resultMap="StockResultMap">
+        <![CDATA[
+        SELECT ]]><include refid="stockColumns"/><![CDATA[ FROM STOCK
+        WHERE stock_code LIKE CONCAT('%', #{keyword}, '%')
+           OR stock_name LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY stock_code
+        LIMIT 50
+        ]]>
+    </select>
+
+    <!-- ════════════════════════════════════════════════════
+         INSERT
+         ════════════════════════════════════════════════════ -->
+    <insert id="insertStock" parameterType="StockVO">
+        INSERT INTO STOCK (
+            stock_code, stock_name, country, market, market_type, industry,
+            current_price, price_change, change_rate, volume, market_cap,
+            created_at, updated_at
+        ) VALUES (
+            #{stockCode}, #{stockName}, #{country}, #{market}, #{marketType}, #{industry},
+            #{currentPrice}, #{priceChange}, #{changeRate}, #{volume}, #{marketCap},
+            NOW(), NOW()
+        )
+    </insert>
+
+    <insert id="insert" parameterType="StockVO">
+        INSERT INTO STOCK (
+            stock_code, stock_name, country, market, market_type, industry,
+            current_price, price_change, change_rate, volume, market_cap,
+            created_at, updated_at
+        ) VALUES (
+            #{stockCode}, #{stockName}, #{country}, #{market}, #{marketType}, #{industry},
+            #{currentPrice}, #{priceChange}, #{changeRate}, #{volume}, #{marketCap},
+            NOW(), NOW()
+        )
+    </insert>
+
+    <!-- ════════════════════════════════════════════════════
+         UPDATE
+         ════════════════════════════════════════════════════ -->
+    <update id="updateStock" parameterType="StockVO">
+        UPDATE STOCK
+        SET stock_name    = #{stockName},
+            current_price = #{currentPrice},
+            price_change  = #{priceChange},
+            change_rate   = #{changeRate},
+            volume        = #{volume},
+            market_cap    = #{marketCap},
+            updated_at    = NOW()
+        WHERE stock_code = #{stockCode}
+    </update>
+
+    <update id="update" parameterType="StockVO">
+        UPDATE STOCK
+        SET stock_name    = #{stockName},
+            current_price = #{currentPrice},
+            price_change  = #{priceChange},
+            change_rate   = #{changeRate},
+            volume        = #{volume},
+            market_cap    = #{marketCap},
+            updated_at    = NOW()
+        WHERE stock_code = #{stockCode}
+    </update>
+
+    <update id="updateStockPrice">
+        UPDATE STOCK
+        SET current_price = #{currentPrice},
+            updated_at    = NOW()
+        WHERE stock_code = #{stockCode}
+    </update>
+
+    <update id="updateCurrentPrice">
+        UPDATE STOCK
+        SET current_price = #{currentPrice},
+            price_change  = #{priceChange},
+            change_rate   = #{priceChangeRate},
+            updated_at    = NOW()
+        WHERE stock_code = #{stockCode}
+    </update>
+
+    <!-- ════════════════════════════════════════════════════
+         DELETE
+         ════════════════════════════════════════════════════ -->
+    <delete id="delete">
+        DELETE FROM STOCK WHERE stock_id = #{stockId}
+    </delete>
+
+    <!-- ════════════════════════════════════════════════════
+         통계
+         ════════════════════════════════════════════════════ -->
+    <select id="countAllStocks" resultType="int">
+        SELECT COUNT(*) FROM STOCK
+    </select>
+
+    <select id="countStocksByCountry" parameterType="string" resultType="int">
+        SELECT COUNT(*) FROM STOCK WHERE country = #{country}
+    </select>
+
+</mapper>
