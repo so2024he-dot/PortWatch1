@@ -3,14 +3,23 @@
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <!--
-    MemberMapper.xml (namespace: com.portwatch.mapper.MemberMapper)
+    MemberMapper_mapper_pkg.xml (namespace: com.portwatch.mapper.MemberMapper)
 
-    ✅ persistence.MemberDAO 와 동일한 SQL을 사용.
-       두 인터페이스가 같은 XML을 공유할 수 없으므로 별도 XML 작성.
-       파일명 충돌 방지: mappers/mapper/ 하위에 배치.
+    ✅ MemberServiceImpl.java 에서 @Autowired MemberMapper memberMapper 로 사용
+    ✅ MemberMapper.xml (namespace: MemberDAO) 과 역할 분리
+       - MemberDAO   namespace → persistence 레이어 직접 사용
+       - MemberMapper namespace → service 레이어에서 사용
+
+    ✅ [2026-04-10 수정]
+       - member_nick 컬럼 추가 (SHOW COLUMNS FROM MEMBER 확인 — NOT NULL)
+       - SELECT * → 명시적 컬럼 목록으로 변경 (안전한 매핑 보장)
+       - INSERT 에 member_nick 추가
 -->
 <mapper namespace="com.portwatch.mapper.MemberMapper">
 
+    <!-- ════════════════════════════════════════
+         ResultMap — DB 컬럼 → Java 필드 명시적 매핑
+         ════════════════════════════════════════ -->
     <resultMap id="memberResultMap" type="MemberVO">
         <id     property="memberId"      column="member_id"/>
         <result property="memberEmail"   column="member_email"/>
@@ -20,6 +29,7 @@
         <result property="memberAddress" column="member_address"/>
         <result property="memberGender"  column="member_gender"/>
         <result property="memberBirth"   column="member_birth"/>
+        <result property="memberNick"    column="member_nick"/>
         <result property="memberRole"    column="member_role"/>
         <result property="memberStatus"  column="member_status"/>
         <result property="balance"       column="balance"/>
@@ -27,27 +37,108 @@
         <result property="updatedAt"     column="updated_at"/>
     </resultMap>
 
+    <!-- ════════════════════════════════════════
+         SELECT 쿼리
+         ════════════════════════════════════════ -->
+
+    <!-- 이메일로 회원 조회 (로그인 핵심) -->
     <select id="findByEmail" parameterType="String" resultMap="memberResultMap">
-        SELECT * FROM MEMBER WHERE member_email = #{memberEmail} AND member_status = 'ACTIVE'
+        SELECT member_id,
+               member_email,
+               member_pass,
+               member_name,
+               member_phone,
+               member_address,
+               member_gender,
+               member_birth,
+               member_nick,
+               member_role,
+               member_status,
+               balance,
+               created_at,
+               updated_at
+          FROM MEMBER
+         WHERE member_email = #{memberEmail}
+           AND member_status = 'ACTIVE'
     </select>
 
+    <!-- ID로 회원 조회 -->
     <select id="findById" parameterType="String" resultMap="memberResultMap">
-        SELECT * FROM MEMBER WHERE member_id = #{memberId}
+        SELECT member_id,
+               member_email,
+               member_pass,
+               member_name,
+               member_phone,
+               member_address,
+               member_gender,
+               member_birth,
+               member_nick,
+               member_role,
+               member_status,
+               balance,
+               created_at,
+               updated_at
+          FROM MEMBER
+         WHERE member_id = #{memberId}
     </select>
 
+    <!-- ID로 회원 조회 (StockPurchaseValidationService 호출) -->
     <select id="selectMemberById" parameterType="String" resultMap="memberResultMap">
-        SELECT * FROM MEMBER WHERE member_id = #{memberId}
+        SELECT member_id,
+               member_email,
+               member_pass,
+               member_name,
+               member_phone,
+               member_address,
+               member_gender,
+               member_birth,
+               member_nick,
+               member_role,
+               member_status,
+               balance,
+               created_at,
+               updated_at
+          FROM MEMBER
+         WHERE member_id = #{memberId}
     </select>
+
+    <!-- ════════════════════════════════════════
+         INSERT
+         ════════════════════════════════════════ -->
 
     <insert id="insert" parameterType="MemberVO">
-        INSERT INTO MEMBER (member_id, member_email, member_pass, member_name,
-                            member_phone, member_address, member_gender, member_birth,
-                            member_role, member_status, balance)
-        VALUES (#{memberId}, #{memberEmail}, #{memberPass}, #{memberName},
-                #{memberPhone,jdbcType=VARCHAR}, #{memberAddress,jdbcType=VARCHAR},
-                #{memberGender,jdbcType=VARCHAR}, #{memberBirth,jdbcType=TIMESTAMP},
-                #{memberRole}, #{memberStatus}, #{balance})
+        INSERT INTO MEMBER (
+            member_id,
+            member_email,
+            member_pass,
+            member_name,
+            member_phone,
+            member_address,
+            member_gender,
+            member_birth,
+            member_nick,
+            member_role,
+            member_status,
+            balance
+        ) VALUES (
+            #{memberId},
+            #{memberEmail},
+            #{memberPass},
+            #{memberName},
+            #{memberPhone,       jdbcType=VARCHAR},
+            #{memberAddress,     jdbcType=VARCHAR},
+            #{memberGender,      jdbcType=VARCHAR},
+            #{memberBirth,       jdbcType=TIMESTAMP},
+            #{memberNick,        jdbcType=VARCHAR},
+            #{memberRole},
+            #{memberStatus},
+            #{balance}
+        )
     </insert>
+
+    <!-- ════════════════════════════════════════
+         UPDATE
+         ════════════════════════════════════════ -->
 
     <update id="update" parameterType="MemberVO">
         UPDATE MEMBER
@@ -63,15 +154,27 @@
     </update>
 
     <update id="updateLastLogin" parameterType="String">
-        UPDATE MEMBER SET updated_at = NOW() WHERE member_id = #{memberId}
+        UPDATE MEMBER
+           SET updated_at = NOW()
+         WHERE member_id  = #{memberId}
     </update>
 
     <update id="updateBalance">
-        UPDATE MEMBER SET balance = #{balance}, updated_at = NOW() WHERE member_id = #{memberId}
+        UPDATE MEMBER
+           SET balance    = #{balance},
+               updated_at = NOW()
+         WHERE member_id  = #{memberId}
     </update>
 
+    <!-- ════════════════════════════════════════
+         DELETE (Soft Delete)
+         ════════════════════════════════════════ -->
+
     <delete id="delete" parameterType="String">
-        UPDATE MEMBER SET member_status = 'INACTIVE', updated_at = NOW() WHERE member_id = #{memberId}
+        UPDATE MEMBER
+           SET member_status = 'INACTIVE',
+               updated_at    = NOW()
+         WHERE member_id     = #{memberId}
     </delete>
 
 </mapper>
