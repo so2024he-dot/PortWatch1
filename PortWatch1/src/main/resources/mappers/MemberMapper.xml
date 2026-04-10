@@ -30,6 +30,7 @@
         <result property="memberAddress" column="member_address"/>
         <result property="memberGender"  column="member_gender"/>
         <result property="memberBirth"   column="member_birth"/>
+        <result property="memberNick"    column="member_nick"/>
         <result property="memberRole"    column="member_role"/>
         <result property="memberStatus"  column="member_status"/>
         <result property="balance"       column="balance"/>
@@ -51,6 +52,7 @@
                member_address,
                member_gender,
                member_birth,
+               member_nick,
                member_role,
                member_status,
                balance,
@@ -71,6 +73,7 @@
                member_address,
                member_gender,
                member_birth,
+               member_nick,
                member_role,
                member_status,
                balance,
@@ -94,6 +97,7 @@
                member_address,
                member_gender,
                member_birth,
+               member_nick,
                member_role,
                member_status,
                balance,
@@ -117,6 +121,7 @@
             member_address,
             member_gender,
             member_birth,
+            member_nick,
             member_role,
             member_status,
             balance
@@ -129,6 +134,7 @@
             #{memberAddress,     jdbcType=VARCHAR},
             #{memberGender,      jdbcType=VARCHAR},
             #{memberBirth,       jdbcType=TIMESTAMP},
+            #{memberNick,        jdbcType=VARCHAR},
             #{memberRole},
             #{memberStatus},
             #{balance}

@@ -14,32 +14,34 @@ import java.sql.Timestamp;
  *    → sqlSessionFactory 생성 실패
  *    → HTTP 500 서버 내부 오류
  *
- * ✅ DB 컬럼 매핑 (MEMBER 테이블 수정 후):
+ * ✅ DB 컬럼 매핑 (MEMBER 테이블 실제 스키마 — SHOW COLUMNS 확인):
  *    member_id, member_email, member_pass, member_name,
  *    member_phone, member_address, member_gender, member_birth,
- *    member_role, member_status, balance, created_at, updated_at
+ *    member_nick, member_role, member_status, balance, created_at, updated_at
  */
 public class MemberVO {
 
     private String    memberId;       // member_id      VARCHAR(50) PK
-    private String    memberEmail;    // member_email   VARCHAR(100) UNIQUE
-    private String    memberPass;     // member_pass    VARCHAR(200) BCrypt
-    private String    memberName;     // member_name    VARCHAR(20)
-    private String    memberPhone;    // member_phone   VARCHAR(20) NULL
+    private String    memberEmail;    // member_email   VARCHAR(100) UNIQUE NOT NULL
+    private String    memberPass;     // member_pass    VARCHAR(200) BCrypt NULL
+    private String    memberName;     // member_name    VARCHAR(50)  NOT NULL
+    private String    memberPhone;    // member_phone   VARCHAR(20)  NULL
     private String    memberAddress;  // member_address VARCHAR(255) NULL
-    private String    memberGender;   // member_gender  VARCHAR(10) NULL
-    private Timestamp memberBirth;    // member_birth   TIMESTAMP NULL
-    private String    memberRole;     // member_role    VARCHAR(20) DEFAULT 'USER'
-    private String    memberStatus;   // member_status  VARCHAR(20) DEFAULT 'ACTIVE'
-    private double    balance;        // balance        DOUBLE DEFAULT 1000000
-    private Timestamp createdAt;      // created_at     TIMESTAMP AUTO
-    private Timestamp updatedAt;      // updated_at     TIMESTAMP AUTO
+    private String    memberGender;   // member_gender  VARCHAR(10)  NULL
+    private Timestamp memberBirth;    // member_birth   TIMESTAMP    NULL
+    private String    memberNick;     // member_nick    VARCHAR(50)  NOT NULL (SHOW COLUMNS 확인)
+    private String    memberRole;     // member_role    VARCHAR(20)  DEFAULT 'USER'
+    private String    memberStatus;   // member_status  VARCHAR(20)  DEFAULT 'ACTIVE'
+    private double    balance;        // balance        DOUBLE       DEFAULT 1000000
+    private Timestamp createdAt;      // created_at     TIMESTAMP    AUTO
+    private Timestamp updatedAt;      // updated_at     TIMESTAMP    AUTO
 
     // ── 기본 생성자 ──────────────────────────────────
     public MemberVO() {
         this.memberRole   = "USER";
         this.memberStatus = "ACTIVE";
         this.balance      = 1_000_000.0;
+        this.memberNick   = "";
     }
 
     // ── 생성자 ───────────────────────────────────────
@@ -77,6 +79,9 @@ public class MemberVO {
 
     public Timestamp getMemberBirth()              { return memberBirth; }
     public void      setMemberBirth(Timestamp v)   { this.memberBirth = v; }
+
+    public String getMemberNick()                  { return memberNick; }
+    public void   setMemberNick(String v)          { this.memberNick = v; }
 
     public String getMemberRole()                  { return memberRole; }
     public void   setMemberRole(String v)          { this.memberRole = v; }
