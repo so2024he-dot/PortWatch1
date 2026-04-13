@@ -77,18 +77,22 @@
             ✅ jdbcUrl 작성 규칙: 반드시 한 줄(value="..." 안에 개행 없음)
                개행이 있으면 XML 파서가 공백/줄바꿈을 URL에 포함 → 연결 실패
                ─────────────────────────────────────────────────────
-               useSSL=false         : SSL 비활성화 (VPC 내부 연결)
-               sslMode=DISABLED     : MySQL 8.4 SSL 비활성화 (useSSL=false와 이중 보장)
-               useUnicode=true      : 한글 처리 명시적 활성화
-               characterEncoding=UTF-8 : 한글 인코딩
+               sslMode=REQUIRED     : Aurora require_secure_transport=ON 대응
+                                      (PREFERRED → SSL 실패 → non-SSL 폴백 → Aurora 거부 → 30초 타임아웃)
+                                      (REQUIRED  → 인증서 검증 없이 SSL 연결 → Aurora 수락 ✅)
+               serverTimezone=Asia/Seoul : KST 타임존 명시
+               characterEncoding=UTF-8  : 한글 인코딩
+               useUnicode=true          : 한글 처리 명시적 활성화
                allowPublicKeyRetrieval=true : MySQL 8.x caching_sha2_password 인증 지원
-               connectTimeout=10000 : TCP 연결 10초 제한
+               connectTimeout=5000  : TCP 연결 5초 제한 (< connectionTimeout=30000 이어야 함)
                socketTimeout=60000  : 쿼리 실행 60초 제한
-               tcpKeepAlive=true    : AWS NAT Gateway 4분 유휴 끊김 방지 (TCP 레벨 keepalive)
+               tcpKeepAlive=true    : AWS NAT Gateway 4분 유휴 끊김 방지
+               zeroDateTimeBehavior=convertToNull : '0000-00-00' TIMESTAMP → null 변환
                ─────────────────────────────────────────────────────
+               ⛔ useSSL=false / sslMode=DISABLED 사용 금지:
+                  Aurora require_secure_transport=ON 환경에서 SSL 없이 연결 시도하면 거부됨
                ⛔ autoReconnect=true 제거:
-                  MySQL 8.x에서 deprecated. 연결 실패 시 재연결 폭풍 유발 가능.
-                  HikariCP 자체 풀 관리(maxLifetime, idleTimeout)로 충분히 대체됨.
+                  MySQL 8.x deprecated. HikariCP maxLifetime/idleTimeout으로 대체됨.
         -->
         <property name="jdbcUrl" value="jdbc:mysql://portwatch-db-seoul.cpggwqm1goo3.ap-northeast-2.rds.amazonaws.com:3306/portwatch?sslMode=REQUIRED&amp;serverTimezone=Asia/Seoul&amp;characterEncoding=UTF-8&amp;useUnicode=true&amp;allowPublicKeyRetrieval=true&amp;connectTimeout=5000&amp;socketTimeout=60000&amp;tcpKeepAlive=true&amp;zeroDateTimeBehavior=convertToNull"/>
 
