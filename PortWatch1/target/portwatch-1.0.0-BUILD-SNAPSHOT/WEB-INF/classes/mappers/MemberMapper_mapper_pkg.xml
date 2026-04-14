@@ -32,7 +32,7 @@
         <result property="memberNick"    column="member_nick"/>
         <result property="memberRole"    column="member_role"/>
         <result property="memberStatus"  column="member_status"/>
-        <result property="balance"       column="point"/>
+        <result property="balance"       column="balance"/>
         <result property="createdAt"     column="created_at"/>
         <result property="updatedAt"     column="updated_at"/>
     </resultMap>
@@ -54,7 +54,7 @@
                member_nick,
                member_role,
                member_status,
-               point,
+               balance,
                created_at,
                updated_at
           FROM MEMBER
@@ -75,7 +75,7 @@
                member_nick,
                member_role,
                member_status,
-               point,
+               balance,
                created_at,
                updated_at
           FROM MEMBER
@@ -95,7 +95,7 @@
                member_nick,
                member_role,
                member_status,
-               point,
+               balance,
                created_at,
                updated_at
           FROM MEMBER
@@ -119,7 +119,7 @@
             member_nick,
             member_role,
             member_status,
-            point
+            balance
         ) VALUES (
             #{memberId},
             #{memberEmail},
@@ -161,7 +161,7 @@
 
     <update id="updateBalance">
         UPDATE MEMBER
-           SET point      = #{balance},
+           SET balance    = #{balance},
                updated_at = NOW()
          WHERE member_id  = #{memberId}
     </update>
