@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import javax.servlet.http.HttpSession;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,7 +49,11 @@ public class StockController {
     // ════════════════════════════════════════════════════════════
     
     /**
-     * 주식 목록 페이지
+     * 주식 목록 페이지 — 50개씩 페이지네이션 지원
+     * ══════════════════════════════════════════════════════════════
+     * ✅ [수정] page 파라미터 추가 → 50개씩 분할 표시
+     *    1시간 단위로 순환 표시하려면 JS setInterval + 페이지 이동 사용
+     * ══════════════════════════════════════════════════════════════
      */
     @GetMapping("/list")
     public String list(
@@ -55,75 +61,165 @@ public class StockController {
             @RequestParam(required = false) String market,
             @RequestParam(required = false) String industry,
             @RequestParam(required = false) String sortBy,
+            @RequestParam(defaultValue = "0") int page,
             Model model) {
-        
-        log.info("주식 목록 조회: country={}, market={}, industry={}, sortBy={}", 
-                country, market, industry, sortBy);
-        
+
+        final int PAGE_SIZE = 50;
+        log.info("주식 목록: country={}, market={}, industry={}, sortBy={}, page={}",
+                country, market, industry, sortBy, page);
+
         List<StockVO> stocks;
+        int totalCount = 0;
 
-        // 필터링
-        if (country != null && market != null) {
-            stocks = stockService.getStocksByCountryAndMarket(country, market);
-        } else if (country != null) {
-            stocks = stockService.getStocksByCountry(country);
-        } else if (market != null) {
-            stocks = stockService.getStocksByMarket(market);
-        } else if (industry != null) {
-            stocks = stockService.getStocksByIndustry(industry);
-        } else {
-            stocks = stockService.getAllStocks();
-        }
-
-        // null 방지: DB 오류 시 빈 목록으로 처리
-        if (stocks == null) {
-            stocks = java.util.Collections.emptyList();
-        }
-
-        // 정렬 (목록이 비어있지 않을 때만)
-        if (!stocks.isEmpty()) {
-            if ("volume".equals(sortBy)) {
-                stocks = stockService.getStocksOrderByVolume(stocks.size());
-                if (stocks == null) stocks = java.util.Collections.emptyList();
-            } else if ("gainers".equals(sortBy)) {
-                stocks = stockService.getStocksOrderByChangeRate(stocks.size());
-                if (stocks == null) stocks = java.util.Collections.emptyList();
-            } else if ("losers".equals(sortBy)) {
-                stocks = stockService.getStocksOrderByChangeRateDesc(stocks.size());
-                if (stocks == null) stocks = java.util.Collections.emptyList();
+        try {
+            // 필터링
+            if (country != null && market != null) {
+                stocks = stockService.getStocksByCountryAndMarket(country, market);
+            } else if (country != null) {
+                stocks = stockService.getStocksByCountry(country);
+            } else if (market != null) {
+                stocks = stockService.getStocksByMarket(market);
+            } else if (industry != null) {
+                stocks = stockService.getStocksByIndustry(industry);
+            } else {
+                stocks = stockService.getAllStocks();
             }
+            if (stocks == null) stocks = java.util.Collections.emptyList();
+
+            // 정렬
+            if (!stocks.isEmpty()) {
+                if ("volume".equals(sortBy)) {
+                    List<StockVO> tmp = stockService.getStocksOrderByVolume(stocks.size());
+                    if (tmp != null) stocks = tmp;
+                } else if ("gainers".equals(sortBy)) {
+                    List<StockVO> tmp = stockService.getStocksOrderByChangeRate(stocks.size());
+                    if (tmp != null) stocks = tmp;
+                } else if ("losers".equals(sortBy)) {
+                    List<StockVO> tmp = stockService.getStocksOrderByChangeRateDesc(stocks.size());
+                    if (tmp != null) stocks = tmp;
+                }
+            }
+
+            totalCount = stocks.size();
+
+            // ✅ 50개씩 페이지네이션 (서버사이드 slicing)
+            int totalPages = (int) Math.ceil((double) totalCount / PAGE_SIZE);
+            if (page < 0) page = 0;
+            if (page >= totalPages && totalPages > 0) page = totalPages - 1;
+
+            int fromIndex = page * PAGE_SIZE;
+            int toIndex   = Math.min(fromIndex + PAGE_SIZE, stocks.size());
+            if (fromIndex < stocks.size()) {
+                stocks = stocks.subList(fromIndex, toIndex);
+            } else {
+                stocks = java.util.Collections.emptyList();
+            }
+
+            model.addAttribute("currentPage", page);
+            model.addAttribute("totalPages",  totalPages);
+            model.addAttribute("totalCount",  totalCount);
+            model.addAttribute("pageSize",    PAGE_SIZE);
+
+        } catch (Exception e) {
+            log.error("주식 목록 조회 실패", e);
+            stocks = java.util.Collections.emptyList();
         }
 
         model.addAttribute("stocks", stocks);
         model.addAttribute("selectedCountry", country);
-        model.addAttribute("selectedMarket", market);
+        model.addAttribute("selectedMarket",  market);
         model.addAttribute("selectedIndustry", industry);
         model.addAttribute("sortBy", sortBy);
 
-        // 필터 옵션 (null 방지)
         java.util.List<String> industries = stockService.getAllIndustries();
-        model.addAttribute("industries", industries != null ? industries : java.util.Collections.emptyList());
-        
+        model.addAttribute("industries",
+                industries != null ? industries : java.util.Collections.emptyList());
+
         return "stock/list";
     }
     
     /**
-     * 주식 상세 페이지
+     * 주식 상세 페이지 - PathVariable 방식 (/stock/detail/005930)
+     * ══════════════════════════════════════════════════════════════
+     * ✅ [수정] PathVariable + QueryParam 두 가지 방식 모두 지원
+     *    stock/list.jsp에서 ?stockCode=xxx QueryParam 방식으로 호출 → 404 발생
+     *    → 두 방식 모두 같은 로직 처리
+     * ══════════════════════════════════════════════════════════════
      */
     @GetMapping("/detail/{stockCode}")
-    public String detail(@PathVariable String stockCode, Model model) {
+    public String detailByPath(@PathVariable String stockCode, Model model) {
+        return loadDetailPage(stockCode, model);
+    }
+
+    /**
+     * 주식 상세 페이지 - QueryParam 방식 (/stock/detail?stockCode=005930)
+     * ✅ [수정 핵심] stock/list.jsp onclick에서 이 URL 사용 → 기존 404 해결
+     */
+    @GetMapping("/detail")
+    public String detailByParam(
+            @RequestParam(required = false) String stockCode,
+            Model model) {
+        if (stockCode == null || stockCode.isEmpty()) {
+            return "redirect:/stock/list";
+        }
+        return loadDetailPage(stockCode, model);
+    }
+
+    /**
+     * 상세 페이지 공통 로직
+     */
+    private String loadDetailPage(String stockCode, Model model) {
         log.info("주식 상세 조회: {}", stockCode);
-        
         StockVO stock = stockService.getStockByCode(stockCode);
-        
         if (stock == null) {
             log.warn("주식 정보를 찾을 수 없습니다: {}", stockCode);
             return "redirect:/stock/list";
         }
-        
         model.addAttribute("stock", stock);
-        
         return "stock/detail";
+    }
+
+    /**
+     * 주식 매수 페이지 (/stock/buy?stockCode=005930)
+     * ══════════════════════════════════════════════════════════════
+     * ✅ [신규] stock/list.jsp 매수 버튼 onclick에서 이 URL 호출
+     *    기존: 매핑 없어서 404 발생
+     *    수정: GET /stock/buy → stock/purchase.jsp 반환
+     * ══════════════════════════════════════════════════════════════
+     */
+    @GetMapping("/buy")
+    public String buyPage(
+            @RequestParam(required = false) String stockCode,
+            HttpSession session,
+            Model model) {
+
+        log.info("주식 매수 페이지: stockCode={}", stockCode);
+
+        // 로그인 체크
+        Object loginMember = session.getAttribute("loginMember");
+        if (loginMember == null) loginMember = session.getAttribute("member");
+        if (loginMember == null) {
+            log.warn("매수 페이지: 로그인 필요");
+            return "redirect:/member/login";
+        }
+
+        // 종목 코드로 주식 조회
+        if (stockCode != null && !stockCode.isEmpty()) {
+            StockVO stock = stockService.getStockByCode(stockCode);
+            if (stock != null) {
+                model.addAttribute("stock", stock);
+                log.info("매수 대상 종목: {} ({})", stock.getStockName(), stock.getStockCode());
+            } else {
+                log.warn("종목 없음: {}", stockCode);
+                model.addAttribute("errorMsg", "종목을 찾을 수 없습니다: " + stockCode);
+            }
+        }
+
+        // 전체 종목 목록 (드롭다운용)
+        model.addAttribute("stockList", stockService.getAllStocks());
+        model.addAttribute("loginMember", loginMember);
+
+        return "stock/purchase";
     }
     
     /**

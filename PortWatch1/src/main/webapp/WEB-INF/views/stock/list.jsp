@@ -152,9 +152,33 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>
                 <i class="fas fa-chart-bar"></i> 주식 목록
+                <small class="text-muted fs-6 ms-2">
+                    (${not empty stocks ? stocks.size() : 0}개 기업 표시 중
+                    <c:if test="${not empty totalCount}"> / 전체 ${totalCount}개</c:if>)
+                </small>
             </h2>
-            <div>
-                <a href="${pageContext.request.contextPath}/stock/search" class="btn btn-outline-primary">
+            <div class="d-flex gap-2">
+                <!-- 페이지 이동 버튼 -->
+                <c:if test="${not empty currentPage}">
+                    <div class="btn-group">
+                        <c:if test="${currentPage > 0}">
+                            <a href="${pageContext.request.contextPath}/stock/list?page=${currentPage-1}<c:if test="${not empty selectedCountry}">&country=${selectedCountry}</c:if>"
+                               class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-chevron-left"></i> 이전 50개
+                            </a>
+                        </c:if>
+                        <span class="btn btn-secondary btn-sm disabled">
+                            ${currentPage+1}/${totalPages} 페이지
+                        </span>
+                        <c:if test="${currentPage + 1 < totalPages}">
+                            <a href="${pageContext.request.contextPath}/stock/list?page=${currentPage+1}<c:if test="${not empty selectedCountry}">&country=${selectedCountry}</c:if>"
+                               class="btn btn-outline-secondary btn-sm">
+                                다음 50개 <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </c:if>
+                    </div>
+                </c:if>
+                <a href="${pageContext.request.contextPath}/stock/search" class="btn btn-outline-primary btn-sm">
                     <i class="fas fa-search"></i> 검색
                 </a>
             </div>

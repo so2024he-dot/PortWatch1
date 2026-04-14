@@ -31,6 +31,14 @@ public interface StockMapper {
     StockVO findById(Integer stockId);
     StockVO findByCode(String stockCode);
     List<StockVO> findAll();
+
+    // ✅ 페이지네이션 (50개씩 순환 표시)
+    List<StockVO> findByPage(@Param("offset") int offset, @Param("pageSize") int pageSize);
+    List<StockVO> findByCountryPage(@Param("country") String country,
+                                    @Param("offset") int offset,
+                                    @Param("pageSize") int pageSize);
+    int countAll();
+
     List<StockVO> findByCountry(String country);
     List<StockVO> findByMarket(String market);
     List<StockVO> findByMarketType(String marketType);
