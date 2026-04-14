@@ -197,7 +197,7 @@ public class KoreaStockCrawlerService {
         stock.setPreviousClose(toBD(previousCloseD));
 
         // 라인 168 수정: incompatible types: Double → BigDecimal
-        stock.setChangeAmount(toBD(changeAmountD));
+        stock.setPriceChange(toBD(changeAmountD));   // ✅ renamed changeAmount → priceChange
 
         // 라인 169 수정: incompatible types: Double → BigDecimal
         stock.setChangeRate(toBD(changeRateD));

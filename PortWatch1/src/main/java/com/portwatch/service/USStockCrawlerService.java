@@ -125,7 +125,7 @@ public class USStockCrawlerService {
         s.setCountry("US");
         s.setCurrentPrice(toBD(price));
         s.setPreviousClose(toBD(price - change));
-        s.setChangeAmount(toBD(change));
+        s.setPriceChange(toBD(change));   // ✅ renamed changeAmount → priceChange
         s.setChangeRate(toBD(changeR));
         s.setVolume(volume);
         return s;

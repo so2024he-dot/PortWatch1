@@ -29,7 +29,7 @@ public class StockVO {
     // 가격 정보
     private BigDecimal currentPrice;
     private BigDecimal previousClose;
-    private BigDecimal changeAmount;
+    private BigDecimal priceChange;   // ✅ DB column: price_change (renamed from changeAmount)
     private BigDecimal changeRate;
     
     // 거래 정보
