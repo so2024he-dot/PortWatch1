@@ -471,8 +471,10 @@
         // 종목별 뉴스 로드
         // ========================================
         function loadStockNews(stockCode) {
+            const ctx = '${pageContext.request.contextPath}';
             $.ajax({
-                url: '/api/news/stock/' + stockCode,
+                // ✅ [수정] /api/news/stock/ (없는 경로) → /news/api/stock/ (실제 NewsController 경로)
+                url: ctx + '/news/api/stock/' + stockCode,
                 method: 'GET',
                 success: function(response) {
                     if (response.success && response.news.length > 0) {
@@ -534,7 +536,8 @@
                     success: function(response) {
                         if (response.success) {
                             alert('✅ 매수가 완료되었습니다!');
-                            window.location.href = ctx + '/dashboard';
+                            // ✅ [수정] /dashboard → /portfolio (매수 결과 즉시 확인)
+                            window.location.href = ctx + '/portfolio';
                         } else {
                             alert('❌ ' + response.message);
                         }
@@ -544,7 +547,8 @@
                             alert('로그인이 필요합니다.');
                             window.location.href = ctx + '/member/login';
                         } else {
-                            alert('매수 처리 중 오류가 발생했습니다.');
+                            const err = xhr.responseJSON || {};
+                            alert('❌ ' + (err.message || '매수 처리 중 오류가 발생했습니다.'));
                         }
                     }
                 });
