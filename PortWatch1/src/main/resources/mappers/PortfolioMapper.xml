@@ -64,9 +64,35 @@
     <!-- ════════════════════════════════════════════════════ -->
     <!-- ✅ 회원별 포트폴리오 목록 (Long memberId)             -->
     <!-- ════════════════════════════════════════════════════ -->
-    
+
     <select id="findPortfolioByMemberId" parameterType="long" resultMap="PortfolioResultMap">
-        SELECT 
+        SELECT
+            p.portfolio_id,
+            p.member_id,
+            p.portfolio_name,
+            p.created_at,
+            p.updated_at,
+            pi.stock_code,
+            s.stock_name,
+            pi.quantity,
+            pi.avg_price,
+            pi.purchase_price,
+            s.current_price
+        FROM PORTFOLIO p
+        LEFT JOIN PORTFOLIO_ITEM pi ON p.portfolio_id = pi.portfolio_id
+        LEFT JOIN STOCK s ON pi.stock_code = s.stock_code
+        WHERE p.member_id = #{memberId}
+        ORDER BY p.portfolio_id ASC, pi.item_id ASC
+    </select>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!-- ✅ [신규] 회원별 포트폴리오 목록 (String memberId)    -->
+    <!-- MemberVO.memberId = VARCHAR(50) — "admin", "user123" -->
+    <!-- Long.parseLong() 변환 불필요 — 직접 String 조회      -->
+    <!-- ════════════════════════════════════════════════════ -->
+
+    <select id="findPortfolioByMemberIdStr" parameterType="string" resultMap="PortfolioResultMap">
+        SELECT
             p.portfolio_id,
             p.member_id,
             p.portfolio_name,

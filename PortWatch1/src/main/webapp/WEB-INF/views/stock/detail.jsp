@@ -213,70 +213,85 @@
                         </c:choose>
                     </div>
                     
-                    <div class="price-change ${stock.priceChangeRate >= 0 ? 'positive' : 'negative'}">
+                    <%-- ✅ [수정] priceChangeRate → changeRate (StockVO 실제 필드명) --%>
+                    <div class="price-change ${stock.changeRate >= 0 ? 'positive' : 'negative'}">
                         <c:choose>
                             <c:when test="${stock.country == 'US'}">
-                                ${stock.priceChangeRate >= 0 ? '▲' : '▼'}
+                                ${stock.changeRate >= 0 ? '▲' : '▼'}
                                 $<fmt:formatNumber value="${stock.priceChange}" pattern="#,##0.00"/>
-                                (<fmt:formatNumber value="${stock.priceChangeRate}" pattern="+#,##0.00;-#,##0.00"/>%)
+                                (<fmt:formatNumber value="${stock.changeRate}" pattern="+#,##0.00;-#,##0.00"/>%)
                             </c:when>
                             <c:otherwise>
-                                ${stock.priceChangeRate >= 0 ? '▲' : '▼'}
+                                ${stock.changeRate >= 0 ? '▲' : '▼'}
                                 <fmt:formatNumber value="${stock.priceChange}" pattern="#,##0"/>원
-                                (<fmt:formatNumber value="${stock.priceChangeRate}" pattern="+#,##0.00;-#,##0.00"/>%)
+                                (<fmt:formatNumber value="${stock.changeRate}" pattern="+#,##0.00;-#,##0.00"/>%)
                             </c:otherwise>
                         </c:choose>
                     </div>
                     
-                    <!-- 주요 지표 -->
+                    <%-- ✅ [수정] openPrice/highPrice/lowPrice → StockVO에 없는 필드
+                          DB에 없는 데이터는 "-" 로 표시, 실제 있는 필드(volume, marketCap)는 정상 출력 --%>
                     <div class="stock-info-grid">
                         <div class="info-item">
-                            <div class="info-label">시가</div>
-                            <div class="info-value">
+                            <div class="info-label">전일 대비</div>
+                            <div class="info-value ${stock.changeRate >= 0 ? 'text-danger' : 'text-primary'}">
                                 <c:choose>
                                     <c:when test="${stock.country == 'US'}">
-                                        $<fmt:formatNumber value="${stock.openPrice}" pattern="#,##0.00"/>
+                                        $<fmt:formatNumber value="${stock.priceChange}" pattern="#,##0.00"/>
                                     </c:when>
                                     <c:otherwise>
-                                        <fmt:formatNumber value="${stock.openPrice}" pattern="#,##0"/>원
+                                        <fmt:formatNumber value="${stock.priceChange}" pattern="#,##0"/>원
                                     </c:otherwise>
                                 </c:choose>
                             </div>
                         </div>
-                        
+
                         <div class="info-item">
-                            <div class="info-label">고가</div>
-                            <div class="info-value">
-                                <c:choose>
-                                    <c:when test="${stock.country == 'US'}">
-                                        $<fmt:formatNumber value="${stock.highPrice}" pattern="#,##0.00"/>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <fmt:formatNumber value="${stock.highPrice}" pattern="#,##0"/>원
-                                    </c:otherwise>
-                                </c:choose>
+                            <div class="info-label">등락률</div>
+                            <div class="info-value ${stock.changeRate >= 0 ? 'text-danger' : 'text-primary'}">
+                                <fmt:formatNumber value="${stock.changeRate}" pattern="+#,##0.00;-#,##0.00"/>%
                             </div>
                         </div>
-                        
-                        <div class="info-item">
-                            <div class="info-label">저가</div>
-                            <div class="info-value">
-                                <c:choose>
-                                    <c:when test="${stock.country == 'US'}">
-                                        $<fmt:formatNumber value="${stock.lowPrice}" pattern="#,##0.00"/>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <fmt:formatNumber value="${stock.lowPrice}" pattern="#,##0"/>원
-                                    </c:otherwise>
-                                </c:choose>
-                            </div>
-                        </div>
-                        
+
                         <div class="info-item">
                             <div class="info-label">거래량</div>
                             <div class="info-value">
                                 <fmt:formatNumber value="${stock.volume}" pattern="#,##0"/>
                             </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">시가총액</div>
+                            <div class="info-value">
+                                <c:choose>
+                                    <c:when test="${not empty stock.marketCap}">
+                                        <c:choose>
+                                            <c:when test="${stock.country == 'US'}">
+                                                $<fmt:formatNumber value="${stock.marketCap}" pattern="#,##0"/>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <fmt:formatNumber value="${stock.marketCap}" pattern="#,##0"/>억
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </c:when>
+                                    <c:otherwise>-</c:otherwise>
+                                </c:choose>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">업종</div>
+                            <div class="info-value">
+                                <c:choose>
+                                    <c:when test="${not empty stock.industry}">${stock.industry}</c:when>
+                                    <c:otherwise>-</c:otherwise>
+                                </c:choose>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">시장</div>
+                            <div class="info-value">${stock.marketType}</div>
                         </div>
                     </div>
                 </div>
@@ -398,7 +413,8 @@
             
             const stockCode = '${stock.stockCode}';
             const country = '${stock.country}';
-            const currentPrice = ${stock.currentPrice};
+            // ✅ [수정] currentPrice null 방어: BigDecimal null → JS SyntaxError 방지
+            const currentPrice = parseFloat('${not empty stock.currentPrice ? stock.currentPrice : 0}') || 0;
             
             // 가격 포맷팅
             updateDisplayPrice(currentPrice, country);
@@ -505,25 +521,31 @@
             }
             
             if (confirm('주식을 매수하시겠습니까?')) {
+                const ctx = '${pageContext.request.contextPath}';
                 $.ajax({
-                    url: '/api/purchase/execute',
+                    url: ctx + '/api/purchase/execute',
                     method: 'POST',
-                    data: {
+                    contentType: 'application/json',
+                    data: JSON.stringify({
                         stockCode: stockCode,
                         quantity: quantity,
                         price: price
-                    },
+                    }),
                     success: function(response) {
                         if (response.success) {
                             alert('✅ 매수가 완료되었습니다!');
-                            // 포트폴리오 페이지로 이동
-                            window.location.href = '/portfolio/';
+                            window.location.href = ctx + '/dashboard';
                         } else {
                             alert('❌ ' + response.message);
                         }
                     },
-                    error: function() {
-                        alert('매수 처리 중 오류가 발생했습니다.');
+                    error: function(xhr) {
+                        if (xhr.status === 401) {
+                            alert('로그인이 필요합니다.');
+                            window.location.href = ctx + '/member/login';
+                        } else {
+                            alert('매수 처리 중 오류가 발생했습니다.');
+                        }
                     }
                 });
             }
@@ -533,8 +555,9 @@
         // 관심종목 추가
         // ========================================
         function addToWatchlist(stockCode) {
+            // ✅ [수정] /api/watchlist/add → /watchlist/add (올바른 컨트롤러 경로)
             $.ajax({
-                url: '/api/watchlist/add',
+                url: '${pageContext.request.contextPath}/watchlist/add',
                 method: 'POST',
                 data: { stockCode: stockCode },
                 success: function(response) {
@@ -544,8 +567,13 @@
                         alert('❌ ' + response.message);
                     }
                 },
-                error: function() {
-                    alert('관심종목 추가에 실패했습니다.');
+                error: function(xhr) {
+                    if (xhr.status === 401) {
+                        alert('로그인이 필요합니다.');
+                        window.location.href = '${pageContext.request.contextPath}/member/login';
+                    } else {
+                        alert('관심종목 추가에 실패했습니다.');
+                    }
                 }
             });
         }

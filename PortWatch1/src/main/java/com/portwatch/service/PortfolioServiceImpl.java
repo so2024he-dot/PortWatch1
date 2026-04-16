@@ -59,17 +59,23 @@ public class PortfolioServiceImpl implements PortfolioService {
     }
 
     /**
-     * ✅ 회원별 포트폴리오 목록 (String 버전 - 신규!)
-     * DashboardController, PortfolioController 호출용
+     * ✅ 회원별 포트폴리오 목록 (String 버전 - 직접 String 조회)
+     * ══════════════════════════════════════════════════════════════
+     * [수정] MemberVO.memberId = VARCHAR(50) ("admin", "kim123" 등)
+     *        기존: Long.parseLong() 시도 → NumberFormatException → 빈 목록
+     *        수정: findPortfolioByMemberIdStr(String) 직접 호출
+     * ══════════════════════════════════════════════════════════════
      */
     @Override
     public List<PortfolioVO> getPortfolioByMemberId(String memberId) {
         try {
-            // String → Long 변환 시도
-            Long memberIdLong = Long.parseLong(memberId);
-            return portfolioMapper.findPortfolioByMemberId(memberIdLong);
-        } catch (NumberFormatException e) {
-            log.warn("memberId 변환 실패 (String→Long): {}", memberId);
+            if (memberId == null || memberId.trim().isEmpty()) {
+                log.warn("memberId is null or empty");
+                return new ArrayList<>();
+            }
+            return portfolioMapper.findPortfolioByMemberIdStr(memberId);
+        } catch (Exception e) {
+            log.error("포트폴리오 조회 실패: memberId={}", memberId, e);
             return new ArrayList<>();
         }
     }

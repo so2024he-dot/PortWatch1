@@ -73,13 +73,19 @@ public class StockPurchaseApiController {
         
         try {
             // 1. 세션에서 회원 정보 확인
-            MemberVO member = (MemberVO) session.getAttribute("member");
+            // ✅ [수정] "member" 키 없으면 "loginMember" 도 확인
+            //    MemberController 로그인: session.setAttribute("loginMember", member)
+            //    일부 페이지: session.setAttribute("member", member)
+            MemberVO member = (MemberVO) session.getAttribute("loginMember");
+            if (member == null) {
+                member = (MemberVO) session.getAttribute("member");
+            }
             if (member == null) {
                 response.put("success", false);
                 response.put("message", "로그인이 필요합니다.");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
-            
+
             String memberId = member.getMemberId();
             
             // 2. 요청 파라미터 파싱
@@ -189,14 +195,17 @@ public class StockPurchaseApiController {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            // 세션에서 회원 정보 확인
-            MemberVO member = (MemberVO) session.getAttribute("member");
+            // 세션에서 회원 정보 확인 (loginMember 또는 member)
+            MemberVO member = (MemberVO) session.getAttribute("loginMember");
+            if (member == null) {
+                member = (MemberVO) session.getAttribute("member");
+            }
             if (member == null) {
                 response.put("valid", false);
                 response.put("message", "로그인이 필요합니다.");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
-            
+
             String memberId = member.getMemberId();
             String stockCode = (String) request.get("stockCode");
             BigDecimal quantity = new BigDecimal(request.get("quantity").toString());

@@ -27,8 +27,15 @@ public interface PortfolioMapper {
     /** 포트폴리오 단건 조회 */
     PortfolioVO findPortfolioById(Long portfolioId);
 
-    /** 회원별 포트폴리오 목록 조회 */
+    /** 회원별 포트폴리오 목록 조회 (Long) */
     List<PortfolioVO> findPortfolioByMemberId(Long memberId);
+
+    /**
+     * ✅ [신규] 회원별 포트폴리오 목록 조회 (String memberId)
+     * MemberVO.memberId = VARCHAR(50) — "admin", "user123" 등
+     * Long.parseLong() 변환 없이 직접 String으로 조회
+     */
+    List<PortfolioVO> findPortfolioByMemberIdStr(String memberId);
 
     /** 포트폴리오 이름 수정 */
     int updatePortfolio(PortfolioVO portfolio);
