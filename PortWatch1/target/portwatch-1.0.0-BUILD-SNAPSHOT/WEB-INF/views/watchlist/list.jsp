@@ -156,8 +156,8 @@
                                 <div class="card watchlist-card" 
                                      onclick="location.href='${pageContext.request.contextPath}/stock/detail?stockCode=${item.stockCode}'">
                                     <!-- 삭제 버튼 -->
-                                    <button class="btn btn-sm btn-danger remove-btn" 
-                                            onclick="event.stopPropagation(); removeFromWatchlist(${item.watchlistId})">
+                                    <button class="btn btn-sm btn-danger remove-btn"
+                                            onclick="event.stopPropagation(); removeFromWatchlist('${item.stockCode}')">
                                         <i class="fas fa-times"></i>
                                     </button>
                                     
@@ -246,20 +246,23 @@
     
     /**
      * 관심종목 삭제
+     * ✅ [수정] watchlistId(Long) → stockCode(String) 로 변경
+     *    엔드포인트: POST /watchlist/remove   →  DELETE /watchlist/delete
+     *    파라미터:  watchlistId               →  stockCode
      */
-    function removeFromWatchlist(watchlistId) {
+    function removeFromWatchlist(stockCode) {
         if (!confirm('관심종목에서 삭제하시겠습니까?')) {
             return;
         }
-        
-        console.log('🗑️ 관심종목 삭제:', watchlistId);
-        
-        fetch(WatchlistManager.contextPath + '/watchlist/remove', {
-            method: 'POST',
+
+        console.log('🗑️ 관심종목 삭제:', stockCode);
+
+        fetch(WatchlistManager.contextPath + '/watchlist/delete', {
+            method: 'DELETE',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: 'watchlistId=' + encodeURIComponent(watchlistId)
+            body: 'stockCode=' + encodeURIComponent(stockCode)
         })
         .then(response => response.json())
         .then(data => {

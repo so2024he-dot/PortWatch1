@@ -29,6 +29,10 @@
         <result property="currentPrice"  column="current_price"/>
         <result property="marketType"    column="market_type"/>
         <result property="country"       column="country"/>
+        <!-- ✅ [수정] 등락 정보 추가 - JSP에서 item.changeRate, item.priceChange 사용 -->
+        <result property="changeRate"    column="change_rate"/>
+        <result property="priceChange"   column="price_change"/>
+        <result property="volume"        column="volume"/>
     </resultMap>
 
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -79,7 +83,8 @@
     <select id="selectByMemberId" parameterType="string" resultMap="WatchlistResultMap">
         SELECT
             w.watchlist_id, w.member_id, w.stock_code, w.created_at,
-            s.stock_name, s.current_price, s.market_type, s.country
+            s.stock_name, s.current_price, s.market_type, s.country,
+            s.change_rate, s.price_change, s.volume
         FROM watchlist w
         LEFT JOIN stock s ON w.stock_code = s.stock_code
         WHERE w.member_id = #{memberId}
@@ -90,7 +95,8 @@
     <select id="selectByMemberAndStock" resultMap="WatchlistResultMap">
         SELECT
             w.watchlist_id, w.member_id, w.stock_code, w.created_at,
-            s.stock_name, s.current_price, s.market_type, s.country
+            s.stock_name, s.current_price, s.market_type, s.country,
+            s.change_rate, s.price_change, s.volume
         FROM watchlist w
         LEFT JOIN stock s ON w.stock_code = s.stock_code
         WHERE w.member_id = #{memberId}
@@ -102,7 +108,8 @@
     <select id="selectById" parameterType="long" resultMap="WatchlistResultMap">
         SELECT
             w.watchlist_id, w.member_id, w.stock_code, w.created_at,
-            s.stock_name, s.current_price, s.market_type, s.country
+            s.stock_name, s.current_price, s.market_type, s.country,
+            s.change_rate, s.price_change, s.volume
         FROM watchlist w
         LEFT JOIN stock s ON w.stock_code = s.stock_code
         WHERE w.watchlist_id = #{watchlistId}
@@ -112,7 +119,8 @@
     <select id="selectByMemberIdAndCountry" resultMap="WatchlistResultMap">
         SELECT
             w.watchlist_id, w.member_id, w.stock_code, w.created_at,
-            s.stock_name, s.current_price, s.market_type, s.country
+            s.stock_name, s.current_price, s.market_type, s.country,
+            s.change_rate, s.price_change, s.volume
         FROM watchlist w
         LEFT JOIN stock s ON w.stock_code = s.stock_code
         WHERE w.member_id = #{memberId}
@@ -124,7 +132,8 @@
     <select id="selectByMemberIdAndMarket" resultMap="WatchlistResultMap">
         SELECT
             w.watchlist_id, w.member_id, w.stock_code, w.created_at,
-            s.stock_name, s.current_price, s.market_type, s.country
+            s.stock_name, s.current_price, s.market_type, s.country,
+            s.change_rate, s.price_change, s.volume
         FROM watchlist w
         LEFT JOIN stock s ON w.stock_code = s.stock_code
         WHERE w.member_id = #{memberId}
@@ -136,7 +145,8 @@
     <select id="selectRecentByMemberId" resultMap="WatchlistResultMap">
         SELECT
             w.watchlist_id, w.member_id, w.stock_code, w.created_at,
-            s.stock_name, s.current_price, s.market_type, s.country
+            s.stock_name, s.current_price, s.market_type, s.country,
+            s.change_rate, s.price_change, s.volume
         FROM watchlist w
         LEFT JOIN stock s ON w.stock_code = s.stock_code
         WHERE w.member_id = #{memberId}

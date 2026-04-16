@@ -60,6 +60,34 @@
     </select>
 
     <!-- ════════════════════════════════════════════════════
+         페이지네이션 조회 (50개씩, 1시간 단위 순환)
+         ✅ [신규] 200대 기업 50개씩 분할 표시
+         params: offset(시작위치), pageSize(표시 수)
+         사용 예: offset=0,  pageSize=50 → 1~50번째
+                 offset=50, pageSize=50 → 51~100번째
+                 offset=100,pageSize=50 → 101~150번째
+                 offset=150,pageSize=50 → 151~200번째
+         ════════════════════════════════════════════════════ -->
+    <select id="findByPage" parameterType="map" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        ORDER BY country ASC, market ASC, stock_code ASC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <!-- 국가별 페이지네이션 -->
+    <select id="findByCountryPage" parameterType="map" resultMap="StockResultMap">
+        SELECT <include refid="stockColumns"/> FROM STOCK
+        WHERE country = #{country}
+        ORDER BY market ASC, stock_code ASC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <!-- 전체 종목 수 (페이지네이션용) -->
+    <select id="countAll" resultType="int">
+        SELECT COUNT(*) FROM STOCK
+    </select>
+
+    <!-- ════════════════════════════════════════════════════
          국가별 조회
          ════════════════════════════════════════════════════ -->
     <select id="findByCountry" parameterType="string" resultMap="StockResultMap">
