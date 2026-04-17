@@ -412,10 +412,12 @@
     const PurchaseManager = {
         stockCode: '${stock.stockCode}',
         stockName: '${stock.stockName}',
-        currentPrice: parseFloat('${stock.currentPrice}'),
+        // ✅ null 안전 처리: ${stock.currentPrice}가 null이면 NaN → BigDecimal("null") → 500 에러
+        currentPrice: parseFloat('${not empty stock.currentPrice ? stock.currentPrice : 0}') || 0,
         country: '${stock.country}',
         contextPath: '${pageContext.request.contextPath}',
-        memberId: '${member.memberId}',
+        // ✅ StockController는 loginMember 키로 저장 (member 키 아님)
+        memberId: '${not empty loginMember ? loginMember.memberId : ""}',
         exchangeRate: 1350.00, // 기본값
         
         /**
@@ -573,35 +575,59 @@
             submitBtn.prop('disabled', true);
             submitBtn.html('<i class="fas fa-spinner fa-spin"></i> 매입 중...');
             
+            // ✅ currentPrice 재확인 (NaN 방어)
+            const safePrice = (isNaN(this.currentPrice) || this.currentPrice <= 0)
+                ? 1
+                : this.currentPrice;
+
+            console.log('  - API 전송 가격:', safePrice);
+
             // API 호출
             $.ajax({
                 url: this.contextPath + '/api/purchase/execute',
                 type: 'POST',
                 contentType: 'application/json',
+                // ✅ xhrFields로 쿠키(세션) 전송 보장
+                xhrFields: { withCredentials: true },
                 data: JSON.stringify({
                     stockCode: this.stockCode,
                     quantity: quantity,
-                    price: this.currentPrice
+                    price: safePrice
                 }),
                 success: (response) => {
                     console.log('✅ 매입 성공:', response);
-                    
-                    this.showAlert('success', '매입이 완료되었습니다!');
-                    
+
+                    const qty   = response.quantity   || quantity;
+                    const price = response.price      || safePrice;
+                    const name  = response.stockName  || this.stockName;
+
+                    this.showAlert('success',
+                        '✅ 매입 완료! ' + name + ' ' + qty + '주 @ ' +
+                        (this.country === 'KR'
+                            ? this.formatNumber(price) + '원'
+                            : '$' + parseFloat(price).toFixed(2)));
+
                     setTimeout(() => {
-                        window.location.href = this.contextPath + '/dashboard';
+                        // ✅ dashboard → portfolio 페이지로 이동
+                        window.location.href = this.contextPath + '/portfolio';
                     }, 1500);
                 },
                 error: (xhr) => {
-                    console.error('❌ 매입 실패:', xhr);
-                    
-                    const error = xhr.responseJSON || {};
-                    const message = error.message || '매입에 실패했습니다.';
-                    
-                    this.showAlert('danger', message);
-                    
+                    console.error('❌ 매입 실패:', xhr.status, xhr.responseJSON);
+
                     submitBtn.prop('disabled', false);
                     submitBtn.html(originalHtml);
+
+                    // ✅ 401: 세션 만료 → 로그인 페이지
+                    if (xhr.status === 401) {
+                        alert('로그인이 필요합니다. 로그인 페이지로 이동합니다.');
+                        window.location.href = this.contextPath + '/member/login';
+                        return;
+                    }
+
+                    const error   = xhr.responseJSON || {};
+                    const message = error.message    || '매수 처리 중 오류가 발생했습니다.';
+                    this.showAlert('danger', '❌ ' + message);
                 }
             });
         },

@@ -458,28 +458,41 @@
     
     /**
      * 관심종목 추가
+     * ✅ credentials: 'same-origin' 추가 — 세션 쿠키 전송 필수
+     * ✅ 401 처리 — 미로그인 시 로그인 페이지로 이동
      */
     function addToWatchlist(stockCode) {
         console.log('💖 관심종목 추가:', stockCode);
-        
+
         fetch(StockFilter.contextPath + '/watchlist/add', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             },
+            credentials: 'same-origin',   // ✅ 세션 쿠키 반드시 포함
             body: 'stockCode=' + encodeURIComponent(stockCode)
         })
-        .then(response => response.json())
+        .then(response => {
+            // ✅ 401: 로그인 세션 없음 → 로그인 페이지로 이동
+            if (response.status === 401) {
+                alert('로그인이 필요합니다.');
+                window.location.href = StockFilter.contextPath + '/member/login';
+                return null;
+            }
+            return response.json();
+        })
         .then(data => {
+            if (!data) return;
             if (data.success) {
-                alert('관심종목에 추가되었습니다!');
+                alert('💖 관심종목에 추가되었습니다!');
             } else {
+                // 이미 등록된 종목 등 서버 메시지 표시
                 alert(data.message || '관심종목 추가에 실패했습니다.');
             }
         })
         .catch(error => {
-            console.error('❌ 관심종목 추가 실패:', error);
-            alert('관심종목 추가에 실패했습니다.');
+            console.error('❌ 관심종목 추가 오류:', error);
+            alert('관심종목 추가 중 오류가 발생했습니다.');
         });
     }
     
