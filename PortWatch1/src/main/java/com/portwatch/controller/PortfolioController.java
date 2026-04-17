@@ -60,18 +60,20 @@ public class PortfolioController {
         log.info("📊 포트폴리오 메인 페이지");
         
         // 로그인 체크
-        MemberVO member = (MemberVO) session.getAttribute("member");
+        MemberVO member = (MemberVO) session.getAttribute("loginMember");
+        if (member == null) member = (MemberVO) session.getAttribute("member");
         if (member == null) {
             log.warn("⚠️ 로그인 필요");
             return "redirect:/member/login";
         }
-        
+
         log.info("  - 회원 ID: " + member.getMemberId());
-        
+
         try {
             // 포트폴리오 목록 조회
             List<PortfolioVO> portfolioList = portfolioService.getPortfolioByMemberId(member.getMemberId());
             model.addAttribute("portfolioList", portfolioList);
+            model.addAttribute("loginMember", member);
             
             log.info("✅ 포트폴리오 목록 조회 완료: " + portfolioList.size() + "개");
             log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -99,13 +101,15 @@ public class PortfolioController {
         log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         log.info("📊 포트폴리오 상세 조회");
         log.info("  - portfolioId: " + portfolioId);
-        
+
         // 로그인 체크
-        MemberVO member = (MemberVO) session.getAttribute("member");
+        MemberVO member = (MemberVO) session.getAttribute("loginMember");
+        if (member == null) member = (MemberVO) session.getAttribute("member");
         if (member == null) {
+            log.warn("⚠️ 로그인 필요");
             return "redirect:/member/login";
         }
-        
+
         try {
             PortfolioVO portfolio = portfolioService.getPortfolio(portfolioId);
             
@@ -142,13 +146,15 @@ public class PortfolioController {
     public String createForm(HttpSession session, Model model) {
         log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         log.info("📝 포트폴리오 생성 폼");
-        
+
         // 로그인 체크
-        MemberVO member = (MemberVO) session.getAttribute("member");
+        MemberVO member = (MemberVO) session.getAttribute("loginMember");
+        if (member == null) member = (MemberVO) session.getAttribute("member");
         if (member == null) {
+            log.warn("⚠️ 로그인 필요");
             return "redirect:/member/login";
         }
-        
+
         try {
             // 전체 주식 목록
             List<StockVO> stockList = stockService.getAllStocks();
@@ -179,13 +185,15 @@ public class PortfolioController {
                         RedirectAttributes rttr) {
         log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         log.info("📝 포트폴리오 생성 실행");
-        
+
         // 로그인 체크
-        MemberVO member = (MemberVO) session.getAttribute("member");
+        MemberVO member = (MemberVO) session.getAttribute("loginMember");
+        if (member == null) member = (MemberVO) session.getAttribute("member");
         if (member == null) {
+            log.warn("⚠️ 로그인 필요");
             return "redirect:/member/login";
         }
-        
+
         try {
             // 회원 ID 설정
             portfolioVO.setMemberId(member.getMemberId());
@@ -220,13 +228,15 @@ public class PortfolioController {
         log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         log.info("📝 포트폴리오 수정 폼");
         log.info("  - portfolioId: " + portfolioId);
-        
+
         // 로그인 체크
-        MemberVO member = (MemberVO) session.getAttribute("member");
+        MemberVO member = (MemberVO) session.getAttribute("loginMember");
+        if (member == null) member = (MemberVO) session.getAttribute("member");
         if (member == null) {
+            log.warn("⚠️ 로그인 필요");
             return "redirect:/member/login";
         }
-        
+
         try {
             PortfolioVO portfolio = portfolioService.getPortfolio(portfolioId);
             
@@ -268,10 +278,12 @@ public class PortfolioController {
         log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         log.info("📝 포트폴리오 수정 실행");
         log.info("  - portfolioId: " + portfolioVO.getPortfolioId());
-        
+
         // 로그인 체크
-        MemberVO member = (MemberVO) session.getAttribute("member");
+        MemberVO member = (MemberVO) session.getAttribute("loginMember");
+        if (member == null) member = (MemberVO) session.getAttribute("member");
         if (member == null) {
+            log.warn("⚠️ 로그인 필요");
             return "redirect:/member/login";
         }
         
@@ -332,17 +344,19 @@ public class PortfolioController {
         log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         log.info("🗑️ 포트폴리오 삭제 (GET 방식)");
         log.info("  - portfolioId: " + portfolioId);
-        
+
         // 로그인 체크
-        MemberVO member = (MemberVO) session.getAttribute("member");
+        MemberVO member = (MemberVO) session.getAttribute("loginMember");
+        if (member == null) member = (MemberVO) session.getAttribute("member");
         if (member == null) {
+            log.warn("⚠️ 로그인 필요");
             return "redirect:/member/login";
         }
-        
+
         try {
             // 기존 포트폴리오 조회
             PortfolioVO portfolio = portfolioService.getPortfolio(portfolioId);
-            
+
             if (portfolio == null) {
                 log.warn("⚠️ 포트폴리오를 찾을 수 없습니다");
                 rttr.addFlashAttribute("errorMessage", "포트폴리오를 찾을 수 없습니다.");
@@ -394,10 +408,12 @@ public class PortfolioController {
         log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         log.info("🗑️ 포트폴리오 삭제 (POST 방식)");
         log.info("  - portfolioId: " + portfolioId);
-        
+
         // 로그인 체크
-        MemberVO member = (MemberVO) session.getAttribute("member");
+        MemberVO member = (MemberVO) session.getAttribute("loginMember");
+        if (member == null) member = (MemberVO) session.getAttribute("member");
         if (member == null) {
+            log.warn("⚠️ 로그인 필요");
             return "redirect:/member/login";
         }
         
