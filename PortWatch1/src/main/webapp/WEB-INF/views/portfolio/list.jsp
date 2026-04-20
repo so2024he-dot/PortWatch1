@@ -261,22 +261,40 @@
    ════════════════════════════════════════════════ */
 
 // ── 데이터 준비 ────────────────────────────────
-const labels  = [];
-const values  = [];    // 평가금액
-const profits = [];    // 손익 금액
-const pRates  = [];    // 수익률 %
+const labels       = [];
+const values       = [];    // 평가금액
+const profits      = [];    // 손익 금액
+const pRates       = [];    // 수익률 %
+const hasPriceFeed = [];    // true=실시간 현재가 / false=매수가 기준(현재가 미확인)
 const COLORS  = ['#4e79a7','#f28e2b','#e15759','#76b7b2',
                  '#59a14f','#edc948','#b07aa1','#ff9da7',
                  '#9c755f','#bab0ac'];
 
 <c:forEach items="${portfolioList}" var="p" varStatus="st">
+<c:if test="${not empty p.stockCode}"><%-- 종목코드 없는 빈 행 제외 --%>
     <c:set var="pAvg2" value="${not empty p.avgPrice ? p.avgPrice : 0}"/>
     <c:set var="pQty2" value="${not empty p.quantity ? p.quantity : 0}"/>
-    <c:set var="pCur2" value="${not empty p.currentPrice ? p.currentPrice : 0}"/>
+    <%-- 현재가 우선순위: STOCK.currentPrice > PORTFOLIO_ITEM.purchasePrice > avgPrice --%>
+    <c:choose>
+        <c:when test="${not empty p.currentPrice and p.currentPrice gt 0}">
+            <c:set var="pCur2"    value="${p.currentPrice}"/>
+            <c:set var="pHasFeed" value="true"/>
+        </c:when>
+        <c:when test="${not empty p.purchasePrice and p.purchasePrice gt 0}">
+            <c:set var="pCur2"    value="${p.purchasePrice}"/>
+            <c:set var="pHasFeed" value="false"/>
+        </c:when>
+        <c:otherwise>
+            <c:set var="pCur2"    value="${pAvg2}"/>
+            <c:set var="pHasFeed" value="false"/>
+        </c:otherwise>
+    </c:choose>
     labels.push('<c:out value="${not empty p.stockName ? p.stockName : p.stockCode}"/>');
     values.push(Math.round(${pCur2} * ${pQty2}));
     profits.push(Math.round((${pCur2} - ${pAvg2}) * ${pQty2}));
     pRates.push(${pAvg2} > 0 ? Math.round(((${pCur2} - ${pAvg2}) / ${pAvg2}) * 10000) / 100 : 0);
+    hasPriceFeed.push(${pHasFeed});
+</c:if>
 </c:forEach>
 
 // ── 1. 도넛 차트 (종목별 보유 비중) ───────────
@@ -328,8 +346,22 @@ const COLORS  = ['#4e79a7','#f28e2b','#e15759','#76b7b2',
     const ctx = document.getElementById('barChart');
     if (!ctx) return;
 
+    // 종목 없을 때 빈 상태 메시지 표시
+    if (labels.length === 0) {
+        ctx.parentElement.innerHTML =
+            '<p class="text-center text-muted py-4">' +
+            '<i class="fas fa-info-circle me-1"></i>보유 종목이 없습니다</p>';
+        return;
+    }
+
     const bgColors = profits.map(v => v >= 0 ? 'rgba(220,53,69,.75)' : 'rgba(13,110,253,.75)');
     const bdColors = profits.map(v => v >= 0 ? '#dc3545' : '#0d6efd');
+
+    // ── Y축 동적 범위: 0값 막대도 반드시 보이도록 ──────────────
+    // ★ yPad 배율(0.30) 조정으로 막대 높낮이 여백 변경 가능
+    const profMax = profits.length ? Math.max(...profits, 1)  : 1;
+    const profMin = profits.length ? Math.min(...profits, -1) : -1;
+    const yPad    = Math.max(Math.abs(profMax), Math.abs(profMin)) * 0.30 + 100;
 
     new Chart(ctx.getContext('2d'), {
         type: 'bar',
@@ -342,7 +374,8 @@ const COLORS  = ['#4e79a7','#f28e2b','#e15759','#76b7b2',
                 borderColor: bdColors,
                 borderWidth: 2,
                 borderRadius: 6,
-                borderSkipped: false
+                borderSkipped: false,
+                minBarLength: 4  // ← 0원 손익도 최소 4px 막대로 표시
             }]
         },
         options: {
@@ -353,9 +386,12 @@ const COLORS  = ['#4e79a7','#f28e2b','#e15759','#76b7b2',
                 tooltip: {
                     callbacks: {
                         label: function(ctx) {
-                            const v = ctx.parsed.y;
+                            const v    = ctx.parsed.y;
                             const sign = v >= 0 ? '+' : '';
-                            return ` 손익: ${sign}${v.toLocaleString('ko-KR')}원`;
+                            // 현재가 미확인인 경우 경고 표시
+                            const note = hasPriceFeed[ctx.dataIndex]
+                                ? '' : ' ⚠️현재가 미확인(매수가 기준)';
+                            return ` 손익: ${sign}${v.toLocaleString('ko-KR')}원${note}`;
                         },
                         afterLabel: function(ctx) {
                             const r = pRates[ctx.dataIndex];
@@ -367,8 +403,12 @@ const COLORS  = ['#4e79a7','#f28e2b','#e15759','#76b7b2',
             scales: {
                 x: { grid: { display: false } },
                 y: {
+                    // 동적 suggestedMin/Max → 0값 막대가 화면에 반드시 표시됨
+                    suggestedMin: profMin - yPad,
+                    suggestedMax: profMax + yPad,
                     grid: { color: 'rgba(0,0,0,.06)' },
                     ticks: {
+                        maxTicksLimit: 6,
                         callback: v => (v >= 0 ? '+' : '') + v.toLocaleString('ko-KR') + '원'
                     }
                 }
