@@ -93,7 +93,7 @@
         }
         .period-btn:hover  { border-color:#1e3a5f; background:#f0f4ff; }
         .period-btn.active { background:#1e3a5f; color:white; border-color:#1e3a5f; }
-        #priceChart { width:100%; height:380px; }
+        #priceChart { width:100%; height:300px; }
 
         /* ── 뉴스 카드 ──────────────────────────────── */
         .news-card {
@@ -561,13 +561,15 @@ function generateHistory(basePrice, startDate, endDate) {
     let   price  = basePrice;
 
     // 역방향: 현재가에서 과거로 역산 (현재→과거 랜덤 워크)
+    // ✅ 일일 변동폭 ±1.2% (이전 -1.5%~+2% 대비 스파이크 방지)
+    // ✅ 최저 가격 70% (이전 30% 대비 Y축 범위 축소)
     const totalDays = Math.ceil((end - cur) / 86400000);
     const prices    = new Array(totalDays + 1);
     prices[totalDays] = basePrice;
 
     for (let i = totalDays - 1; i >= 0; i--) {
-        const change = prices[i+1] * (Math.random() * 0.035 - 0.015);
-        prices[i] = Math.max(prices[i+1] + change, basePrice * 0.3);
+        const change = prices[i+1] * (Math.random() * 0.024 - 0.012);
+        prices[i] = Math.max(prices[i+1] + change, basePrice * 0.70);
     }
 
     let idx = 0;
@@ -608,6 +610,14 @@ function renderChart(data) {
     const isUp = prices.length >= 2 && prices[prices.length-1] >= prices[0];
     const lineColor = isUp ? '#dc3545' : '#0d6efd';
     const fillColor = isUp ? 'rgba(220,53,69,.08)' : 'rgba(13,110,253,.08)';
+
+    // ✅ Y축 범위 자동 계산: 실제 데이터 min/max ± 5% 여백
+    //    (0부터 시작하지 않고 실제 가격 범위만 표시 → 가격 변동이 선명하게 보임)
+    const minPrice = Math.min.apply(null, prices);
+    const maxPrice = Math.max.apply(null, prices);
+    const rangePad = (maxPrice - minPrice) * 0.15 || maxPrice * 0.05;
+    const yMin = Math.max(0, Math.floor(minPrice - rangePad));
+    const yMax = Math.ceil(maxPrice + rangePad);
 
     if (chartInstance) chartInstance.destroy();
 
@@ -654,9 +664,17 @@ function renderChart(data) {
                     }
                 },
                 y: {
+                    // ✅ 실제 가격 범위에 맞게 min/max 자동 설정 (모든 종목 공통 적용)
+                    min: yMin,
+                    max: yMax,
                     ticks: {
+                        // ✅ Y축 눈금 최대 6개로 제한 → 한 화면에 깔끔하게 표시
+                        maxTicksLimit: 6,
                         callback: function(val) {
-                            return country === 'US' ? '$' + val.toLocaleString() : val.toLocaleString() + '원';
+                            if (country === 'US') {
+                                return '$' + Number(val).toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:2});
+                            }
+                            return Number(val).toLocaleString('ko-KR') + '원';
                         }
                     }
                 }
