@@ -169,7 +169,7 @@ public class NewsController {
             List<NewsVO> newsList = newsService.getNewsByStockCode(stockCode, 20);
             
             response.put("success", true);
-            response.put("newsList", newsList);
+            response.put("news", newsList);      // ✅ JS 접근키 "news" 통일
             response.put("count", newsList.size());
             
             return ResponseEntity.ok(response);

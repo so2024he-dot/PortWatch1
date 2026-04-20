@@ -589,16 +589,30 @@ function loadNews() {
         success: function(res) {
             const container = document.getElementById('newsContainer');
             if (res.success && res.news && res.news.length > 0) {
-                // JSP EL 충돌 방지: backtick 템플릿 리터럴 대신 문자열 연결(+) 사용
+                // ✅ [수정] 서버 응답 필드명 일치:
+                //    link      → newsUrl
+                //    source    → name
+                //    publishedAt → publishedDate (LocalDateTime: 배열 또는 문자열)
                 var html = '';
-                res.news.slice(0,8).forEach(function(n) {
-                    var link   = n.link  || '#';
-                    var title  = n.title || '';
-                    var src    = n.source || '';
-                    var dt     = n.publishedAt ? new Date(n.publishedAt).toLocaleDateString('ko-KR') : '';
+                res.news.slice(0, 8).forEach(function(n) {
+                    var link  = n.newsUrl || '#';
+                    var title = n.title   || '(제목 없음)';
+                    var src   = n.name    || '';
+                    var dt    = '';
+                    if (n.publishedDate) {
+                        if (Array.isArray(n.publishedDate)) {
+                            // Jackson 기본: LocalDateTime → [yyyy, MM, dd, HH, mm, ss]
+                            dt = n.publishedDate[0] + '-'
+                               + String(n.publishedDate[1]).padStart(2, '0') + '-'
+                               + String(n.publishedDate[2]).padStart(2, '0');
+                        } else {
+                            try { dt = new Date(n.publishedDate).toLocaleDateString('ko-KR'); }
+                            catch(e) { dt = String(n.publishedDate).substring(0, 10); }
+                        }
+                    }
                     html += '<div class="news-item">'
                           + '<a href="' + link + '" target="_blank">' + title + '</a><br>'
-                          + '<small class="text-muted">' + src + ' | ' + dt + '</small>'
+                          + '<small class="text-muted">' + src + (src && dt ? ' | ' : '') + dt + '</small>'
                           + '</div>';
                 });
                 container.innerHTML = html;
