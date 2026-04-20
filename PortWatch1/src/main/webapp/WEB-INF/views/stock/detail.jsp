@@ -93,7 +93,31 @@
         }
         .period-btn:hover  { border-color:#1e3a5f; background:#f0f4ff; }
         .period-btn.active { background:#1e3a5f; color:white; border-color:#1e3a5f; }
-        #priceChart { width:100%; height:300px; }
+        /* ────────────────────────────────────────────────
+           차트 높이 반응형 설정 (수치만 바꿔서 즉시 조정 가능)
+           - 데스크톱(992px 이상)  : 280px
+           - 태블릿 (576~991px)   : 240px
+           - 모바일 (575px 이하)   : 200px
+           ──────────────────────────────────────────────── */
+        #priceChart { width:100%; height:280px; }
+        @media (max-width: 991.98px) { #priceChart { height:240px; } }
+        @media (max-width: 575.98px) { #priceChart { height:200px; } }
+
+        /* 모바일: 카드 여백 축소 → 한 화면에 차트+정보 모두 표시 */
+        @media (max-width: 575.98px) {
+            .chart-card, .price-card, .company-card, .news-card {
+                padding: 14px 12px;
+                margin-bottom: 12px;
+            }
+            .current-price { font-size: 2rem; }
+            .price-change  { font-size: 1.05rem; }
+            .period-btn    { padding: 5px 11px; font-size: .78rem; }
+            .period-btns   { gap: 5px; margin-bottom: 10px; }
+            .info-grid     { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-top: 14px; }
+            .buy-panel     { position: static; margin-top: 14px; }
+            .stock-banner  { padding: 20px 0 16px; margin-bottom: 16px; }
+            .banner-name   { font-size: 1.4rem; }
+        }
 
         /* ── 뉴스 카드 ──────────────────────────────── */
         .news-card {
@@ -611,11 +635,16 @@ function renderChart(data) {
     const lineColor = isUp ? '#dc3545' : '#0d6efd';
     const fillColor = isUp ? 'rgba(220,53,69,.08)' : 'rgba(13,110,253,.08)';
 
-    // ✅ Y축 범위 자동 계산: 실제 데이터 min/max ± 5% 여백
-    //    (0부터 시작하지 않고 실제 가격 범위만 표시 → 가격 변동이 선명하게 보임)
+    // ✅ Y축 범위 자동 계산: 실제 데이터 min/max ± CHART_Y_PADDING 여백
+    //    크롤링 실제 데이터 대비 넉넉히 여백 확보 (모바일/태블릿 최적화)
+    //    ★ 수치 조정 가이드: CHART_Y_PADDING 값만 바꾸면 즉시 반영
+    //      - 0.10 (10% 여백, 좁게)
+    //      - 0.20 (20% 여백, 넉넉 ← 현재 설정)
+    //      - 0.30 (30% 여백, 매우 넉넉)
+    const CHART_Y_PADDING = 0.20;   // ← 이 값만 바꾸면 됩니다
     const minPrice = Math.min.apply(null, prices);
     const maxPrice = Math.max.apply(null, prices);
-    const rangePad = (maxPrice - minPrice) * 0.15 || maxPrice * 0.05;
+    const rangePad = (maxPrice - minPrice) * CHART_Y_PADDING || maxPrice * 0.08;
     const yMin = Math.max(0, Math.floor(minPrice - rangePad));
     const yMax = Math.ceil(maxPrice + rangePad);
 
@@ -656,6 +685,7 @@ function renderChart(data) {
             scales: {
                 x: {
                     ticks: {
+                        // ★ X축 날짜 눈금 수: 모바일에서 겹치지 않도록 8개로 제한
                         maxTicksLimit: 8,
                         callback: function(val, idx, ticks) {
                             const label = this.getLabelForValue(val);
@@ -668,7 +698,8 @@ function renderChart(data) {
                     min: yMin,
                     max: yMax,
                     ticks: {
-                        // ✅ Y축 눈금 최대 6개로 제한 → 한 화면에 깔끔하게 표시
+                        // ✅ Y축 눈금 수 제한 → 모바일 화면에 깔끔하게 표시
+                        // ★ 조정 가이드: 4(최소) ~ 8(최대) 권장, 현재 6
                         maxTicksLimit: 6,
                         callback: function(val) {
                             if (country === 'US') {
