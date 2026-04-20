@@ -522,11 +522,19 @@ function loadNews() {
         success: function(res) {
             const container = document.getElementById('newsContainer');
             if (res.success && res.news && res.news.length > 0) {
-                container.innerHTML = res.news.slice(0,8).map(n => `
-                    <div class="news-item">
-                        <a href="${n.link}" target="_blank">${n.title}</a><br>
-                        <small class="text-muted">${n.source || ''} | ${n.publishedAt ? new Date(n.publishedAt).toLocaleDateString('ko-KR') : ''}</small>
-                    </div>`).join('');
+                // JSP EL 충돌 방지: template literal ${} 대신 문자열 연결 사용
+                var html = '';
+                res.news.slice(0,8).forEach(function(n) {
+                    var link   = n.link  || '#';
+                    var title  = n.title || '';
+                    var src    = n.source || '';
+                    var dt     = n.publishedAt ? new Date(n.publishedAt).toLocaleDateString('ko-KR') : '';
+                    html += '<div class="news-item">'
+                          + '<a href="' + link + '" target="_blank">' + title + '</a><br>'
+                          + '<small class="text-muted">' + src + ' | ' + dt + '</small>'
+                          + '</div>';
+                });
+                container.innerHTML = html;
             } else {
                 container.innerHTML = '<p class="text-muted text-center py-2">관련 뉴스가 없습니다.</p>';
             }
