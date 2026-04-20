@@ -522,7 +522,7 @@ function loadNews() {
         success: function(res) {
             const container = document.getElementById('newsContainer');
             if (res.success && res.news && res.news.length > 0) {
-                // JSP EL 충돌 방지: template literal ${} 대신 문자열 연결 사용
+                // JSP EL 충돌 방지: backtick 템플릿 리터럴 대신 문자열 연결(+) 사용
                 var html = '';
                 res.news.slice(0,8).forEach(function(n) {
                     var link   = n.link  || '#';
