@@ -304,6 +304,8 @@
         )
         ON DUPLICATE KEY UPDATE
             stock_name    = VALUES(stock_name),
+            market        = VALUES(market),
+            market_type   = VALUES(market_type),
             current_price = VALUES(current_price),
             price_change  = VALUES(price_change),
             change_rate   = VALUES(change_rate),
