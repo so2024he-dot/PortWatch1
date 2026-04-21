@@ -98,21 +98,33 @@
         LIMIT #{limit}
     </select>
 
-    <!-- ✅ 종목별 뉴스 조회 (selectNewsByStock) -->
+    <!-- ✅ 종목별 뉴스 조회 (selectNewsByStock)
+         ✅ [수정] stock_code 정확 매칭 + 종목명 타이틀 키워드 폴백
+            → STOCK 테이블 LEFT JOIN 으로 stock_name 획득
+            → news.title LIKE '%종목명%' 으로 관련 뉴스도 표시 -->
     <select id="selectNewsByStock" resultMap="NewsResultMap">
-        SELECT news_id, title, stock_code, news_url, published_date, name
-        FROM news
-        WHERE stock_code = #{stockCode}
-        ORDER BY published_date DESC
+        SELECT DISTINCT n.news_id, n.title, n.stock_code, n.news_url, n.published_date, n.name
+        FROM news n
+        LEFT JOIN STOCK s ON s.stock_code = #{stockCode}
+        WHERE n.stock_code = #{stockCode}
+           OR (s.stock_name IS NOT NULL
+               AND s.stock_name != ''
+               AND n.title LIKE CONCAT('%', s.stock_name, '%'))
+        ORDER BY n.published_date DESC
         LIMIT #{limit}
     </select>
 
-    <!-- ✅ 종목별 뉴스 조회 (selectNewsByStockCode - 인터페이스 호환용) -->
+    <!-- ✅ 종목별 뉴스 조회 (selectNewsByStockCode - 인터페이스 호환용)
+         ✅ [수정] 동일하게 종목명 키워드 폴백 포함 -->
     <select id="selectNewsByStockCode" resultMap="NewsResultMap">
-        SELECT news_id, title, stock_code, news_url, published_date, name
-        FROM news
-        WHERE stock_code = #{stockCode}
-        ORDER BY published_date DESC
+        SELECT DISTINCT n.news_id, n.title, n.stock_code, n.news_url, n.published_date, n.name
+        FROM news n
+        LEFT JOIN STOCK s ON s.stock_code = #{stockCode}
+        WHERE n.stock_code = #{stockCode}
+           OR (s.stock_name IS NOT NULL
+               AND s.stock_name != ''
+               AND n.title LIKE CONCAT('%', s.stock_name, '%'))
+        ORDER BY n.published_date DESC
         LIMIT #{limit}
     </select>
 

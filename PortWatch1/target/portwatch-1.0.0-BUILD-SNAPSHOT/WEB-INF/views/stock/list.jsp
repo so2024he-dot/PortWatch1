@@ -438,19 +438,39 @@
         
         /**
          * 시장별 필터링
+         * ✅ 시장 선택 시 국가 자동 연계
+         *    KOSPI/KOSDAQ → 한국(KR)
+         *    NASDAQ/NYSE  → 미국(US)
+         *    ALL          → 기존 국가 유지
          */
         filterByMarket: function(market) {
             StockFilter.currentMarket = market;
-            
-            // 국가가 선택되지 않은 경우 한국으로 기본 설정
-            if (StockFilter.currentCountry === 'ALL' || !StockFilter.currentCountry) {
+
+            // ✅ 시장에 따라 국가 자동 연계
+            if (market === 'KOSPI' || market === 'KOSDAQ') {
                 StockFilter.currentCountry = 'KR';
+                console.log('🇰🇷 한국 시장 선택 → 국가 KR 자동 설정');
+            } else if (market === 'NASDAQ' || market === 'NYSE') {
+                StockFilter.currentCountry = 'US';
+                console.log('🇺🇸 미국 시장 선택 → 국가 US 자동 설정');
+            } else {
+                // 전체(ALL) 시장: 국가가 없으면 전체로 초기화
+                if (!StockFilter.currentCountry) {
+                    StockFilter.currentCountry = 'ALL';
+                }
             }
-            
+
             // URL 생성
-            const url = StockFilter.contextPath + '/stock/list?country=' + 
-                        StockFilter.currentCountry + '&market=' + market;
-            
+            var url;
+            if (market === 'ALL') {
+                url = StockFilter.currentCountry && StockFilter.currentCountry !== 'ALL'
+                    ? StockFilter.contextPath + '/stock/list?country=' + StockFilter.currentCountry
+                    : StockFilter.contextPath + '/stock/list';
+            } else {
+                url = StockFilter.contextPath + '/stock/list?country=' +
+                      StockFilter.currentCountry + '&market=' + market;
+            }
+
             console.log('🔗 이동:', url);
             window.location.href = url;
         }

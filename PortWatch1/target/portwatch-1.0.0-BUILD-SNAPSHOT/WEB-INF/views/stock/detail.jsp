@@ -93,7 +93,49 @@
         }
         .period-btn:hover  { border-color:#1e3a5f; background:#f0f4ff; }
         .period-btn.active { background:#1e3a5f; color:white; border-color:#1e3a5f; }
-        #priceChart { width:100%; height:300px; }
+        /* ── 이중 차트: 거시적(좌, 전체추이) + 미시적(우, 기간별) ────
+           ★ 높이 수정: .macro-wrap / .micro-wrap height 값만 변경
+              거시 기본 190px | 미시 기본 210px
+           ──────────────────────────────────────────────────────── */
+        .chart-dual-wrap {
+            display: grid;
+            grid-template-columns: 38fr 62fr;  /* 거시 38% : 미시 62% */
+            gap: 14px;
+            align-items: start;
+        }
+        .chart-sub-label {
+            font-size: .72rem; font-weight: 700; color: #6c757d;
+            text-transform: uppercase; letter-spacing: .05em;
+            margin-bottom: 6px;
+        }
+        .macro-wrap { position: relative; height: 190px; } /* ★ 거시 높이 */
+        .micro-wrap  { position: relative; height: 210px; } /* ★ 미시 높이 */
+
+        @media (max-width: 767.98px) {
+            .chart-dual-wrap { grid-template-columns: 1fr; }
+            .macro-wrap { height: 155px; }
+            .micro-wrap  { height: 175px; }
+        }
+        @media (max-width: 575.98px) {
+            .macro-wrap { height: 130px; }
+            .micro-wrap  { height: 155px; }
+        }
+
+        /* 모바일: 카드 여백 축소 → 한 화면에 차트+정보 모두 표시 */
+        @media (max-width: 575.98px) {
+            .chart-card, .price-card, .company-card, .news-card {
+                padding: 14px 12px;
+                margin-bottom: 12px;
+            }
+            .current-price { font-size: 2rem; }
+            .price-change  { font-size: 1.05rem; }
+            .period-btn    { padding: 5px 11px; font-size: .78rem; }
+            .period-btns   { gap: 5px; margin-bottom: 10px; }
+            .info-grid     { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-top: 14px; }
+            .buy-panel     { position: static; margin-top: 14px; }
+            .stock-banner  { padding: 20px 0 16px; margin-bottom: 16px; }
+            .banner-name   { font-size: 1.4rem; }
+        }
 
         /* ── 뉴스 카드 ──────────────────────────────── */
         .news-card {
@@ -335,16 +377,41 @@
                 </div>
             </div>
 
-            <%-- ── 주가 차트 (2025년 1월 ~ 현재) ─────────── --%>
+            <%-- ── 주가 차트: 거시(전체) + 미시(기간별) ─────── --%>
             <div class="chart-card">
                 <h5><i class="fas fa-chart-line me-2"></i>주가 차트 (2025년 ~ 현재)</h5>
-                <div class="period-btns" id="periodBtns">
-                    <button class="period-btn active" onclick="switchPeriod(this,'3M')">3개월</button>
-                    <button class="period-btn"        onclick="switchPeriod(this,'6M')">6개월</button>
-                    <button class="period-btn"        onclick="switchPeriod(this,'1Y')">1년 (2025~)</button>
-                    <button class="period-btn"        onclick="switchPeriod(this,'ALL')">전체</button>
+                <div class="chart-dual-wrap">
+
+                    <%-- ─── 거시적 차트: 전체 기간, 최고/최저 범위 표시 ─── --%>
+                    <div>
+                        <div class="chart-sub-label">
+                            <i class="fas fa-globe-asia me-1"></i>거시 추이 (전체)
+                        </div>
+                        <div class="macro-wrap">
+                            <canvas id="macroChart"></canvas>
+                        </div>
+                        <div class="text-muted text-center mt-1" style="font-size:.67rem;">
+                            전체 기간 최고 · 최저 범위 포함
+                        </div>
+                    </div>
+
+                    <%-- ─── 미시적 차트: 기간 선택, 상세 분석 ───────────── --%>
+                    <div>
+                        <div class="chart-sub-label">
+                            <i class="fas fa-search-plus me-1"></i>미시 분석 (기간 선택)
+                        </div>
+                        <div class="period-btns" id="periodBtns">
+                            <button class="period-btn active" onclick="switchPeriod(this,'3M')">3개월</button>
+                            <button class="period-btn"        onclick="switchPeriod(this,'6M')">6개월</button>
+                            <button class="period-btn"        onclick="switchPeriod(this,'1Y')">1년</button>
+                            <button class="period-btn"        onclick="switchPeriod(this,'ALL')">전체</button>
+                        </div>
+                        <div class="micro-wrap">
+                            <canvas id="priceChart"></canvas>
+                        </div>
+                    </div>
+
                 </div>
-                <canvas id="priceChart"></canvas>
             </div>
 
             <%-- ── 관련 뉴스 ──────────────────────────────── --%>
@@ -522,16 +589,30 @@ function loadNews() {
         success: function(res) {
             const container = document.getElementById('newsContainer');
             if (res.success && res.news && res.news.length > 0) {
-                // JSP EL 충돌 방지: backtick 템플릿 리터럴 대신 문자열 연결(+) 사용
+                // ✅ [수정] 서버 응답 필드명 일치:
+                //    link      → newsUrl
+                //    source    → name
+                //    publishedAt → publishedDate (LocalDateTime: 배열 또는 문자열)
                 var html = '';
-                res.news.slice(0,8).forEach(function(n) {
-                    var link   = n.link  || '#';
-                    var title  = n.title || '';
-                    var src    = n.source || '';
-                    var dt     = n.publishedAt ? new Date(n.publishedAt).toLocaleDateString('ko-KR') : '';
+                res.news.slice(0, 8).forEach(function(n) {
+                    var link  = n.newsUrl || '#';
+                    var title = n.title   || '(제목 없음)';
+                    var src   = n.name    || '';
+                    var dt    = '';
+                    if (n.publishedDate) {
+                        if (Array.isArray(n.publishedDate)) {
+                            // Jackson 기본: LocalDateTime → [yyyy, MM, dd, HH, mm, ss]
+                            dt = n.publishedDate[0] + '-'
+                               + String(n.publishedDate[1]).padStart(2, '0') + '-'
+                               + String(n.publishedDate[2]).padStart(2, '0');
+                        } else {
+                            try { dt = new Date(n.publishedDate).toLocaleDateString('ko-KR'); }
+                            catch(e) { dt = String(n.publishedDate).substring(0, 10); }
+                        }
+                    }
                     html += '<div class="news-item">'
                           + '<a href="' + link + '" target="_blank">' + title + '</a><br>'
-                          + '<small class="text-muted">' + src + ' | ' + dt + '</small>'
+                          + '<small class="text-muted">' + src + (src && dt ? ' | ' : '') + dt + '</small>'
                           + '</div>';
                 });
                 container.innerHTML = html;
@@ -552,7 +633,8 @@ loadNews();
       STOCK_PRICE 테이블 데이터 없음 → 현재가 기반 시뮬레이션
    ─────────────────────────────────────────────── */
 let chartInstance = null;
-let allData       = [];  // 전체 데이터 (2025-01-01 ~ today)
+let macroInstance = null;  // 거시 차트 인스턴스
+let allData       = [];    // 전체 데이터 (2025-01-01 ~ today)
 
 function generateHistory(basePrice, startDate, endDate) {
     const data   = [];
@@ -611,11 +693,16 @@ function renderChart(data) {
     const lineColor = isUp ? '#dc3545' : '#0d6efd';
     const fillColor = isUp ? 'rgba(220,53,69,.08)' : 'rgba(13,110,253,.08)';
 
-    // ✅ Y축 범위 자동 계산: 실제 데이터 min/max ± 5% 여백
-    //    (0부터 시작하지 않고 실제 가격 범위만 표시 → 가격 변동이 선명하게 보임)
+    // ✅ Y축 범위 자동 계산: 실제 데이터 min/max ± CHART_Y_PADDING 여백
+    //    크롤링 실제 데이터 대비 넉넉히 여백 확보 (모바일/태블릿 최적화)
+    //    ★ 수치 조정 가이드: CHART_Y_PADDING 값만 바꾸면 즉시 반영
+    //      - 0.10 (10% 여백, 좁게)
+    //      - 0.20 (20% 여백, 넉넉 ← 현재 설정)
+    //      - 0.30 (30% 여백, 매우 넉넉)
+    const CHART_Y_PADDING = 0.20;   // ← 이 값만 바꾸면 됩니다
     const minPrice = Math.min.apply(null, prices);
     const maxPrice = Math.max.apply(null, prices);
-    const rangePad = (maxPrice - minPrice) * 0.15 || maxPrice * 0.05;
+    const rangePad = (maxPrice - minPrice) * CHART_Y_PADDING || maxPrice * 0.08;
     const yMin = Math.max(0, Math.floor(minPrice - rangePad));
     const yMax = Math.ceil(maxPrice + rangePad);
 
@@ -656,6 +743,7 @@ function renderChart(data) {
             scales: {
                 x: {
                     ticks: {
+                        // ★ X축 날짜 눈금 수: 모바일에서 겹치지 않도록 8개로 제한
                         maxTicksLimit: 8,
                         callback: function(val, idx, ticks) {
                             const label = this.getLabelForValue(val);
@@ -668,7 +756,8 @@ function renderChart(data) {
                     min: yMin,
                     max: yMax,
                     ticks: {
-                        // ✅ Y축 눈금 최대 6개로 제한 → 한 화면에 깔끔하게 표시
+                        // ✅ Y축 눈금 수 제한 → 모바일 화면에 깔끔하게 표시
+                        // ★ 조정 가이드: 4(최소) ~ 8(최대) 권장, 현재 6
                         maxTicksLimit: 6,
                         callback: function(val) {
                             if (country === 'US') {
@@ -683,9 +772,95 @@ function renderChart(data) {
     });
 }
 
+/* ────────────────────────────────────────────────
+   거시적 차트 (macroChart): 전체 기간, 실제 최고/최저 표시
+   - Y축: 실제 데이터 min/max ± 5% (꽉 찬 뷰 → 역사적 가격 범위 한눈에)
+   - X축: 연·월 4개 눈금만 (공간 절약)
+   - 툴팁: 가격만 표시, 포인트 없음 (상세는 미시 차트에서)
+   ─────────────────────────────────────────────── */
+function renderMacroChart(data) {
+    const canvas = document.getElementById('macroChart');
+    if (!canvas || !data || data.length === 0) return;
+
+    const labels = data.map(d => d.date);
+    const prices = data.map(d => d.close);
+    const isUp   = prices.length >= 2 && prices[prices.length - 1] >= prices[0];
+    const lineColor = isUp ? 'rgba(220,53,69,.75)' : 'rgba(13,110,253,.75)';
+    const fillColor = isUp ? 'rgba(220,53,69,.05)' : 'rgba(13,110,253,.05)';
+
+    // 거시 Y축: 전체 실제 min/max ± 5% (최고·최저 한 화면에 표시)
+    // ★ 여백 비율 조정: 0.05 = 5%, 0.10 = 10%
+    const allMin  = Math.min.apply(null, prices);
+    const allMax  = Math.max.apply(null, prices);
+    const macroPad = (allMax - allMin) * 0.05 || allMax * 0.03;
+    const macroMin = Math.max(0, allMin - macroPad);
+    const macroMax = allMax + macroPad;
+
+    if (macroInstance) macroInstance.destroy();
+
+    macroInstance = new Chart(canvas.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: prices,
+                borderColor: lineColor,
+                backgroundColor: fillColor,
+                borderWidth: 1.5,
+                fill: true,
+                tension: 0.3,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: function(t) { return t[0].label ? t[0].label.substring(0,7) : ''; },
+                        label: function(t) {
+                            return country === 'US'
+                                ? '$' + t.parsed.y.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2})
+                                : t.parsed.y.toLocaleString('ko-KR') + '원';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        maxTicksLimit: 4,
+                        callback: function(val) {
+                            const label = this.getLabelForValue(val);
+                            return label ? label.substring(0,7) : '';
+                        }
+                    },
+                    grid: { display: false }
+                },
+                y: {
+                    min: macroMin,
+                    max: macroMax,
+                    ticks: {
+                        maxTicksLimit: 4,  // ★ 거시 Y축 눈금 수 (4개 권장)
+                        callback: function(val) {
+                            return country === 'US'
+                                ? '$' + Math.round(val).toLocaleString()
+                                : Math.round(val).toLocaleString('ko-KR') + '원';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
 function switchPeriod(btn, period) {
     document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
+    // 미시 차트만 업데이트 (거시 차트는 항상 전체 데이터 유지)
     renderChart(filterByPeriod(allData, period));
 }
 
@@ -702,12 +877,14 @@ function switchPeriod(btn, period) {
                 allData = generateHistory(currentPrice > 0 ? currentPrice : 100,
                                           '2025-01-01', new Date().toISOString().split('T')[0]);
             }
-            renderChart(filterByPeriod(allData, '3M'));
+            renderMacroChart(allData);                        // 거시 차트: 전체 기간
+            renderChart(filterByPeriod(allData, '3M'));       // 미시 차트: 3개월
         },
         error: function() {
             allData = generateHistory(currentPrice > 0 ? currentPrice : 100,
                                       '2025-01-01', new Date().toISOString().split('T')[0]);
-            renderChart(filterByPeriod(allData, '3M'));
+            renderMacroChart(allData);                        // 거시 차트: 전체 기간
+            renderChart(filterByPeriod(allData, '3M'));       // 미시 차트: 3개월
         }
     });
 })();
