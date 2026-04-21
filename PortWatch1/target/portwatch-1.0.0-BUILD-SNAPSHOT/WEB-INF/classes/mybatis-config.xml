@@ -47,32 +47,32 @@
     </settings>
 
     <!--
-        ✅ 명시적 TypeAlias 등록 (패키지 스캔 방식 제거)
+        ✅ typeAliases: root-context.xml의 typeAliasesPackage 방식으로 위임
         ══════════════════════════════════════════════════════════════
         [오류 수정] ClassNotFoundException: Cannot find class: MemberVO
         ──────────────────────────────────────────────────────────────
-        원인:
-          <package name="com.portwatch.domain"/> 스캔 방식은
-          STS 로컬 환경에서 WTP 배포 경로에 한글(소현석) 포함 시
-          MyBatis ClassLoaderWrapper가 classpath 스캔에 실패함.
-          → typeAlias 미등록 → MemberMapper.xml 파싱 중 오류
-          → sqlSessionFactory 생성 실패 → Tomcat 시작 불가
+        원인 분석:
+          개별 <typeAlias type="..."> 방식은 내부적으로 Class.forName()을
+          호출하는데, STS WTP 배포 시 컴파일된 클래스가 배포 classpath에
+          없으면 ClassNotFoundException 발생.
+          → sqlSessionFactory 생성 실패 → Spring 컨텍스트 초기화 불가
+          → 모든 URL 500 / Tomcat ERR_CONNECTION_REFUSED
+
+          패키지 스캔(<package name="..."/>)은 MyBatis ClassLoaderWrapper가
+          classpath URL을 순회하므로 한글 경로(소현석)에서 실패할 수 있음.
 
         해결:
-          각 VO 클래스를 명시적으로 등록하면 패키지 스캔 없이
-          직접 Class.forName()으로 로드 → 경로 문제 회피
+          <typeAliases> 블록을 mybatis-config.xml에서 완전 제거하고
+          root-context.xml의 SqlSessionFactoryBean.typeAliasesPackage
+          방식으로 일원화.
+          → Spring PathMatchingResourcePatternResolver 사용
+          → URL 인코딩 처리 우수, 한글 경로 대응
+          → domain 패키지 내 모든 VO 클래스 자동 등록
+             (MemberVO, StockVO, NewsVO, WatchlistVO, PortfolioVO,
+              PortfolioItemVO, PortfolioStockVO, StockPriceVO,
+              PaymentVO, DashboardVO, MarketSummaryVO 등)
         ══════════════════════════════════════════════════════════════
     -->
-    <typeAliases>
-        <!-- ✅ 명시적 alias 등록 (STS 로컬 한글 경로 ClassLoader 버그 회피) -->
-        <typeAlias alias="MemberVO"            type="com.portwatch.domain.MemberVO"/>
-        <typeAlias alias="StockVO"             type="com.portwatch.domain.StockVO"/>
-        <typeAlias alias="WatchlistVO"         type="com.portwatch.domain.WatchlistVO"/>
-        <typeAlias alias="WatchlistWithPriceVO" type="com.portwatch.domain.WatchlistWithPriceVO"/>
-        <typeAlias alias="PortfolioVO"         type="com.portwatch.domain.PortfolioVO"/>
-        <typeAlias alias="PortfolioItemVO"     type="com.portwatch.domain.PortfolioItemVO"/>
-        <typeAlias alias="PortfolioStockVO"    type="com.portwatch.domain.PortfolioStockVO"/>
-        <typeAlias alias="StockPriceVO"        type="com.portwatch.domain.StockPriceVO"/>
-    </typeAliases>
+    <!-- typeAliases 블록 제거됨 — root-context.xml typeAliasesPackage 사용 -->
 
 </configuration>
