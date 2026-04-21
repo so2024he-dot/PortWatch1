@@ -525,8 +525,14 @@
     
        <div class="container">
         <h1>📊 주식 목록 (<c:out value="${not empty stocks ? stocks.size() : 0}"/>개 기업)</h1>
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="종목 코드 또는 이름 검색...">
+        <div class="search-box" style="display:flex;gap:6px;align-items:center;">
+            <input type="text" id="searchInput" placeholder="종목명/코드 검색 (Enter → 검색 페이지)..."
+                   style="flex:1;max-width:360px;"
+                   onkeydown="if(event.key==='Enter'&&this.value.trim()){location.href='${pageContext.request.contextPath}/stock/search?keyword='+encodeURIComponent(this.value.trim());}"/>
+            <button onclick="var v=document.getElementById('searchInput').value.trim();if(v){location.href='${pageContext.request.contextPath}/stock/search?keyword='+encodeURIComponent(v);}"
+                    style="padding:8px 16px;background:#667eea;color:#fff;border:none;border-radius:5px;cursor:pointer;">
+                🔍 검색
+            </button>
         </div>
         <table id="stockTable">
             <thead>

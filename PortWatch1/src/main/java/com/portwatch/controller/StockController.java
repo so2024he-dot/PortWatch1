@@ -224,17 +224,36 @@ public class StockController {
     
     /**
      * 주식 검색 페이지
+     * ══════════════════════════════════════════════════════════════
+     * ✅ [수정] required=false + defaultValue="" → keyword 없이 접속 시 400 해결
+     *    keyword 비어있으면 검색 페이지(빈 결과)만 표시
+     *    keyword 있으면 DB 검색 후 결과 목록 표시
+     *    전용 stock/search.jsp 반환 (한글/영문 자동완성 포함)
+     * ══════════════════════════════════════════════════════════════
      */
     @GetMapping("/search")
     public String search(
-            @RequestParam String keyword,
+            @RequestParam(required = false, defaultValue = "") String keyword,
             @RequestParam(required = false) String country,
             Model model) {
-        
+
+        keyword = keyword.trim();
+
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("selectedCountry", country);
+
+        if (keyword.isEmpty()) {
+            // 키워드 없음 → 빈 결과로 검색 페이지 표시
+            model.addAttribute("stocks", java.util.Collections.emptyList());
+            model.addAttribute("totalCount", 0);
+            return "stock/search";
+        }
+
         log.info("주식 검색: keyword={}, country={}", keyword, country);
-        
+
         List<StockVO> stocks = stockService.searchStocks(keyword);
-        
+        if (stocks == null) stocks = java.util.Collections.emptyList();
+
         // ✅ Java 11 호환: toList() → collect(Collectors.toList())
         if ("KR".equals(country)) {
             stocks = stocks.stream()
@@ -245,12 +264,11 @@ public class StockController {
                     .filter(s -> "US".equals(s.getCountry()))
                     .collect(Collectors.toList());
         }
-        
+
         model.addAttribute("stocks", stocks);
-        model.addAttribute("keyword", keyword);
-        model.addAttribute("selectedCountry", country);
-        
-        return "stock/list";
+        model.addAttribute("totalCount", stocks.size());
+
+        return "stock/search";
     }
     
     // ════════════════════════════════════════════════════════════

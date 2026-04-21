@@ -149,27 +149,47 @@ public class StockFilterController {
     }
     
     /**
-     * 5. 종목 검색
+     * 5. 종목 검색 (자동완성 API)
      * GET /api/stocks/search?keyword={keyword}
+     * ✅ [수정] required=false → keyword 없이 호출 시 400 방지
+     *    keyword 비어있으면 빈 배열 반환 (자동완성 초기화)
+     *    최대 20건으로 제한 (자동완성 드롭다운 성능 최적화)
      */
     @GetMapping("/search")
     public ResponseEntity<Map<String, Object>> searchStocks(
-            @RequestParam String keyword) {
-        
+            @RequestParam(required = false, defaultValue = "") String keyword) {
+
         Map<String, Object> response = new HashMap<>();
-        
+
+        keyword = keyword.trim();
+
+        // 빈 키워드 → 빈 결과 즉시 반환
+        if (keyword.isEmpty()) {
+            response.put("success", true);
+            response.put("keyword", "");
+            response.put("count", 0);
+            response.put("stocks", java.util.Collections.emptyList());
+            return ResponseEntity.ok(response);
+        }
+
         try {
-            System.out.println("🔍 종목 검색: " + keyword);
-            
+            System.out.println("🔍 종목 검색(자동완성): " + keyword);
+
             List<StockVO> stocks = stockService.searchStocks(keyword);
-            
+            if (stocks == null) stocks = java.util.Collections.emptyList();
+
+            // 자동완성은 최대 20건 (드롭다운 성능)
+            if (stocks.size() > 20) {
+                stocks = stocks.subList(0, 20);
+            }
+
             response.put("success", true);
             response.put("keyword", keyword);
             response.put("count", stocks.size());
             response.put("stocks", stocks);
-            
+
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "종목 검색 실패: " + e.getMessage());
