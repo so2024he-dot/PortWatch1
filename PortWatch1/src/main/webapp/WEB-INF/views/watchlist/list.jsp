@@ -184,14 +184,15 @@
                                             </c:choose>
                                         </div>
                                         
-                                        <!-- 등락률 -->
-                                        <div class="change-rate ${item.changeRate >= 0 ? 'price-up' : 'price-down'}">
+                                        <!-- 등락률 (null-safe) -->
+                                        <c:set var="rate" value="${not empty item.changeRate ? item.changeRate : 0}"/>
+                                        <div class="change-rate ${rate >= 0 ? 'price-up' : 'price-down'}">
                                             <c:choose>
-                                                <c:when test="${item.changeRate >= 0}">
-                                                    <i class="fas fa-arrow-up"></i> +<fmt:formatNumber value="${item.changeRate}" type="number" minFractionDigits="2" maxFractionDigits="2"/>%
+                                                <c:when test="${rate >= 0}">
+                                                    <i class="fas fa-arrow-up"></i> +<fmt:formatNumber value="${rate}" type="number" minFractionDigits="2" maxFractionDigits="2"/>%
                                                 </c:when>
                                                 <c:otherwise>
-                                                    <i class="fas fa-arrow-down"></i> <fmt:formatNumber value="${item.changeRate}" type="number" minFractionDigits="2" maxFractionDigits="2"/>%
+                                                    <i class="fas fa-arrow-down"></i> <fmt:formatNumber value="${rate}" type="number" minFractionDigits="2" maxFractionDigits="2"/>%
                                                 </c:otherwise>
                                             </c:choose>
                                         </div>
@@ -257,12 +258,10 @@
 
         console.log('🗑️ 관심종목 삭제:', stockCode);
 
-        fetch(WatchlistManager.contextPath + '/watchlist/delete', {
+        // ✅ [수정] DELETE + body → DELETE + 쿼리스트링 (Tomcat 9에서 body 미파싱 방지)
+        fetch(WatchlistManager.contextPath + '/watchlist/delete?stockCode=' + encodeURIComponent(stockCode), {
             method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: 'stockCode=' + encodeURIComponent(stockCode)
+            credentials: 'same-origin'
         })
         .then(response => response.json())
         .then(data => {

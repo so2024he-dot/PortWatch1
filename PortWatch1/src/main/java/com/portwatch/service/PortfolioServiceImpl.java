@@ -135,68 +135,119 @@ public class PortfolioServiceImpl implements PortfolioService {
     }
 
     /**
-     * ✅ 종목 추가 (4개 파라미터 버전 - 신규!)
+     * ✅ 종목 추가 (4개 파라미터 버전 - 완전 수정!)
      * StockPurchaseApiController 호출용
-     * 
-     * 동작:
-     * 1. memberId로 기본 포트폴리오 조회/생성
-     * 2. PortfolioItemVO 생성
-     * 3. insertItem 호출
+     *
+     * ══════════════════════════════════════════════════════════════
+     * [수정 핵심 - 2026-04-21]
+     *   1. portfolioMapper.insertPortfolio 직접 호출
+     *      → createPortfolio(this.xxx) 자기 호출은 @Transactional 무시됨
+     *      → 직접 mapper 호출로 변경
+     *   2. PORTFOLIO FK 제약 없이 삽입 가능하도록 SQL 수정 예정
+     *      (EC2 SQL: ALTER TABLE PORTFOLIO DROP FOREIGN KEY fk_portfolio_member)
+     *   3. 게스트 사용자("guest_user") 지원:
+     *      FK 제약 제거 후 insertPortfolio 정상 작동
+     *   4. 상세 에러 로깅 추가 (원인 파악 용이)
+     * ══════════════════════════════════════════════════════════════
      */
     @Override
     @Transactional
     public boolean addStockToPortfolio(String memberId, String stockCode, double quantity, double price) {
+        log.info("════ 종목 추가 시작 ════");
+        log.info("  memberId={}, stockCode={}, quantity={}, price={}",
+                 memberId, stockCode, quantity, price);
+
         try {
-            log.info("종목 추가 시작: memberId={}, stockCode={}, quantity={}, price={}", 
-                     memberId, stockCode, quantity, price);
-
-            // 1. memberId로 포트폴리오 조회
-            List<PortfolioVO> portfolios = getPortfolioByMemberId(memberId);
-            
-            Long portfolioId;
-            if (portfolios == null || portfolios.isEmpty()) {
-                // 포트폴리오가 없으면 생성
-                log.info("포트폴리오 없음, 신규 생성");
-                PortfolioVO newPortfolio = new PortfolioVO();
-                newPortfolio.setMemberId(memberId);
-                newPortfolio.setPortfolioName("기본 포트폴리오");
-                createPortfolio(newPortfolio);
-                
-                // 다시 조회
-                portfolios = getPortfolioByMemberId(memberId);
-                if (portfolios == null || portfolios.isEmpty()) {
-                    log.error("포트폴리오 생성 실패");
-                    return false;
-                }
-                portfolioId = portfolios.get(0).getPortfolioId();
-            } else {
-                // 첫 번째 포트폴리오 사용
-                portfolioId = portfolios.get(0).getPortfolioId();
+            // ── 유효성 검사 ──
+            if (memberId == null || memberId.trim().isEmpty()) {
+                log.error("  ❌ memberId 비어있음");
+                return false;
             }
-
-            // 2. MySQL에서 종목 정보 조회
-            StockVO stock = stockMapper.findByCode(stockCode);
-            if (stock == null) {
-                log.error("종목 정보 없음: {}", stockCode);
+            if (stockCode == null || stockCode.trim().isEmpty()) {
+                log.error("  ❌ stockCode 비어있음");
                 return false;
             }
 
-            // 3. PortfolioItemVO 생성
+            // ── STEP 1: 포트폴리오 조회 ──
+            List<PortfolioVO> portfolios = portfolioMapper.findPortfolioByMemberIdStr(memberId);
+            log.info("  포트폴리오 조회 결과: {}건", portfolios == null ? "null" : portfolios.size());
+
+            Long portfolioId;
+            if (portfolios == null || portfolios.isEmpty()) {
+                // 포트폴리오가 없으면 신규 생성
+                log.info("  포트폴리오 없음 → 신규 생성");
+                PortfolioVO newPortfolio = new PortfolioVO();
+                newPortfolio.setMemberId(memberId);
+                newPortfolio.setPortfolioName("기본 포트폴리오");
+                newPortfolio.setCreatedAt(new java.sql.Timestamp(System.currentTimeMillis()));
+                newPortfolio.setUpdatedAt(new java.sql.Timestamp(System.currentTimeMillis()));
+
+                try {
+                    int inserted = portfolioMapper.insertPortfolio(newPortfolio);
+                    log.info("  insertPortfolio 결과: {} (생성된 portfolioId={})", inserted, newPortfolio.getPortfolioId());
+                } catch (Exception ex) {
+                    log.error("  ❌ insertPortfolio 실패: {}", ex.getMessage(), ex);
+                    // FK 제약 오류(1452)이면 게스트 계정일 가능성 → 에러 메시지 명확히
+                    if (ex.getMessage() != null && (ex.getMessage().contains("1452") || ex.getMessage().contains("foreign key"))) {
+                        log.error("  ❌ FK 제약 위반: member_id='{}' 가 MEMBER 테이블에 없음", memberId);
+                        log.error("     EC2 SQL 실행 필요: ALTER TABLE PORTFOLIO DROP FOREIGN KEY fk_portfolio_member");
+                    }
+                    return false;
+                }
+
+                // 생성된 portfolioId 사용 (useGeneratedKeys=true)
+                if (newPortfolio.getPortfolioId() != null && newPortfolio.getPortfolioId() > 0) {
+                    portfolioId = newPortfolio.getPortfolioId();
+                } else {
+                    // 다시 조회
+                    portfolios = portfolioMapper.findPortfolioByMemberIdStr(memberId);
+                    if (portfolios == null || portfolios.isEmpty()) {
+                        log.error("  ❌ 포트폴리오 생성 후 재조회 실패");
+                        return false;
+                    }
+                    portfolioId = portfolios.get(0).getPortfolioId();
+                }
+            } else {
+                portfolioId = portfolios.get(0).getPortfolioId();
+                log.info("  기존 portfolioId={} 사용", portfolioId);
+            }
+
+            // ── STEP 2: 종목 정보 조회 ──
+            StockVO stock = stockMapper.findByCode(stockCode);
+            if (stock == null) {
+                log.error("  ❌ 종목 정보 없음: stockCode={}", stockCode);
+                return false;
+            }
+            log.info("  종목 확인: {} ({})", stock.getStockName(), stockCode);
+
+            // ── STEP 3: PORTFOLIO_ITEM 삽입 ──
             PortfolioItemVO item = new PortfolioItemVO();
             item.setPortfolioId(portfolioId);
             item.setStockCode(stockCode);
             item.setQuantity(BigDecimal.valueOf(quantity));
             item.setAvgPrice(BigDecimal.valueOf(price));
             item.setPurchasePrice(BigDecimal.valueOf(price));
+            item.setCreatedAt(new java.sql.Timestamp(System.currentTimeMillis()));
 
-            // 4. 종목 추가
-            int result = addStockToPortfolio(item);
-            
-            log.info("종목 추가 완료: result={}", result);
-            return result > 0;
+            int result;
+            try {
+                result = portfolioMapper.insertItem(item);
+                log.info("  insertItem 결과: {} (itemId={})", result, item.getItemId());
+            } catch (Exception ex) {
+                log.error("  ❌ insertItem 실패: {}", ex.getMessage(), ex);
+                return false;
+            }
+
+            if (result > 0) {
+                log.info("════ 종목 추가 완료 ✅ ════");
+                return true;
+            } else {
+                log.warn("  ⚠️ insertItem 결과 0 (영향받은 행 없음)");
+                return false;
+            }
 
         } catch (Exception e) {
-            log.error("종목 추가 실패", e);
+            log.error("════ 종목 추가 실패 ❌ ════: {}", e.getMessage(), e);
             return false;
         }
     }

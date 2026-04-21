@@ -149,18 +149,22 @@ public class StockPurchaseApiController {
                 System.out.println("  가격: " + currentPrice);
                 System.out.println("  총액: " + quantity.multiply(currentPrice));
                 System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                
-                response.put("success", true);
-                response.put("message", "매수가 완료되었습니다.");
-                response.put("stockName", stock.getStockName());
-                response.put("quantity", quantity);
-                response.put("price", currentPrice);
+
+                response.put("success",     true);
+                response.put("message",     "매수가 완료되었습니다.");
+                response.put("stockName",   stock.getStockName());
+                response.put("stockCode",   stockCode);
+                response.put("quantity",    quantity);
+                response.put("price",       currentPrice);
                 response.put("totalAmount", quantity.multiply(currentPrice));
-                
+
                 return ResponseEntity.ok(response);
             } else {
+                System.err.println("❌ addStockToPortfolio 반환값 false");
+                System.err.println("   → 서버 로그(catalina.out)에서 '종목 추가 실패' 확인 필요");
+                System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
                 response.put("success", false);
-                response.put("message", "매수 처리 중 오류가 발생했습니다.");
+                response.put("message", "매수 처리 중 오류가 발생했습니다. (포트폴리오 저장 실패)");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
             
