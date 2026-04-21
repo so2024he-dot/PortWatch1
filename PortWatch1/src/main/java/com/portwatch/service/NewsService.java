@@ -77,5 +77,13 @@ public interface NewsService {
 
 	int getTotalNewsCount();
 
-	
+    /**
+     * ✅ [신규] 종목별 뉴스 자동 크롤링 및 저장
+     * 종목명 키워드로 네이버 뉴스 검색 → DB 저장
+     *
+     * @param stockCode 종목 코드 (예: "000100", "MCD")
+     * @param stockName 종목명 (예: "유한양행", "McDonald's")
+     * @return 신규 저장된 뉴스 건수
+     */
+    int crawlAndSaveByStockCode(String stockCode, String stockName) throws Exception;
 }

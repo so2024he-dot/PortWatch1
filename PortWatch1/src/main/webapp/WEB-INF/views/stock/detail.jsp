@@ -580,19 +580,21 @@ function addToWatchlist(code) {
 }
 
 /* ────────────────────────────────────────────────
-   6. 뉴스 로드
+   6. 뉴스 로드 (자동 크롤링 포함)
    ─────────────────────────────────────────────── */
-function loadNews() {
+/**
+ * ✅ [수정] 뉴스 로드 + 자동 크롤링
+ * @param {boolean} isRetry - true이면 크롤링 후 재시도 (무한루프 방지)
+ */
+function loadNews(isRetry) {
+    var container = document.getElementById('newsContainer');
+
     $.ajax({
         url: ctx + '/news/api/stock/' + stockCode,
         method: 'GET',
         success: function(res) {
-            const container = document.getElementById('newsContainer');
             if (res.success && res.news && res.news.length > 0) {
-                // ✅ [수정] 서버 응답 필드명 일치:
-                //    link      → newsUrl
-                //    source    → name
-                //    publishedAt → publishedDate (LocalDateTime: 배열 또는 문자열)
+                // ✅ 서버 응답 필드명: newsUrl, name, publishedDate
                 var html = '';
                 res.news.slice(0, 8).forEach(function(n) {
                     var link  = n.newsUrl || '#';
@@ -616,17 +618,43 @@ function loadNews() {
                           + '</div>';
                 });
                 container.innerHTML = html;
+
+            } else if (!isRetry) {
+                // ✅ [자동 크롤링] 뉴스 0건이면 종목별 크롤링 자동 실행
+                container.innerHTML =
+                    '<p class="text-muted text-center py-2">' +
+                    '<i class="fas fa-sync-alt fa-spin me-1"></i>' +
+                    '관련 뉴스를 수집하고 있습니다...</p>';
+
+                $.ajax({
+                    url: ctx + '/news/api/stock/' + stockCode + '/crawl',
+                    method: 'GET',
+                    timeout: 15000,
+                    success: function(crawlRes) {
+                        // 크롤링 완료 후 2초 뒤 재조회 (한 번만)
+                        setTimeout(function() { loadNews(true); }, 2000);
+                    },
+                    error: function() {
+                        // 크롤링 실패해도 재시도
+                        setTimeout(function() { loadNews(true); }, 1000);
+                    }
+                });
+
             } else {
-                container.innerHTML = '<p class="text-muted text-center py-2">관련 뉴스가 없습니다.</p>';
+                // 재시도 후도 없으면 안내 메시지
+                container.innerHTML =
+                    '<p class="text-muted text-center py-2">관련 뉴스가 없습니다. ' +
+                    '<a href="' + ctx + '/api/admin/update-all-news" target="_blank" ' +
+                    'class="text-primary">뉴스 수집하기</a></p>';
             }
         },
         error: function() {
-            document.getElementById('newsContainer').innerHTML =
+            container.innerHTML =
                 '<p class="text-muted text-center py-2">뉴스를 불러올 수 없습니다.</p>';
         }
     });
 }
-loadNews();
+loadNews(false);  // ✅ 최초 호출 시 isRetry=false
 
 /* ────────────────────────────────────────────────
    7. 주가 차트 (2025년 1월 ~ 현재)

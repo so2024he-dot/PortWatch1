@@ -440,20 +440,74 @@ public class NewsServiceImpl implements NewsService {
     public int getTotalNewsCount() {
         log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         log.info("🔢 전체 뉴스 개수 조회");
-        
+
         try {
             int count = newsDAO.countAllNews();
-            
+
             log.info("  - 전체 뉴스 개수: " + count + "건");
             log.info("✅ 전체 뉴스 개수 조회 완료");
             log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
+
             return count;
-            
+
         } catch (Exception e) {
             log.error("❌ 전체 뉴스 개수 조회 실패: " + e.getMessage(), e);
             log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             return 0;
+        }
+    }
+
+    /**
+     * ✅ [신규] 종목별 뉴스 자동 크롤링 및 저장
+     * 종목명 키워드로 네이버 뉴스 검색 → 중복 체크 후 DB 저장
+     *
+     * @param stockCode 종목 코드
+     * @param stockName 종목명
+     * @return 신규 저장된 뉴스 건수
+     */
+    @Override
+    @Transactional
+    public int crawlAndSaveByStockCode(String stockCode, String stockName) throws Exception {
+        log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        log.info("🔄 종목별 뉴스 자동 크롤링: " + stockName + " (" + stockCode + ")");
+
+        if (stockName == null || stockName.trim().isEmpty()) {
+            log.warn("⚠️ 종목명이 없어 크롤링을 건너뜁니다.");
+            return 0;
+        }
+
+        try {
+            // 네이버 뉴스 키워드 검색
+            List<NewsVO> crawled = naverNewsCrawler.crawlNewsByKeyword(stockName, stockCode);
+
+            if (crawled == null || crawled.isEmpty()) {
+                log.warn("  - 크롤링된 뉴스 없음");
+                return 0;
+            }
+
+            log.info("  - 크롤링된 뉴스: " + crawled.size() + "개");
+
+            int savedCount = 0;
+            for (NewsVO news : crawled) {
+                try {
+                    boolean exists = newsDAO.existsByUrl(news.getNewsUrl());
+                    if (!exists) {
+                        newsDAO.insertNews(news);
+                        savedCount++;
+                    }
+                } catch (Exception e) {
+                    log.warn("  ⚠️ 저장 실패: " + news.getTitle() + " - " + e.getMessage());
+                }
+            }
+
+            log.info("✅ 종목별 크롤링 완료: 신규 " + savedCount + "건 저장");
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            return savedCount;
+
+        } catch (Exception e) {
+            log.error("❌ 종목별 크롤링 실패: " + e.getMessage(), e);
+            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            throw e;
         }
     }
 }
