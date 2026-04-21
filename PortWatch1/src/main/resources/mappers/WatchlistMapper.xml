@@ -39,7 +39,7 @@
          INSERT
          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <insert id="insert" parameterType="com.portwatch.domain.WatchlistVO">
-        INSERT INTO watchlist (member_id, stock_code, created_at)
+        INSERT INTO WATCHLIST (member_id, stock_code, created_at)
         VALUES (#{memberId}, #{stockCode}, NOW())
     </insert>
 
@@ -48,31 +48,31 @@
          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <!-- deleteById -->
     <delete id="deleteById" parameterType="long">
-        DELETE FROM watchlist WHERE watchlist_id = #{watchlistId}
+        DELETE FROM WATCHLIST WHERE watchlist_id = #{watchlistId}
     </delete>
 
     <!-- delete(memberId, stockCode) -->
     <delete id="delete">
-        DELETE FROM watchlist
+        DELETE FROM WATCHLIST
         WHERE member_id = #{memberId}
           AND stock_code = #{stockCode}
     </delete>
 
     <!-- deleteByMemberAndStock - 기존 호환 -->
     <delete id="deleteByMemberAndStock">
-        DELETE FROM watchlist
+        DELETE FROM WATCHLIST
         WHERE member_id = #{memberId}
           AND stock_code = #{stockCode}
     </delete>
 
     <!-- deleteByMemberId -->
     <delete id="deleteByMemberId" parameterType="string">
-        DELETE FROM watchlist WHERE member_id = #{memberId}
+        DELETE FROM WATCHLIST WHERE member_id = #{memberId}
     </delete>
 
     <!-- deleteAllByMemberId - 기존 호환 -->
     <delete id="deleteAllByMemberId" parameterType="string">
-        DELETE FROM watchlist WHERE member_id = #{memberId}
+        DELETE FROM WATCHLIST WHERE member_id = #{memberId}
     </delete>
 
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -85,8 +85,8 @@
             w.watchlist_id, w.member_id, w.stock_code, w.created_at,
             s.stock_name, s.current_price, s.market_type, s.country,
             s.change_rate, s.price_change, s.volume
-        FROM watchlist w
-        LEFT JOIN stock s ON w.stock_code = s.stock_code
+        FROM WATCHLIST w
+        LEFT JOIN STOCK s ON w.stock_code = s.stock_code
         WHERE w.member_id = #{memberId}
         ORDER BY w.created_at DESC
     </select>
@@ -97,8 +97,8 @@
             w.watchlist_id, w.member_id, w.stock_code, w.created_at,
             s.stock_name, s.current_price, s.market_type, s.country,
             s.change_rate, s.price_change, s.volume
-        FROM watchlist w
-        LEFT JOIN stock s ON w.stock_code = s.stock_code
+        FROM WATCHLIST w
+        LEFT JOIN STOCK s ON w.stock_code = s.stock_code
         WHERE w.member_id = #{memberId}
           AND w.stock_code = #{stockCode}
         LIMIT 1
@@ -110,8 +110,8 @@
             w.watchlist_id, w.member_id, w.stock_code, w.created_at,
             s.stock_name, s.current_price, s.market_type, s.country,
             s.change_rate, s.price_change, s.volume
-        FROM watchlist w
-        LEFT JOIN stock s ON w.stock_code = s.stock_code
+        FROM WATCHLIST w
+        LEFT JOIN STOCK s ON w.stock_code = s.stock_code
         WHERE w.watchlist_id = #{watchlistId}
     </select>
 
@@ -121,8 +121,8 @@
             w.watchlist_id, w.member_id, w.stock_code, w.created_at,
             s.stock_name, s.current_price, s.market_type, s.country,
             s.change_rate, s.price_change, s.volume
-        FROM watchlist w
-        LEFT JOIN stock s ON w.stock_code = s.stock_code
+        FROM WATCHLIST w
+        LEFT JOIN STOCK s ON w.stock_code = s.stock_code
         WHERE w.member_id = #{memberId}
           AND s.country = #{country}
         ORDER BY w.created_at DESC
@@ -134,8 +134,8 @@
             w.watchlist_id, w.member_id, w.stock_code, w.created_at,
             s.stock_name, s.current_price, s.market_type, s.country,
             s.change_rate, s.price_change, s.volume
-        FROM watchlist w
-        LEFT JOIN stock s ON w.stock_code = s.stock_code
+        FROM WATCHLIST w
+        LEFT JOIN STOCK s ON w.stock_code = s.stock_code
         WHERE w.member_id = #{memberId}
           AND s.market_type = #{marketType}
         ORDER BY w.created_at DESC
@@ -147,8 +147,8 @@
             w.watchlist_id, w.member_id, w.stock_code, w.created_at,
             s.stock_name, s.current_price, s.market_type, s.country,
             s.change_rate, s.price_change, s.volume
-        FROM watchlist w
-        LEFT JOIN stock s ON w.stock_code = s.stock_code
+        FROM WATCHLIST w
+        LEFT JOIN STOCK s ON w.stock_code = s.stock_code
         WHERE w.member_id = #{memberId}
         ORDER BY w.created_at DESC
         LIMIT #{limit}
@@ -160,23 +160,23 @@
 
     <!-- count(memberId) -->
     <select id="count" parameterType="string" resultType="int">
-        SELECT COUNT(*) FROM watchlist WHERE member_id = #{memberId}
+        SELECT COUNT(*) FROM WATCHLIST WHERE member_id = #{memberId}
     </select>
 
     <!-- countByMemberId - 기존 호환 -->
     <select id="countByMemberId" parameterType="string" resultType="int">
-        SELECT COUNT(*) FROM watchlist WHERE member_id = #{memberId}
+        SELECT COUNT(*) FROM WATCHLIST WHERE member_id = #{memberId}
     </select>
 
     <!-- countByStockCode -->
     <select id="countByStockCode" parameterType="string" resultType="int">
-        SELECT COUNT(*) FROM watchlist WHERE stock_code = #{stockCode}
+        SELECT COUNT(*) FROM WATCHLIST WHERE stock_code = #{stockCode}
     </select>
 
     <!-- exists(memberId, stockCode) -->
     <select id="exists" resultType="int">
         SELECT COUNT(*)
-        FROM watchlist
+        FROM WATCHLIST
         WHERE member_id = #{memberId}
           AND stock_code = #{stockCode}
     </select>
@@ -184,7 +184,7 @@
     <!-- existsByMemberAndStock - 기존 호환 -->
     <select id="existsByMemberAndStock" resultType="int">
         SELECT COUNT(*)
-        FROM watchlist
+        FROM WATCHLIST
         WHERE member_id = #{memberId}
           AND stock_code = #{stockCode}
     </select>
