@@ -39,13 +39,13 @@
 
     <!-- ✅ 뉴스 삽입 -->
     <insert id="insertNews">
-        INSERT INTO news (title, stock_id, stock_code, news_url, published_date, name)
+        INSERT INTO NEWS (title, stock_id, stock_code, news_url, published_date, name)
         VALUES (#{title}, #{stockId}, #{stockCode}, #{newsUrl}, #{publishedDate}, #{name})
     </insert>
 
     <!-- ✅ 뉴스 수정 -->
     <update id="updateNews">
-        UPDATE news
+        UPDATE NEWS
         SET title          = #{title},
             stock_code     = #{stockCode},
             news_url       = #{newsUrl},
@@ -55,7 +55,7 @@
 
     <!-- ✅ 뉴스 삭제 -->
     <delete id="deleteNews">
-        DELETE FROM news WHERE news_id = #{newsId}
+        DELETE FROM NEWS WHERE news_id = #{newsId}
     </delete>
 
     <!-- ============================================================
@@ -66,7 +66,7 @@
     <select id="selectNewsById" resultMap="NewsResultMap">
         SELECT news_id, title, stock_id, stock_code, news_code,
                news_title, news_url, published_date, created_at, name
-        FROM news
+        FROM NEWS
         WHERE news_id = #{newsId}
     </select>
 
@@ -77,7 +77,7 @@
     <!-- ✅ 전체 뉴스 조회 (최신순) - 성능 최적화: LIMIT 50 -->
     <select id="selectAllNews" resultMap="NewsResultMap">
         SELECT news_id, title, stock_code, news_url, published_date, name
-        FROM news
+        FROM NEWS
         ORDER BY published_date DESC
         LIMIT 50
     </select>
@@ -85,7 +85,7 @@
     <!-- ✅ 최근 N개 뉴스 조회 -->
     <select id="selectRecentNews" resultMap="NewsResultMap">
         SELECT news_id, title, stock_code, news_url, published_date, name
-        FROM news
+        FROM NEWS
         ORDER BY published_date DESC
         LIMIT #{limit}
     </select>
@@ -93,7 +93,7 @@
     <!-- ✅ 최신 N개 뉴스 조회 (selectRecentNews 와 동일 - 인터페이스 호환용) -->
     <select id="selectLatestNews" resultMap="NewsResultMap">
         SELECT news_id, title, stock_code, news_url, published_date, name
-        FROM news
+        FROM NEWS
         ORDER BY published_date DESC
         LIMIT #{limit}
     </select>
@@ -104,7 +104,7 @@
             → news.title LIKE '%종목명%' 으로 관련 뉴스도 표시 -->
     <select id="selectNewsByStock" resultMap="NewsResultMap">
         SELECT DISTINCT n.news_id, n.title, n.stock_code, n.news_url, n.published_date, n.name
-        FROM news n
+        FROM NEWS n
         LEFT JOIN STOCK s ON s.stock_code = #{stockCode}
         WHERE n.stock_code = #{stockCode}
            OR (s.stock_name IS NOT NULL
@@ -118,7 +118,7 @@
          ✅ [수정] 동일하게 종목명 키워드 폴백 포함 -->
     <select id="selectNewsByStockCode" resultMap="NewsResultMap">
         SELECT DISTINCT n.news_id, n.title, n.stock_code, n.news_url, n.published_date, n.name
-        FROM news n
+        FROM NEWS n
         LEFT JOIN STOCK s ON s.stock_code = #{stockCode}
         WHERE n.stock_code = #{stockCode}
            OR (s.stock_name IS NOT NULL
@@ -131,8 +131,8 @@
     <!-- ✅ 국가별 뉴스 조회 (stock 테이블 JOIN) -->
     <select id="selectNewsByCountry" resultMap="NewsResultMap">
         SELECT n.news_id, n.title, n.stock_code, n.news_url, n.published_date, n.name
-        FROM news n
-        LEFT JOIN stock s ON n.stock_code = s.stock_code
+        FROM NEWS n
+        LEFT JOIN STOCK s ON n.stock_code = s.stock_code
         WHERE s.country = #{country}
         ORDER BY n.published_date DESC
         LIMIT #{limit}
@@ -141,7 +141,7 @@
     <!-- ✅ 카테고리별 뉴스 조회 (name 컬럼 = 카테고리/출처) -->
     <select id="selectByCategory" resultMap="NewsResultMap">
         SELECT news_id, title, stock_code, news_url, published_date, name
-        FROM news
+        FROM NEWS
         WHERE name = #{category}
         ORDER BY published_date DESC
         LIMIT #{limit}
@@ -150,7 +150,7 @@
     <!-- ✅ 키워드 검색 -->
     <select id="search" resultMap="NewsResultMap">
         SELECT news_id, title, stock_code, news_url, published_date, name
-        FROM news
+        FROM NEWS
         WHERE title      LIKE CONCAT('%', #{keyword}, '%')
            OR news_title LIKE CONCAT('%', #{keyword}, '%')
         ORDER BY published_date DESC
@@ -167,31 +167,31 @@
     -->
     <select id="existsByUrl" resultType="boolean">
         SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END
-        FROM news
+        FROM NEWS
         WHERE news_url = #{url}
     </select>
 
     <!-- ✅ URL 중복 건수 반환 (int) -->
     <select id="checkDuplicateUrl" resultType="int">
         SELECT COUNT(*)
-        FROM news
+        FROM NEWS
         WHERE news_url = #{link}
     </select>
 
     <!-- ✅ 전체 뉴스 개수 (getTotalNewsCount) -->
     <select id="getTotalNewsCount" resultType="int">
-        SELECT COUNT(*) FROM news
+        SELECT COUNT(*) FROM NEWS
     </select>
 
     <!-- ✅ 전체 뉴스 개수 (countAllNews - 인터페이스 호환용) -->
     <select id="countAllNews" resultType="int">
-        SELECT COUNT(*) FROM news
+        SELECT COUNT(*) FROM NEWS
     </select>
 
     <!-- ✅ 오늘 등록된 뉴스 개수 -->
     <select id="getTodayNewsCount" resultType="int">
         SELECT COUNT(*)
-        FROM news
+        FROM NEWS
         WHERE DATE(published_date) = CURDATE()
     </select>
 
