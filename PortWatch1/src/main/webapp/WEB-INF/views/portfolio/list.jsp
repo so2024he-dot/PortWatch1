@@ -128,12 +128,14 @@
 <c:otherwise>
 
     <%-- ── 요약 카드 4개 ───────────────────────────────── --%>
-    <%-- JSTL 변수로 합계 계산 --%>
+    <%-- JSTL 변수로 합계 계산 (US 종목은 환율 1380 적용) --%>
+    <c:set var="KRW_RATE" value="1380"/>
     <c:set var="totalInvest" value="0"/>
     <c:set var="totalCurrent" value="0"/>
     <c:forEach items="${portfolioList}" var="p">
-        <c:set var="pInvest"  value="${(not empty p.avgPrice ? p.avgPrice : 0) * (not empty p.quantity ? p.quantity : 0)}"/>
-        <c:set var="pCurrent" value="${(not empty p.currentPrice ? p.currentPrice : 0) * (not empty p.quantity ? p.quantity : 0)}"/>
+        <c:set var="fx" value="${p.country eq 'US' ? KRW_RATE : 1}"/>
+        <c:set var="pInvest"  value="${(not empty p.avgPrice ? p.avgPrice : 0) * (not empty p.quantity ? p.quantity : 0) * fx}"/>
+        <c:set var="pCurrent" value="${(not empty p.currentPrice ? p.currentPrice : 0) * (not empty p.quantity ? p.quantity : 0) * fx}"/>
         <c:set var="totalInvest"  value="${totalInvest  + pInvest}"/>
         <c:set var="totalCurrent" value="${totalCurrent + pCurrent}"/>
     </c:forEach>
@@ -206,34 +208,56 @@
 
     <%-- ── 종목 카드 리스트 ───────────────────────────── --%>
     <c:forEach items="${portfolioList}" var="p">
-        <c:set var="pAvg" value="${not empty p.avgPrice ? p.avgPrice : 0}"/>
-        <c:set var="pQty" value="${not empty p.quantity ? p.quantity : 0}"/>
-        <c:set var="pCur" value="${not empty p.currentPrice ? p.currentPrice : 0}"/>
-        <c:set var="pPnl" value="${(pCur - pAvg) * pQty}"/>
-        <c:set var="pRate" value="${pAvg > 0 ? ((pCur - pAvg) / pAvg * 100) : 0}"/>
+        <c:set var="pAvg"     value="${not empty p.avgPrice ? p.avgPrice : 0}"/>
+        <c:set var="pQty"     value="${not empty p.quantity ? p.quantity : 0}"/>
+        <c:set var="pCur"     value="${not empty p.currentPrice ? p.currentPrice : 0}"/>
+        <c:set var="pIsUS"    value="${p.country eq 'US'}"/>
+        <c:set var="pUnit"    value="${pIsUS ? '$' : '원'}"/>
+        <c:set var="pPnl"     value="${(pCur - pAvg) * pQty}"/>
+        <c:set var="pRate"    value="${pAvg > 0 ? ((pCur - pAvg) / pAvg * 100) : 0}"/>
+        <%-- 손익 표시: US는 USD 단위 그대로 (환율 표시는 차트에서) --%>
 
         <div class="stock-item">
             <div class="row align-items-center">
                 <div class="col-md-3 mb-2 mb-md-0">
                     <div class="sname"><c:out value="${not empty p.stockName ? p.stockName : p.stockCode}"/></div>
-                    <div class="scode"><c:out value="${p.stockCode}"/></div>
+                    <div class="scode">
+                        <c:out value="${p.stockCode}"/>
+                        <c:if test="${pIsUS}">
+                            <span class="badge bg-info ms-1" style="font-size:.7rem">USD</span>
+                        </c:if>
+                    </div>
                 </div>
                 <div class="col-4 col-md-2 text-center">
                     <div class="tbl-label">수량</div>
-                    <div class="tbl-val"><fmt:formatNumber value="${pQty}" pattern="#,###"/>주</div>
+                    <div class="tbl-val"><fmt:formatNumber value="${pQty}" pattern="#,##0.####"/>주</div>
                 </div>
                 <div class="col-4 col-md-2 text-center">
                     <div class="tbl-label">평균매수가</div>
-                    <div class="tbl-val"><fmt:formatNumber value="${pAvg}" pattern="#,###"/>원</div>
+                    <div class="tbl-val">
+                        <c:choose>
+                            <c:when test="${pIsUS}">$<fmt:formatNumber value="${pAvg}" pattern="#,##0.00"/></c:when>
+                            <c:otherwise><fmt:formatNumber value="${pAvg}" pattern="#,###"/>원</c:otherwise>
+                        </c:choose>
+                    </div>
                 </div>
                 <div class="col-4 col-md-2 text-center">
                     <div class="tbl-label">현재가</div>
-                    <div class="tbl-val"><fmt:formatNumber value="${pCur}" pattern="#,###"/>원</div>
+                    <div class="tbl-val">
+                        <c:choose>
+                            <c:when test="${pIsUS}">$<fmt:formatNumber value="${pCur}" pattern="#,##0.00"/></c:when>
+                            <c:otherwise><fmt:formatNumber value="${pCur}" pattern="#,###"/>원</c:otherwise>
+                        </c:choose>
+                    </div>
                 </div>
                 <div class="col-6 col-md-2 text-center">
                     <div class="tbl-label">평가손익</div>
                     <div class="tbl-val ${pPnl >= 0 ? 'profit-up' : 'profit-down'}">
-                        <c:if test="${pPnl >= 0}">+</c:if><fmt:formatNumber value="${pPnl}" pattern="#,###"/>원
+                        <c:if test="${pPnl >= 0}">+</c:if>
+                        <c:choose>
+                            <c:when test="${pIsUS}">$<fmt:formatNumber value="${pPnl}" pattern="#,##0.00"/></c:when>
+                            <c:otherwise><fmt:formatNumber value="${pPnl}" pattern="#,###"/>원</c:otherwise>
+                        </c:choose>
                     </div>
                 </div>
                 <div class="col-6 col-md-1 text-center">
@@ -258,14 +282,25 @@
 <script>
 /* ════════════════════════════════════════════════
    Chart.js 포트폴리오 차트 초기화
+   ════════════════════════════════════════════════
+   ✅ [수정 2026-04-22] 미국 주식 환율 변환 추가
+      - US 종목은 USD → KRW 변환 후 차트에 표시
+      - 기준 환율: 1 USD = USD_TO_KRW 원 (고정값)
+      - 툴팁에 원래 USD 금액도 함께 표시
    ════════════════════════════════════════════════ */
+
+// ━━━ 환율 설정 (USD → KRW) ━━━━━━━━━━━━━━━━━━━━
+const USD_TO_KRW = 1380;   // 참고 환율: 1달러 = 1,380원 (필요 시 조정)
 
 // ── 데이터 준비 ────────────────────────────────
 const labels       = [];
-const values       = [];    // 평가금액
-const profits      = [];    // 손익 금액
-const pRates       = [];    // 수익률 %
-const hasPriceFeed = [];    // true=실시간 현재가 / false=매수가 기준(현재가 미확인)
+const valuesKRW    = [];   // 평가금액 (모두 KRW로 환산)
+const valuesOrig   = [];   // 평가금액 (원래 통화)
+const profits      = [];   // 손익 금액 (KRW 환산)
+const profitsOrig  = [];   // 손익 금액 (원래 통화)
+const pRates       = [];   // 수익률 %
+const hasPriceFeed = [];   // true=실시간 현재가 / false=매수가 기준
+const currencies   = [];   // 'KRW' 또는 'USD'
 const COLORS  = ['#4e79a7','#f28e2b','#e15759','#76b7b2',
                  '#59a14f','#edc948','#b07aa1','#ff9da7',
                  '#9c755f','#bab0ac'];
@@ -274,6 +309,7 @@ const COLORS  = ['#4e79a7','#f28e2b','#e15759','#76b7b2',
 <c:if test="${not empty p.stockCode}"><%-- 종목코드 없는 빈 행 제외 --%>
     <c:set var="pAvg2" value="${not empty p.avgPrice ? p.avgPrice : 0}"/>
     <c:set var="pQty2" value="${not empty p.quantity ? p.quantity : 0}"/>
+    <c:set var="pCountry" value="${not empty p.country ? p.country : 'KR'}"/>
     <%-- 현재가 우선순위: STOCK.currentPrice > PORTFOLIO_ITEM.purchasePrice > avgPrice --%>
     <c:choose>
         <c:when test="${not empty p.currentPrice and p.currentPrice gt 0}">
@@ -289,29 +325,42 @@ const COLORS  = ['#4e79a7','#f28e2b','#e15759','#76b7b2',
             <c:set var="pHasFeed" value="false"/>
         </c:otherwise>
     </c:choose>
-    labels.push('<c:out value="${not empty p.stockName ? p.stockName : p.stockCode}"/>');
-    values.push(Math.round(${pCur2} * ${pQty2}));
-    profits.push(Math.round((${pCur2} - ${pAvg2}) * ${pQty2}));
-    pRates.push(${pAvg2} > 0 ? Math.round(((${pCur2} - ${pAvg2}) / ${pAvg2}) * 10000) / 100 : 0);
-    hasPriceFeed.push(${pHasFeed});
+    {
+        const rawCur  = ${pCur2};
+        const rawAvg  = ${pAvg2};
+        const qty     = ${pQty2};
+        const isUS    = ('${pCountry}' === 'US');
+        const fx      = isUS ? USD_TO_KRW : 1;   // KR은 1:1, US는 환율 적용
+        const curKRW  = rawCur * fx;
+        const avgKRW  = rawAvg * fx;
+
+        labels.push('<c:out value="${not empty p.stockName ? p.stockName : p.stockCode}"/>');
+        valuesKRW.push(Math.round(curKRW  * qty));
+        valuesOrig.push(Math.round(rawCur * qty));
+        profits.push(Math.round((curKRW  - avgKRW)  * qty));
+        profitsOrig.push(Math.round((rawCur - rawAvg) * qty));
+        pRates.push(rawAvg > 0 ? Math.round(((rawCur - rawAvg) / rawAvg) * 10000) / 100 : 0);
+        hasPriceFeed.push(${pHasFeed});
+        currencies.push(isUS ? 'USD' : 'KRW');
+    }
 </c:if>
 </c:forEach>
 
-// ── 1. 도넛 차트 (종목별 보유 비중) ───────────
+// ── 1. 도넛 차트 (종목별 보유 비중 — KRW 환산) ───────────
 (function() {
     const ctx = document.getElementById('pieChart');
     if (!ctx) return;
 
-    // 가중치에 따른 퍼센트 계산
-    const total = values.reduce((a,b) => a+b, 0);
-    const pcts  = total > 0 ? values.map(v => Math.round(v / total * 1000) / 10) : values.map(() => 0);
+    if (valuesKRW.length === 0) return;
+
+    const total = valuesKRW.reduce((a,b) => a+b, 0);
 
     new Chart(ctx.getContext('2d'), {
         type: 'doughnut',
         data: {
             labels: labels,
             datasets: [{
-                data: values,
+                data: valuesKRW,
                 backgroundColor: COLORS.slice(0, labels.length),
                 borderWidth: 3,
                 borderColor: '#fff',
@@ -329,10 +378,20 @@ const COLORS  = ['#4e79a7','#f28e2b','#e15759','#76b7b2',
                 },
                 tooltip: {
                     callbacks: {
-                        label: function(ctx) {
-                            const val = ctx.parsed;
-                            const pct = total > 0 ? (val / total * 100).toFixed(1) : 0;
-                            return ` ${ctx.label}: ${val.toLocaleString('ko-KR')}원 (${pct}%)`;
+                        label: function(c) {
+                            const idx  = c.dataIndex;
+                            const krw  = valuesKRW[idx];
+                            const orig = valuesOrig[idx];
+                            const cur  = currencies[idx];
+                            const pct  = total > 0 ? (krw / total * 100).toFixed(1) : 0;
+                            // 미국 주식은 USD 원금도 함께 표시
+                            if (cur === 'USD') {
+                                return [
+                                    ` ${c.label}: ${krw.toLocaleString('ko-KR')}원 환산 (${pct}%)`,
+                                    ` 원화 환산 = $${orig.toLocaleString('en-US')} × ${USD_TO_KRW.toLocaleString('ko-KR')}원/$ `
+                                ];
+                            }
+                            return ` ${c.label}: ${krw.toLocaleString('ko-KR')}원 (${pct}%)`;
                         }
                     }
                 }
@@ -341,12 +400,11 @@ const COLORS  = ['#4e79a7','#f28e2b','#e15759','#76b7b2',
     });
 })();
 
-// ── 2. 막대 차트 (종목별 손익) ─────────────────
+// ── 2. 막대 차트 (종목별 손익 — KRW 환산) ─────────────────
 (function() {
     const ctx = document.getElementById('barChart');
     if (!ctx) return;
 
-    // 종목 없을 때 빈 상태 메시지 표시
     if (labels.length === 0) {
         ctx.parentElement.innerHTML =
             '<p class="text-center text-muted py-4">' +
@@ -357,8 +415,6 @@ const COLORS  = ['#4e79a7','#f28e2b','#e15759','#76b7b2',
     const bgColors = profits.map(v => v >= 0 ? 'rgba(220,53,69,.75)' : 'rgba(13,110,253,.75)');
     const bdColors = profits.map(v => v >= 0 ? '#dc3545' : '#0d6efd');
 
-    // ── Y축 동적 범위: 0값 막대도 반드시 보이도록 ──────────────
-    // ★ yPad 배율(0.30) 조정으로 막대 높낮이 여백 변경 가능
     const profMax = profits.length ? Math.max(...profits, 1)  : 1;
     const profMin = profits.length ? Math.min(...profits, -1) : -1;
     const yPad    = Math.max(Math.abs(profMax), Math.abs(profMin)) * 0.30 + 100;
@@ -368,14 +424,14 @@ const COLORS  = ['#4e79a7','#f28e2b','#e15759','#76b7b2',
         data: {
             labels: labels,
             datasets: [{
-                label: '평가손익 (원)',
+                label: '평가손익 (KRW 환산)',
                 data: profits,
                 backgroundColor: bgColors,
                 borderColor: bdColors,
                 borderWidth: 2,
                 borderRadius: 6,
                 borderSkipped: false,
-                minBarLength: 4  // ← 0원 손익도 최소 4px 막대로 표시
+                minBarLength: 4
             }]
         },
         options: {
@@ -385,16 +441,23 @@ const COLORS  = ['#4e79a7','#f28e2b','#e15759','#76b7b2',
                 legend: { display: false },
                 tooltip: {
                     callbacks: {
-                        label: function(ctx) {
-                            const v    = ctx.parsed.y;
+                        label: function(c) {
+                            const idx  = c.dataIndex;
+                            const v    = c.parsed.y;
                             const sign = v >= 0 ? '+' : '';
-                            // 현재가 미확인인 경우 경고 표시
-                            const note = hasPriceFeed[ctx.dataIndex]
-                                ? '' : ' ⚠️현재가 미확인(매수가 기준)';
+                            const cur  = currencies[idx];
+                            const note = !hasPriceFeed[idx] ? ' ⚠️현재가 미확인' : '';
+                            if (cur === 'USD') {
+                                const usdPnl = profitsOrig[idx];
+                                return [
+                                    ` 손익(환산): ${sign}${v.toLocaleString('ko-KR')}원${note}`,
+                                    ` 손익(USD): ${usdPnl >= 0 ? '+' : ''}$${usdPnl.toLocaleString('en-US')}`
+                                ];
+                            }
                             return ` 손익: ${sign}${v.toLocaleString('ko-KR')}원${note}`;
                         },
-                        afterLabel: function(ctx) {
-                            const r = pRates[ctx.dataIndex];
+                        afterLabel: function(c) {
+                            const r = pRates[c.dataIndex];
                             return ` 수익률: ${r >= 0 ? '+' : ''}${r}%`;
                         }
                     }
@@ -403,7 +466,6 @@ const COLORS  = ['#4e79a7','#f28e2b','#e15759','#76b7b2',
             scales: {
                 x: { grid: { display: false } },
                 y: {
-                    // 동적 suggestedMin/Max → 0값 막대가 화면에 반드시 표시됨
                     suggestedMin: profMin - yPad,
                     suggestedMax: profMax + yPad,
                     grid: { color: 'rgba(0,0,0,.06)' },

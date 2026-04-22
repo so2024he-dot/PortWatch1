@@ -29,6 +29,7 @@ public class PortfolioVO {
     private String stockId;
     private String stockCode;
     private String stockName;
+    private String country;           // 'KR' 또는 'US' — 차트 환율 변환용
     private BigDecimal quantity;
     private BigDecimal avgPrice;
     private BigDecimal avgPurchasePrice;
