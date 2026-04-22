@@ -24,6 +24,7 @@
         <result property="portfolioName" column="portfolio_name"/>
         <result property="stockCode" column="stock_code"/>
         <result property="stockName" column="stock_name"/>
+        <result property="country" column="country"/>
         <result property="quantity" column="quantity"/>
         <result property="purchasePrice" column="purchase_price"/>
         <result property="avgPrice" column="avg_price"/>
@@ -74,6 +75,7 @@
             p.updated_at,
             pi.stock_code,
             s.stock_name,
+            s.country,
             pi.quantity,
             pi.avg_price,
             pi.purchase_price,
@@ -100,6 +102,7 @@
             p.updated_at,
             pi.stock_code,
             s.stock_name,
+            s.country,
             pi.quantity,
             pi.avg_price,
             pi.purchase_price,
