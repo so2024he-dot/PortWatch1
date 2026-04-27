@@ -100,16 +100,15 @@
         <property name="password" value="portwatch2026!!abcd"/>
 
         <!--
-            ✅ db.t3.micro: max_connections ≈ 150
-               maximumPoolSize=15 (10→15으로 증가):
-                 NewsScheduler + StockScheduler + 수동 API 동시 실행 시 풀 경쟁 방지
+            ✅ t2.micro 메모리 최적화 (1GB RAM 제한):
+               maximumPoolSize=8 (15→8으로 감소):
+                 t2.micro 1GB RAM에서 15개 연결 유지 시 메모리 부족 OOM 위험
                  NewsScheduler(한국/미국) + StockScheduler(한국/미국) = 최대 4개 동시
-                 + 수동 crawler/korea, /us, update-all = 최대 3개
-                 합계 7개 + 여유 8개 = 15개 적합
-               minimumIdle=3 (2→3으로 증가): 최소 연결 상시 유지
+                 + 여유 4개 = 8개로 충분하며 메모리 절약 효과
+               minimumIdle=2 (3→2으로 감소): 유휴 연결 최소화로 메모리 절약
         -->
-        <property name="maximumPoolSize" value="15"/>
-        <property name="minimumIdle" value="3"/>
+        <property name="maximumPoolSize" value="8"/>
+        <property name="minimumIdle" value="2"/>
 
         <!--
             ✅ connectionTimeout=30000 (30초): 풀에서 연결 대기 최대 시간
